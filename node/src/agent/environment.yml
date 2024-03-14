@@ -1,0 +1,14 @@
+#NOTE: *must* import with:
+#
+# conda env create -f ./environment.yml -p ./.conda/collaborative-learning-dev
+#
+# command must be launched in the agent folder.
+
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pybind11
+  - keras
+  - tensorflow
+  
