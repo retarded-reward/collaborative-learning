@@ -1,27 +1,23 @@
-import keras
-from keras import layers
-from keras.datasets import mnist
-import numpy as np
+import tensorflow as tf
 
-'''
-This is a simple example of a Keras model.
-It only serves the purpose to show that a ML framework use in a custom module
-can be imported in a cpp program
-'''
-def hello_world_keras():
+from tf_agents.agents.dqn import dqn_agent
+from tf_agents.drivers import py_driver
+from tf_agents.environments import suite_gym
+from tf_agents.environments import tf_py_environment
+from tf_agents.eval import metric_utils
+from tf_agents.metrics import tf_metrics
+from tf_agents.networks import sequential
+from tf_agents.policies import py_tf_eager_policy
+from tf_agents.policies import random_tf_policy
+from tf_agents.replay_buffers import reverb_replay_buffer
+from tf_agents.replay_buffers import reverb_utils
+from tf_agents.trajectories import trajectory
+from tf_agents.specs import tensor_spec
+from tf_agents.utils import common
 
-    print(keras.__version__)
-    
-    # Load the data and split it between train and test sets
-    (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+def get_action(state, rewards):
+    env_name = 'CartPole-v0'
+    env = suite_gym.load(env_name)
+    print('Observation Spec:', env.time_step_spec().observation)
 
-    # Scale images to the [0, 1] range
-    x_train = x_train.astype("float32") / 255
-    x_test = x_test.astype("float32") / 255
-    # Make sure images have shape (28, 28, 1)
-    x_train = np.expand_dims(x_train, -1)
-    x_test = np.expand_dims(x_test, -1)
-    print("x_train shape:", x_train.shape)
-    print("y_train shape:", y_train.shape)
-    print(x_train.shape[0], "train samples")
-    print(x_test.shape[0], "test samples")
+get_action(None, None)

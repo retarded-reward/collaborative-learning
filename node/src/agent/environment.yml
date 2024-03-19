@@ -3,7 +3,6 @@
 # conda env create -f ./environment.yml -p ./.conda/collaborative-learning-dev
 #
 # command must be launched in the agent folder.
-
 channels:
   - defaults
 dependencies:
@@ -11,4 +10,6 @@ dependencies:
   - pybind11
   - keras
   - tensorflow
-  
+  - pip
+  - pip:
+    - tf-agents == 0.16.0
