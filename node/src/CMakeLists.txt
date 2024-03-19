@@ -14,7 +14,7 @@ find_package (Python COMPONENTS Interpreter Development)
 find_package(pybind11 REQUIRED)
 
 set(sources 
-    main.cpp
+    main.cc
 )
 
 add_executable(node ${sources})

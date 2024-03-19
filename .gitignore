@@ -1,2 +1,5 @@
 .vscode/
 scripts/
+out/
+collaborative-learning
+node/simulations/results/
