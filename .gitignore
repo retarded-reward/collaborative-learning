@@ -3,3 +3,7 @@ scripts/
 out/
 collaborative-learning
 node/simulations/results/
+.settings/
+.oppbuildspec
+.project
+bin/

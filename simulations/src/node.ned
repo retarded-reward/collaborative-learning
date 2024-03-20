@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package node.src;
+package simulations;
 
 // Basic node with only one port for communication
 simple Node
