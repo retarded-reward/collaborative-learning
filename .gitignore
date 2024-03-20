@@ -6,4 +6,5 @@ node/simulations/results/
 .settings/
 .oppbuildspec
 .project
+.cproject
 bin/
