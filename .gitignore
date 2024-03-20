@@ -1,10 +1,9 @@
 .vscode/
-scripts/
 out/
-collaborative-learning
-node/simulations/results/
 .settings/
 .oppbuildspec
 .project
 .cproject
 bin/
+.envrc
+.shellcheckrc
