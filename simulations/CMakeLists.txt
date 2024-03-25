@@ -19,7 +19,10 @@ find_package(pybind11 REQUIRED)
 
 # Define your library/simulation sources
 set(SOURCES
-    src/node.cc
+    src/node/controller.cc
+    src/node/agentc/agent_client_msg.cc
+    src/node/agentc/agent_client_pybind.cc
+    src/node/agentc/python_interpreter.cc
 )
 
 add_library(project_library SHARED ${SOURCES})
@@ -56,9 +59,9 @@ target_link_libraries(project_library pybind11::embed) # pybind11
 
 # This creates an OMNet++ CMake run for you
 add_opp_run(collaborative-learning-sim 
-    CONFIG src/omnetpp.ini 
+    CONFIG res/omnetpp.ini 
     DEPENDENCY project_library
-    )
+)
 
 
 

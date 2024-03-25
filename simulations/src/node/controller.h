@@ -13,22 +13,21 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#include "node.h"
+#ifndef __DEMO_NODE_H_
+#define __DEMO_NODE_H_
 
-Define_Module(Node);
+#include <omnetpp.h>
 
-//Node behaviour when started
-void Node::initialize()
+using namespace omnetpp;
+
+/**
+ * TODO - Generated class
+ */
+class Controller : public cSimpleModule
 {
-    cMessage *information = new cMessage();
-    send(information, "port$o");
-}
+  protected:
+    virtual void initialize() override;
+    virtual void handleMessage(cMessage *msg) override;
+};
 
-//Node behaviour at message reception
-void Node::handleMessage(cMessage *msg)
-{
-    EV << "Message received";
-    cMessage *answer = new cMessage();
-    sendDelayed(answer, uniform(10, 60), "port$o");
-
-}
+#endif

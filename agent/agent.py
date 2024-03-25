@@ -19,5 +19,7 @@ def get_action(state, rewards):
     env_name = 'CartPole-v0'
     env = suite_gym.load(env_name)
     print('Observation Spec:', env.time_step_spec().observation)
+    return 1
 
-get_action(None, None)
+if __name__ == '__main__':
+    get_action(None, None)

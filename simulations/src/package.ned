@@ -1,3 +1,3 @@
-package simulations;
+package org.cl.simulations;
 
 @license(LGPL);

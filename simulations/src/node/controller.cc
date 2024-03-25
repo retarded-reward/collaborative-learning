@@ -13,21 +13,27 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef __DEMO_NODE_H_
-#define __DEMO_NODE_H_
+#include "controller.h"
+#include "agentc/agent_client.h"
 
-#include <omnetpp.h>
+Define_Module(Controller);
 
-using namespace omnetpp;
-
-/**
- * TODO - Generated class
- */
-class Node : public cSimpleModule
+//Node behaviour when started
+void Controller::initialize()
 {
-  protected:
-    virtual void initialize() override;
-    virtual void handleMessage(cMessage *msg) override;
-};
+    //cMessage *information = new cMessage();
+    //send(information, "network_port$o");
+    cMessage *msg = new cMessage();
+    msg->setName(AgentClientMsg::ACTION_REQUEST.getTopic().c_str());
+    send(msg, "agent_port$o");
+}
 
-#endif
+//Node behaviour at message reception
+void Controller::handleMessage(cMessage *msg)
+{
+    EV << "Message received";
+    //send(new cMessage(), "agent_port$o");
+    //cMessage *answer = new cMessage();
+    //sendDelayed(answer, uniform(10, 60), "network_port$o");
+
+}

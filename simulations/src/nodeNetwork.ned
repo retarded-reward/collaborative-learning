@@ -13,7 +13,8 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package simulations;
+package org.cl.simulations;
+import org.cl.simulations.node.Node;
 
 //Network description including nodes and their connections
 network NodeNetwork

@@ -13,12 +13,23 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package simulations;
+package org.cl.simulations.node;
 
-// Basic node with only one port for communication
-simple Node
+import ned.IdealChannel;
+import org.cl.simulations.node.agentc.AgentClient;
+import org.cl.simulations.node.Controller;
+
+// a node of the network
+module Node
 {
     gates:
         inout port;
+    submodules:
+        controller: Controller;
+        agent: AgentClient;
+    connections:
+        port <--> controller.network_port;
+        agent.port <--> IdealChannel <--> controller.agent_port;
+        
     
 }
