@@ -36,7 +36,8 @@ set(MESSAGE_SOURCES
 generate_opp_message(
     ${MESSAGE_SOURCES}
     TARGET project_library
-    OUTPUT_ROOT ${CMAKE_BINARY_DIR}/messages 
+    OUTPUT_ROOT ${CMAKE_BINARY_DIR}/simulations
+    DIRECTORY messages 
     GEN_SOURCES gen_sources
     # NOTE: this parameter does not work, thus include directory must be added manually.
     # see https://github.com/omnetpp/cmake?tab=readme-ov-file#caveats for details
@@ -65,7 +66,7 @@ target_link_libraries(project_library OmnetPP::header)
 #target_link_libraries(project_library OmnetPP::scave)
 #target_link_libraries(project_library OmnetPP::sim)
 #target_link_libraries(project_library OmnetPP::tkenv)
-target_link_libraries(project_library pybind11::embed) # pybind11
+target_link_libraries(project_library pybind11::embed)
 
 # This creates an OMNet++ CMake run for you
 add_opp_run(collaborative-learning-sim 

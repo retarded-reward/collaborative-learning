@@ -10,4 +10,4 @@ find_package(OmnetPP 6.0 REQUIRED)
 # Load the CMake commands for OMNeT++
 include(OmnetppHelpers)
 
-add_subdirectory(simulations simulations/bin)
+add_subdirectory(simulations simulations)

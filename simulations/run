@@ -1,5 +1,0 @@
-#!/bin/sh
-cd `dirname $0`
-../../collaborative-learning -n .:../src $*
-# for shared lib, use: opp_run -l ../src -n .:../src $*
-# Modified row 3 to make it work with collaborative-learning packaging 
