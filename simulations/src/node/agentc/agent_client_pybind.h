@@ -12,6 +12,8 @@ class AgentClientPybind : public AgentClient {
         void handleMessage(cMessage *msg) override;
     private:
         py::module agent;
+        
+        void handleActionRequest(ActionRequest *msg);
     public:
         AgentClientPybind();
         ~AgentClientPybind();

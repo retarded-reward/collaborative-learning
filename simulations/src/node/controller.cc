@@ -15,6 +15,7 @@
 
 #include "controller.h"
 #include "agentc/agent_client.h"
+#include "ActionRequest_m.h"
 
 Define_Module(Controller);
 
@@ -23,8 +24,13 @@ void Controller::initialize()
 {
     //cMessage *information = new cMessage();
     //send(information, "network_port$o");
-    cMessage *msg = new cMessage();
-    msg->setName(AgentClientMsg::ACTION_REQUEST.getTopic().c_str());
+    
+    // Tests the agent client by sending it a request for an action.
+    // Normal workflow should expect a response from the agent client containing
+    // the action to take.
+    cMessage *msg = new ActionRequest();
+    msg->setName(AgentClient::MSG_TOPIC.c_str());
+    msg->setKind((int) AgentClientMsgKind::ACTION_REQUEST);
     send(msg, "agent_port$o");
 }
 

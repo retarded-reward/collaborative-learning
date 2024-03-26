@@ -3,25 +3,24 @@
 
 #include <omnetpp.h>
 #include <string>
+#include "ActionRequest_m.h"
 
 using namespace omnetpp;
 using namespace std;
 
-class AgentClientMsg{
-    public:
-        static const AgentClientMsg ACTION_REQUEST;
-        static const AgentClientMsg ACTION_RESPONSE;
-    private:
-        string topic;   // Agent will process messagges with this topic as their name
-
-        AgentClientMsg(string topic);
-
-    public:
-        string getTopic() const;
+enum class AgentClientMsgKind : short {
+    UNSPECIFIED = 0,
+    ACTION_REQUEST,
+    ACTION_RESPONSE,
 };
 
 class AgentClient : public cSimpleModule {
-
+    public:
+        /**
+         * Only messages with this topic as their name will be processed by the agent
+         * client.
+        */
+        static const string MSG_TOPIC;
 };
 
 #endif // AGENT_CLIENT_H
