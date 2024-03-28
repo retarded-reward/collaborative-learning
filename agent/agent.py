@@ -19,90 +19,37 @@ from tf_agents.policies import random_py_policy
 from tf_agents.agents.random import fixed_policy_agent
 from tf_agents.typing import types
 from tf_agents.agents.tf_agent import TFAgent
+from tf_agents.trajectories.time_step import TimeStep
+from tf_agents.trajectories.time_step import StepType
+from tf_agents.agents.tf_agent import LossInfo
 
-class SensorNetwork(py_environment.PyEnvironment):
+class RandomAgent(TFAgent):
+    """An agent with a random policy and no learning."""
 
-    def __init__(self):
-        self._action_spec = array_spec.BoundedArraySpec(
-            shape=(), dtype=np.int32, minimum=0, maximum=1, name='send_message')
-        self._observation_spec = array_spec.BoundedArraySpec(
-            shape=(1,), dtype=np.int32, minimum=0, maximum=10, name='energy')
-        self._state = 0
-        self._episode_ended = False
+    def __init__(
+        self,
+        time_step_spec: ts.TimeStep,
+        action_spec: types.NestedTensorSpec,
+        name: Optional[Text] = None,
+    ):
+        policy = random_tf_policy.RandomTFPolicy(time_step_spec, action_spec)
+        super(RandomAgent, self).__init__(
+            time_step_spec,
+            action_spec,
+            policy = policy,
+            collect_policy = policy,
+            train_sequence_length = None
+        )
 
-    def action_spec(self):
-        return self._action_spec
+    def _train(self, experience, weights=None):
+        print("Training...")
 
-    def observation_spec(self):
-        return self._observation_spec
+        # NOTE: counter must be incremented manually by exact one.
+        #       See comments of TFAgent.train method for more details. 
+        self.train_step_counter.assign_add(1)
 
-    def _reset(self):
-        self._state = 0
-        self._episode_ended = False
-        return ts.restart(np.array([self._state], dtype=np.int32))
-
-    def _step(self, action):
-
-        if self._episode_ended:
-        # The last action ended the episode. Ignore the current action and start
-        # a new episode.
-            return self.reset()
-
-        # Make sure episodes don't go on forever.
-        if action == 1:
-            self._episode_ended = True
-        elif action == 0:
-            new_card = np.random.randint(1, 11)
-            self._state += new_card
-        else:
-            raise ValueError('`action` should be 0 or 1.')
-
-        if self._episode_ended or self._state >= 21:
-            reward = self._state - 21 if self._state <= 21 else -21
-            return ts.termination(np.array([self._state], dtype=np.int32), reward)
-        else:
-            return ts.transition(
-                np.array([self._state], dtype=np.int32), reward=0.0, discount=1.0)
-
-class RandomAgent(fixed_policy_agent.FixedPolicyAgent):
-  """An agent with a random policy and no learning."""
-
-  def __init__(
-      self,
-      time_step_spec: ts.TimeStep,
-      action_spec: types.NestedTensorSpec,
-      debug_summaries: bool = False,
-      summarize_grads_and_vars: bool = False,
-      train_step_counter: Optional[tf.Variable] = None,
-      num_outer_dims: int = 1,
-      name: Optional[Text] = None,
-  ):
-    """Creates a random agent.
-
-    Args:
-      time_step_spec: A `TimeStep` spec of the expected time_steps.
-      action_spec: A nest of BoundedTensorSpec representing the actions.
-      debug_summaries: A bool to gather debug summaries.
-      summarize_grads_and_vars: If true, gradient summaries will be written.
-      train_step_counter: An optional counter to increment every time the train
-        op is run.  Defaults to the global_step.
-      num_outer_dims: same as base class.
-      name: The name of this agent. All variables in this module will fall under
-        that name. Defaults to the class name.
-    """
-    tf.Module.__init__(self, name=name)
-
-    policy_class = random_tf_policy.RandomTFPolicy
-
-    super(RandomAgent, self).__init__(
-        time_step_spec,
-        action_spec,
-        policy_class=policy_class,
-        debug_summaries=debug_summaries,
-        summarize_grads_and_vars=summarize_grads_and_vars,
-        train_step_counter=train_step_counter,
-        num_outer_dims=num_outer_dims,
-    )
+        # NOTE: Loss should be computed by invoking the loss function of the policy
+        return LossInfo(loss=tf.constant(0.0), extra=())
 
 class AgentFacade():
     
@@ -114,24 +61,70 @@ class AgentFacade():
             self.message_id = message_id
 
     def __init__(self):
-        self._env = SensorNetwork()
-        self._train_env = tf_py_environment.TFPyEnvironment(self._env)
-        self._agent = RandomAgent(self._train_env.time_step_spec(), self._train_env.action_spec())
-        self._rnd_policy = random_py_policy.RandomPyPolicy(time_step_spec=None,
-        action_spec=self._env.action_spec())
+        
+        observation_spec = [
+
+            # one list element for each tensor (state variable) 
+            # TODO: maybe each state variable should be a tensor dimension instead?
+            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32)
+        ]
+        action_spec = [
+            
+            # TODO: 
+            #       Predictions return an object with same shape as the action_spec.
+            #       This means that if we give one tensor to each action, predictions will
+            #       return an entire list of action. Same result is achieved if we use a
+            #       single tensor with one dimension for each action.
+            #
+            #       This means that we are unable to choose one different type of action
+            #       at each policy interrogation 
+            #       (i.e we can't choose to predict send_message without predicting on/off state change).
+            #
+            #       One possible solution could leverage a hierarchical structure of actions,
+            #       where the agents first decides which kind of action must be taken, and then
+            #       chooses the specific value for that action.
+            #       An example: agent chooses from {send_message, change_power_state}. If it 
+            #       chooses send_message, it then predicts the tensor (which_neighbour, send_rate),
+            #       else it chooses the power state from {on, off}.
+            #       This solution brings a more difficult handling of the reward. How should the reward
+            #       distribute among the hierachy levels? Should we use more agents, one for each level?
+
+            # TODO: How to handle actions with variable action space? 
+            #       (i.e: choose a relay node from a variable set of neighbours)
+
+            # one list element for each tensor (action)
+
+            tensor_spec.BoundedTensorSpec(
+            shape=(1), dtype=tf.int32, minimum=0, maximum=1)
+        ]
+        time_step_spec = ts.time_step_spec(observation_spec)
+
+        # TODO: make the agent implementation easily configurable
+        self._agent = RandomAgent(time_step_spec, action_spec)
         self._unrw_buff = []
     
 
     def get_action(self, state, rewards):
+
+        # updates agent policy using new rewards
         experiences = self._assemble_experience_list(rewards)
         self._update_policy(experiences)
+
+        # Computes TimeStep object by resetting the environment
+        # at the given state
+        # and uses it to get the action
         time_step = self._state_to_time_step(state)
-        action = self._rnd_policy.action(time_step) 
+        action = self._agent.policy.action(time_step)
+
+        # Uses the action-state pair among the experiences waiting to be rewarded
         self._unrw_buff.append(self.UnrewardedExperience(state, action, 1))
+        
         return ActionBean(action.action)
 
     def _state_to_time_step(self, state):
-        return ts.restart(np.array([state.energy], dtype=np.int32))
+        return ts.restart(
+            observation=state.to_tensor()
+        )
 
     def _assemble_experience_list(self, rewards):
         experiences = []
@@ -155,9 +148,9 @@ class AgentFacade():
     def _update_policy(self, experiences):
         for e in experiences:
             self._agent.train(e)
-            print("Esperienza ricevuta:\n\t Stato [energy:{0}] \n\t Azione [send_message:{1}] \n\t Reward: {2} ".format(e.observation.energy, e.step_type, e.reward))
+            print("Esperienza ricevuta:\n\t Stato [energy:{0}] \n\t Azione [send_message:{1}] \n\t Reward: {2} ".format(e.observation.energy, e.action.action[0][0], e.reward))
             
-
+# TODO: implement the other state variables according to the model
 class StateBean():
 
     def __init__(self, energy : int):
@@ -167,6 +160,22 @@ class StateBean():
     @property
     def energy(self):
         return self._energy
+    
+    """
+    Returns a list of tensors representing the state of the agent.
+    Each tensor is a state variable.
+    """
+    def to_tensor(self):
+        
+        # keep in sync with observation_spec in AgentFacade constructor
+        return [
+            tf.constant(
+                name="node_energy",
+                value=self.energy,
+                shape=(1),
+                dtype=tf.float32
+            )
+        ]
 
 class RewardBean():
 
@@ -183,6 +192,7 @@ class RewardBean():
     def reward(self):
         return self._reward
     
+# TODO: implement the other actions according to the model
 class ActionBean():
     
     def __init__(self, send_message : int):
@@ -199,7 +209,7 @@ if __name__ == '__main__':
     state = StateBean(1)
     rewards = [RewardBean(1, 10)]
     action = agent.get_action(state, [])
-    print("Manda messagio: " + str(action.send_message))
+    print("Manda messagio: " + str(action.send_message[0][0]))
     action = agent.get_action(state, rewards)
-    print("Manda messagio: " + str(action.send_message))
+    print("Manda messagio: " + str(action.send_message[0][0]))
     
