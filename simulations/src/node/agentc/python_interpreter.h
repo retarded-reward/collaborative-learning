@@ -1,8 +1,6 @@
 #ifndef PYTHON_INTERPRETER_H
 #define PYTHON_INTERPRETER_H
 
-#include <pybind11/embed.h>
-
 /*
     Singleton holder for references to the python interpreter used to 
     run the agent.

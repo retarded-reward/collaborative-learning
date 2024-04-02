@@ -30,19 +30,24 @@ add_library(project_library SHARED ${SOURCES})
 # Define your messages as well
 set(MESSAGE_SOURCES
     messages/ActionRequest.msg
+    messages/NodeStateMsg.msg
+    messages/SinkRewardMsg.msg
 )
 
-# uncomment the following if you have messages
-generate_opp_message(
-    ${MESSAGE_SOURCES}
-    TARGET project_library
-    OUTPUT_ROOT ${CMAKE_BINARY_DIR}/simulations
-    DIRECTORY messages 
-    GEN_SOURCES gen_sources
-    # NOTE: this parameter does not work, thus include directory must be added manually.
-    # see https://github.com/omnetpp/cmake?tab=readme-ov-file#caveats for details
-    #GEN_INCLUDE_DIR ${CMAKE_BINARY_DIR}/messages
-    )
+foreach(MESSAGE ${MESSAGE_SOURCES})
+
+    # uncomment the following if you have messages
+    generate_opp_message(
+        ${MESSAGE}
+        TARGET project_library
+        OUTPUT_ROOT ${CMAKE_BINARY_DIR}/simulations
+        DIRECTORY messages 
+        GEN_SOURCES gen_sources
+        # NOTE: this parameter does not work, thus include directory must be added manually.
+        # see https://github.com/omnetpp/cmake?tab=readme-ov-file#caveats for details
+        GEN_INCLUDE_DIR ${CMAKE_BINARY_DIR}/messages
+        )
+endforeach()
 
 target_include_directories(project_library
  PUBLIC ${CMAKE_BINARY_DIR}/simulations/messages)

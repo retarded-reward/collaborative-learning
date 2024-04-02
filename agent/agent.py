@@ -12,7 +12,7 @@ from tf_agents.trajectories.time_step import StepType, TimeStep
 from tf_agents.typing import types
 from tf_agents.utils import common
 
-from beans import ActionBean, RewardBean, StateBean
+from beans import ActionBean, RewardBean, RewardsBean, StateBean
 
 class AgentFacade():
     
@@ -50,8 +50,7 @@ class AgentFacade():
         ]
         action_spec = [
             
-            # TODO: 
-            #       Predictions return an object with same shape as the action_spec.
+            # TODO: Predictions return an object with same shape as the action_spec.
             #       This means that if we give one tensor to each action, predictions will
             #       return an entire list of action. Same result is achieved if we use a
             #       single tensor with one dimension for each action.
@@ -86,7 +85,10 @@ class AgentFacade():
         self._unrw_buff = []
     
 
-    def get_action(self, state, rewards):
+    def get_action(self, state_bean, rewards_bean):
+        return self._get_action(state_bean, rewards_bean.rewards)
+    
+    def _get_action(self, state, rewards):
 
         # updates agent policy using new rewards
         experiences = self._assemble_experience_list(rewards)
@@ -101,7 +103,7 @@ class AgentFacade():
         # Uses the action-state pair among the experiences waiting to be rewarded
         self._unrw_buff.append(self.UnrewardedExperience(state, action, 1))
         
-        return ActionBean(action.action)
+        return ActionBean(send_message=action.action[0][0])
 
     def _state_to_time_step(self, state):
         return ts.restart(
@@ -139,7 +141,7 @@ if __name__ == '__main__':
     state.add_neighbour(neighbour)
     rewards = [RewardBean(1, 10)]
     action = agent.get_action(state, [])
-    print("Manda messagio: " + str(action.send_message[0][0]))
+    print("Manda messagio: " + str(action.send_message))
     action = agent.get_action(state, rewards)
-    print("Manda messagio: " + str(action.send_message[0][0]))
+    print("Manda messagio: " + str(action.send_message))
     

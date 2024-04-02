@@ -38,7 +38,7 @@ class StateBean():
 
         self._id = id
         """
-        Unique identifier of the node.
+        Unique identifier of the node, if available/needed/meaningful.
         Can be a global identifier or a neighbour identifier, according to the needs.
         """
 
@@ -54,21 +54,41 @@ class StateBean():
     def energy(self):
         return self._energy
     
+    @energy.setter
+    def energy(self, energy):
+        self._energy = energy
+    
     @property
     def power_state(self):
         return self._power_state
+    
+    @power_state.setter
+    def power_state(self, power_state):
+        self._power_state = power_state
     
     @property
     def has_packet_in_buffer(self):
         return self._has_packet_in_buffer
     
+    @has_packet_in_buffer.setter
+    def has_packet_in_buffer(self, has_packet_in_buffer):
+        self._has_packet_in_buffer = has_packet_in_buffer
+    
     @property
     def link_capacity(self):
         return self._link_capacity
     
+    @link_capacity.setter
+    def link_capacity(self, link_capacity):
+        self._link_capacity = link_capacity
+    
     @property
     def id(self):
         return self._id
+    
+    @id.setter
+    def id(self, id):
+        self._id = id
     
     def add_neighbour(self, neighbour):
         self._neighbours.append(neighbour)
@@ -117,10 +137,10 @@ class StateBean():
             # recursively calling to_tensor() on each neighbour
             [n.to_tensor() for n in self._neighbours]
         ]
-
+        
 class RewardBean():
 
-    def __init__(self, message_id : int, reward : int):
+    def __init__(self, message_id : int = None, reward : int = None):
         # id of the message corresponding to the reward
         self._message_id = message_id
         self._reward = reward
@@ -129,10 +149,30 @@ class RewardBean():
     def message_id(self):
         return self._message_id
     
+    @message_id.setter
+    def message_id(self, message_id):
+        self._message_id = message_id
+    
     @property
     def reward(self):
         return self._reward
     
+    @reward.setter
+    def reward(self, reward):
+        self._reward = reward
+    
+class RewardsBean():
+    
+    def __init__(self, rewards : [RewardBean] = []):
+        self._rewards = rewards
+
+    @property
+    def rewards(self):
+        return self._rewards
+    
+    def add_reward(self, msg_id : int, reward : int):
+        self._rewards.append(RewardBean(message_id=msg_id, reward=reward))
+
 # TODO: implement the other actions according to the model
 class ActionBean():
     

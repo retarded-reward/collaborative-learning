@@ -28,10 +28,26 @@ void Controller::initialize()
     // Tests the agent client by sending it a request for an action.
     // Normal workflow should expect a response from the agent client containing
     // the action to take.
-    cMessage *msg = new ActionRequest();
-    msg->setName(AgentClient::MSG_TOPIC.c_str());
-    msg->setKind((int) AgentClientMsgKind::ACTION_REQUEST);
-    send(msg, "agent_port$o");
+
+    NodeStateMsg *neighbour = new NodeStateMsg();
+    neighbour->setEnergy(100);
+    neighbour->setHas_packet_in_buffer(false);
+    neighbour->setPower_state(NodePowerState::ON);
+
+    ActionRequest *ar = new ActionRequest();
+    ar->setName(AgentClient::MSG_TOPIC.c_str());
+    ar->setKind((int) AgentClientMsgKind::ACTION_REQUEST);
+
+    ar->getStateForUpdate().setEnergy(100);
+    ar->getStateForUpdate().setHas_packet_in_buffer(false);
+    ar->getStateForUpdate().setPower_state(NodePowerState::OFF);
+    ar->getStateForUpdate().appendNeighbours(*neighbour);
+
+    ar->setRewardArraySize(1);
+    ar->getRewardForUpdate(0).setMessage_id(1);
+    ar->getRewardForUpdate(0).setValue(10);
+
+    send(ar, "agent_port$o");
 }
 
 //Node behaviour at message reception

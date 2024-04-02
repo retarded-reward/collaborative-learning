@@ -8,7 +8,9 @@ namespace py = pybind11;
 
 class AgentClientPybind : public AgentClient {
     private:
-        py::module agent;
+        py::module agent_module;
+        py::object agent;
+        void state_msg_to_bean(NodeStateMsg msg, py::object bean);
     protected:
         void handleActionRequest(ActionRequest *msg) override;
     public:

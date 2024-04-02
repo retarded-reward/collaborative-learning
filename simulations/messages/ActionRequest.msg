@@ -13,8 +13,15 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
+// see agent beans module for an explanation of the members
+
+// TODO: import state and reward and glue them togheter
+
+import NodeStateMsg;
+import SinkRewardMsg;
+
 message ActionRequest {
     
-    // TODO: replace this line with menbers descriving the action request params
-    int a = 0;
-}
+    NodeStateMsg state;
+    SinkRewardMsg reward[];
+};
