@@ -7,13 +7,10 @@
 namespace py = pybind11;
 
 class AgentClientPybind : public AgentClient {
-    protected:
-        void initialize() override;
-        void handleMessage(cMessage *msg) override;
     private:
         py::module agent;
-        
-        void handleActionRequest(ActionRequest *msg);
+    protected:
+        void handleActionRequest(ActionRequest *msg) override;
     public:
         AgentClientPybind();
         ~AgentClientPybind();

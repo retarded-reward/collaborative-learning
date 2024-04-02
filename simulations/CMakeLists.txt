@@ -20,7 +20,7 @@ find_package(pybind11 REQUIRED)
 # Define your library/simulation sources
 set(SOURCES
     src/node/controller.cc
-    src/node/agentc/agent_client_msg.cc
+    src/node/agentc/agent_client.cc
     src/node/agentc/agent_client_pybind.cc
     src/node/agentc/python_interpreter.cc
 )
