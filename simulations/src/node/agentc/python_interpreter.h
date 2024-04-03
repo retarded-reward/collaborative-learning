@@ -35,7 +35,7 @@ class PythonInterpreter{
          * Decrements by one the number of users of the python interpreter.
          * If the counter reaches zero, the python interpreter is shut down
          * and must be initialized again before being reused.
-         * NOTE! Users must destroy all their references to python objects they own
+         * NOTE: Users must destroy all their references to python objects they own
          * before calling this method.
         */
         void put();
