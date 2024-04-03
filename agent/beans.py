@@ -173,14 +173,44 @@ class RewardsBean():
     def add_reward(self, msg_id : int, reward : int):
         self._rewards.append(RewardBean(message_id=msg_id, reward=reward))
 
+class RelayBean():
+
+    def __init__(self):
+        self._neighbour_id = -1
+        self._rate = 0.0
+        @property
+        def neighbour_id(self):
+            return self._neighbour_id
+        
+        @neighbour_id.setter
+        def neighbour_id(self, neighbour_id: int):
+            self._neighbour_id = neighbour_id
+        
+        @property
+        def rate(self):
+            return self._rate
+        
+        @rate.setter
+        def rate(self, rate: float):
+            self._rate = rate
+
 # TODO: implement the other actions according to the model
 class ActionBean():
     
-    def __init__(self, send_message : int):
-        # send_message is a int value 0 or 1
-        self._send_message = send_message
+    def __init__(self):
+        self.changePowerState = -1
+        self.relaySet = []
 
     @property
     def send_message(self):
         return self._send_message
+    
+    def add_relay(self, relay: RelayBean):
+        self.relaySet.append(relay)
+    
+    def get_relay(self, index: int) -> RelayBean:
+        return self.relaySet[index]
+    
+    def get_relay_count(self) -> int:
+        return len(self.relaySet)
 

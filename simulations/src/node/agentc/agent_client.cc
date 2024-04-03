@@ -1,6 +1,5 @@
 #include "agent_client.h"
-
-const string AgentClient::MSG_TOPIC = "agent_client_msg";
+#include "AgentClientMsg_m.h"
 
 void AgentClient::initialize()
 {
@@ -9,12 +8,12 @@ void AgentClient::initialize()
 
 void AgentClient::handleMessage(cMessage *msg)
 {
-    if (strcmp(msg->getName(), AgentClient::MSG_TOPIC.c_str())){
+    if (!is_agentc_msg(msg)){
         
         EV_WARN << "Agent client received message with name "
          << msg->getName() 
          << " but it can process only messages with name "
-         << AgentClient::MSG_TOPIC.c_str();
+         << AGENTC_MSG_TOPIC << endl;
         goto agentc_handleMessage_exit;
     }
 

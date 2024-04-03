@@ -2,7 +2,7 @@
 #include "agent_client.h"
 #include "python_interpreter.h"
 #include <omnetpp.h>
-#include <string.h>
+#include <cstddef>
 
 Define_Module(AgentClientPybind);
 
@@ -33,11 +33,28 @@ void AgentClientPybind::state_msg_to_bean(NodeStateMsg state, py::object bean){
     }
 }
 
+void AgentClientPybind::action_bean_to_msg(py::object bean, ActionResponse *msg){
+
+    py::object relay_bean;
+
+    msg->setChange_power_state(ChangePowerStateAction(bean.attr("changePowerState").cast<int>()));
+    msg->setRelayArraySize(bean.attr("get_relay_count")().cast<size_t>());
+    for (int i = 0; i < msg->getRelayArraySize(); i++)
+    {
+        relay_bean = bean.attr("get_relay")(i);
+        msg->getRelayForUpdate(i)
+        .setNeighbour_id(relay_bean.attr("neighbour_id").cast<int>());
+        msg->getRelayForUpdate(i).setRate(relay_bean.attr("rate").cast<float>());
+    }
+}
+
 void AgentClientPybind::handleActionRequest(ActionRequest *msg)
 {    
     py::object state_bean = this->agent_module.attr("StateBean")();
     py::object rewards_bean = this->agent_module.attr("RewardsBean")();
     py::object action_bean;
+    py::object current_action_bean;
+    ActionResponse *response;
 
     EV_DEBUG << "Agent client received action request" << endl;
 
@@ -52,11 +69,12 @@ void AgentClientPybind::handleActionRequest(ActionRequest *msg)
 
     // interrogates agent for the next action
     action_bean = this->agent.attr("get_action")(state_bean, rewards_bean);
-    EV_DEBUG << "Agent chose action" << action_bean.attr("send_message").cast<int>() << endl;
 
-    // TODO: convert the action bean in a ActionResponse message and send it
+    // converts the action bean in a ActionResponse message and send it
     // back to the controller
-
+    response = new ActionResponse();
+    action_bean_to_msg(action_bean, response);
+    this->send(response, "port$o");
 }
 
 AgentClientPybind::~AgentClientPybind()

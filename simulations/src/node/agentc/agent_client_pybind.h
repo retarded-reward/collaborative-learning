@@ -4,6 +4,7 @@
 #include "agent_client.h"
 #include <pybind11/embed.h>
 #include "cpp_visibility_tools.h"
+#include "ActionResponse_m.h"
 
 namespace py = pybind11;
 
@@ -12,6 +13,7 @@ class DLL_LOCAL AgentClientPybind : public AgentClient {
         py::module agent_module;
         py::object agent;
         void state_msg_to_bean(NodeStateMsg msg, py::object bean);
+        void action_bean_to_msg(py::object bean, ActionResponse *msg);
     protected:
         void handleActionRequest(ActionRequest *msg) override;
     public:

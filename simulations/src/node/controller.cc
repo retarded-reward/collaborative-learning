@@ -22,9 +22,6 @@ Define_Module(Controller);
 //Node behaviour when started
 void Controller::initialize()
 {
-    //cMessage *information = new cMessage();
-    //send(information, "network_port$o");
-    
     // Tests the agent client by sending it a request for an action.
     // Normal workflow should expect a response from the agent client containing
     // the action to take.
@@ -35,8 +32,6 @@ void Controller::initialize()
     neighbour->setPower_state(NodePowerState::ON);
 
     ActionRequest *ar = new ActionRequest();
-    ar->setName(AgentClient::MSG_TOPIC.c_str());
-    ar->setKind((int) AgentClientMsgKind::ACTION_REQUEST);
 
     ar->getStateForUpdate().setEnergy(100);
     ar->getStateForUpdate().setHas_packet_in_buffer(false);
@@ -50,12 +45,34 @@ void Controller::initialize()
     send(ar, "agent_port$o");
 }
 
+void Controller::handleActionResponse(ActionResponse *msg)
+{
+    // TODO: implement this method
+    
+    EV << "Action response received";
+
+    EV  << "Change power state: " << msg->getChange_power_state() << endl;
+}
+
 //Node behaviour at message reception
 void Controller::handleMessage(cMessage *msg)
 {
     EV << "Message received";
-    //send(new cMessage(), "agent_port$o");
-    //cMessage *answer = new cMessage();
-    //sendDelayed(answer, uniform(10, 60), "network_port$o");
+
+    if (is_agentc_msg(msg)){
+        switch (msg->getKind())
+        {
+        case (int) AgentClientMsgKind::ACTION_RESPONSE:
+            handleActionResponse((ActionResponse *) msg);
+            break;
+        
+        default:
+            EV_ERROR << "Controller: unrecognized agentc message kind " 
+            << msg->getKind();
+            break;
+        }
+    }
+
+    delete msg;
 
 }

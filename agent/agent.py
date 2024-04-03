@@ -71,6 +71,8 @@ class AgentFacade():
             # TODO: How to handle actions with variable action space? 
             #       (i.e: choose a relay node from a variable set of neighbours)
 
+            # TODO: update TimeStep spec with all actions described in the model
+
             # one list element for each tensor (action)
 
             tensor_spec.BoundedTensorSpec(
@@ -103,7 +105,11 @@ class AgentFacade():
         # Uses the action-state pair among the experiences waiting to be rewarded
         self._unrw_buff.append(self.UnrewardedExperience(state, action, 1))
         
-        return ActionBean(send_message=action.action[0][0])
+        # TODO: convert all actions, not only changePowerState
+        action_bean = ActionBean()
+        action_bean.changePowerState = action.action[0][0]
+
+        return action_bean
 
     def _state_to_time_step(self, state):
         return ts.restart(
@@ -134,6 +140,7 @@ class AgentFacade():
             self._agent.train(e)
             print("Esperienza ricevuta:\n\t Stato [energy:{0}] \n\t Azione [send_message:{1}] \n\t Reward: {2} ".format(e.observation.energy, e.action.action[0][0], e.reward))
             
+# Test main
 if __name__ == '__main__':
     agent = AgentFacade()
     neighbour = StateBean(energy=1)

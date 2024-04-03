@@ -32,6 +32,8 @@ set(MESSAGE_SOURCES
     messages/ActionRequest.msg
     messages/NodeStateMsg.msg
     messages/SinkRewardMsg.msg
+    messages/ActionResponse.msg
+    messages/AgentClientMsg.msg
 )
 
 foreach(MESSAGE ${MESSAGE_SOURCES})

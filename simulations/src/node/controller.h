@@ -17,17 +17,17 @@
 #define __DEMO_NODE_H_
 
 #include <omnetpp.h>
+#include "ActionResponse_m.h"
 
 using namespace omnetpp;
 
-/**
- * TODO - Generated class
- */
 class Controller : public cSimpleModule
 {
   protected:
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
+  private:
+    void handleActionResponse(ActionResponse *msg);
 };
 
 #endif

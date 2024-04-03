@@ -15,12 +15,16 @@
 
 // see agent beans module for an explanation of the members
 
-// TODO: import state and reward and glue them togheter
-
+import AgentClientMsg;
 import NodeStateMsg;
 import SinkRewardMsg;
 
-message ActionRequest {
+
+cplusplus(ActionRequest::ActionRequest){{
+    this->setKind((int)AgentClientMsgKind::ACTION_REQUEST);
+}}
+
+message ActionRequest extends AgentClientMsg{
     
     NodeStateMsg state;
     SinkRewardMsg reward[];
