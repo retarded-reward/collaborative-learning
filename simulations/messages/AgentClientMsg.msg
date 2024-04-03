@@ -8,18 +8,19 @@ cplusplus(h){{
 
 enum AgentClientMsgKind{
     
-    UNSPECIFIED = 0,
+    UNSPECIFIED = 0;
 
-    /**
-     * Request the agent what action the node should carry out.
-     * The node must send the state and the rewards.
-    */
-    ACTION_REQUEST,
+   // /**
+  //   * Request the agent what action the node should carry out.
+  //   * The node must send the state and the rewards.
+  //  */
+    ACTION_REQUEST = 1;
 
-    /**
-     * Response to the node with the action the agent has chosen.
-    */
-    ACTION_RESPONSE,}
+  //  /**
+   //  * Response to the node with the action the agent has chosen.
+   // */
+    ACTION_RESPONSE = 2;
+    }
 
 message AgentClientMsg extends cMessage{   
     int a=0;
