@@ -2,7 +2,7 @@
 #
 # Must use the same python environment used by the agent
 # Pybind11 must be unstalled in the agent environment
-message(CMAKE_BINARY_DIR="${CMAKE_BINARY_DIR}")
+#message(CMAKE_BINARY_DIR="${CMAKE_BINARY_DIR}")
 set(agent_env_path ${PROJECT_SOURCE_DIR}/agent/.conda/collaborative-learning-dev)
 
 set(Python_ROOT_DIR ${agent_env_path})
@@ -35,7 +35,6 @@ set(MESSAGE_SOURCES
 )
 
 foreach(MESSAGE ${MESSAGE_SOURCES})
-
     # uncomment the following if you have messages
     generate_opp_message(
         ${MESSAGE}
@@ -45,7 +44,7 @@ foreach(MESSAGE ${MESSAGE_SOURCES})
         GEN_SOURCES gen_sources
         # NOTE: this parameter does not work, thus include directory must be added manually.
         # see https://github.com/omnetpp/cmake?tab=readme-ov-file#caveats for details
-        GEN_INCLUDE_DIR ${CMAKE_BINARY_DIR}/messages
+        #GEN_INCLUDE_DIR ${CMAKE_BINARY_DIR}/messages
         )
 endforeach()
 
