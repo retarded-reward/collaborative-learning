@@ -10,5 +10,5 @@ class NodeStateMsg {
 	NodePowerState power_state;
 	bool has_packet_in_buffer;
 	string id; 
-	NodeStateMsg neighbours[];
+	NodeStateMsg neighbour[];
 };

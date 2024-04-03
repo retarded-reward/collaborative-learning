@@ -41,7 +41,7 @@ void Controller::initialize()
     ar->getStateForUpdate().setEnergy(100);
     ar->getStateForUpdate().setHas_packet_in_buffer(false);
     ar->getStateForUpdate().setPower_state(NodePowerState::OFF);
-    ar->getStateForUpdate().appendNeighbours(*neighbour);
+    ar->getStateForUpdate().appendNeighbour(*neighbour);
 
     ar->setRewardArraySize(1);
     ar->getRewardForUpdate(0).setMessage_id(1);
