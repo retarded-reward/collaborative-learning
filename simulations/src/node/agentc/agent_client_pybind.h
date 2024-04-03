@@ -3,10 +3,11 @@
 
 #include "agent_client.h"
 #include <pybind11/embed.h>
+#include "cpp_visibility_tools.h"
 
 namespace py = pybind11;
 
-class AgentClientPybind : public AgentClient {
+class DLL_LOCAL AgentClientPybind : public AgentClient {
     private:
         py::module agent_module;
         py::object agent;

@@ -49,7 +49,9 @@ foreach(MESSAGE ${MESSAGE_SOURCES})
 endforeach()
 
 target_include_directories(project_library
- PUBLIC ${CMAKE_BINARY_DIR}/simulations/messages)
+ PUBLIC ${CMAKE_BINARY_DIR}/simulations/messages
+ PUBLIC ${PROJECT_SOURCE_DIR}/simulations/src
+ )
 
 # You will need to tweak and add the additional properties for your project
 set_target_properties(project_library
