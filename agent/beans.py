@@ -1,3 +1,7 @@
+# TODO: maybe is better to move creation of *_spec objects in static methods
+#       of the beans. For example, the StateBean class knows what is the structure
+#       of the state tensor, so it can provide a method that returns the observation_spec.
+
 from enum import IntEnum
 
 import tensorflow as tf

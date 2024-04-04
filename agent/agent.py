@@ -69,7 +69,7 @@ class AgentFacade():
             #       distribute among the hierachy levels? Should we use more agents, one for each level?
 
             # TODO: How to handle actions with variable action space? 
-            #       (i.e: choose a relay node from a variable set of neighbours)
+            #       (e.g: choose a relay node from a variable set of neighbours)
 
             # TODO: update TimeStep spec with all actions described in the model
 
