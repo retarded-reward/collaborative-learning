@@ -23,31 +23,25 @@ class AgentFacade():
             self.action = action
             self.message_id = message_id
 
-    def __init__(self):
-        
-        observation_spec = [
-
+    def __init__(self, max_neighbours=10):
+        self._max_neighbours = max_neighbours
+        node_spec = [
             # one list element for each tensor (state variable) 
+
+            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32, name = "id"),
+            tensor_spec.TensorSpec(shape=(1), dtype=tf.int32, name = "energy_state"),
+            tensor_spec.TensorSpec(shape=(1), dtype=tf.bool, name = "power_state"),
+            tensor_spec.TensorSpec(shape=(1), dtype=tf.bool, name = "has_packet_in_buffer"),
             
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.int32),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.bool),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.string),
-            [
-                [
-                    tensor_spec.TensorSpec(shape=(1), dtype=tf.float32),
-                    tensor_spec.TensorSpec(shape=(1), dtype=tf.int32),
-                    tensor_spec.TensorSpec(shape=(1), dtype=tf.bool),
-                    tensor_spec.TensorSpec(shape=(1), dtype=tf.float32),
-                    tensor_spec.TensorSpec(shape=(1), dtype=tf.string),
-                    # NOTE: it expects that the list of neighbours of each neighbour
-                    # is empty. This is because I don't know how to recursively define
-                    # the observation_spec for the neighbours of each neighbour.
-                    []
-                ]
-            ]
         ]
+        neighbour_spec = [
+            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.float32, name = "id_neighbour"),
+            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.int32, name = "energy_state_neighbour"),
+            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.float32, name = "link_capacity")
+        ]
+
+        observation_spec = node_spec + neighbour_spec
+
         action_spec = [
             
             # TODO: Predictions return an object with same shape as the action_spec.
@@ -88,7 +82,7 @@ class AgentFacade():
     
 
     def get_action(self, state_bean, rewards_bean):
-        return self._get_action(state_bean, rewards_bean.rewards)
+        return self._get_action(state_bean, rewards_bean)
     
     def _get_action(self, state, rewards):
 
@@ -113,7 +107,7 @@ class AgentFacade():
 
     def _state_to_time_step(self, state):
         return ts.restart(
-            observation=state.to_tensor()
+            observation=state.to_tensor(self._max_neighbours)
         )
 
     def _assemble_experience_list(self, rewards):
