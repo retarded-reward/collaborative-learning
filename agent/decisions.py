@@ -87,11 +87,12 @@ class DecisionTreeConsultant():
     to take among the ones available in the given action category. 
     """
 
-    def __init__(self, agent: TFAgent, decision_name : str = "",
-     deduce_consultant_state: Callable[[Tensor], Tensor] =
-      lambda self, parent_state: parent_state,
-     deduce_consultant_experience: Callable[[Experience], Experience] =
-      lambda self, parent_reward: parent_reward):
+    def __init__(self, agent: TFAgent,
+        decision_name : str = "",
+        deduce_consultant_state: Callable[[Tensor], Tensor] = lambda self, 
+        parent_state: parent_state,
+        deduce_consultant_experience: Callable[[Experience], Experience] = lambda self, 
+        parent_reward: parent_reward):
         
         self._agent = agent
         """

@@ -11,6 +11,8 @@ from tf_agents.trajectories import trajectory
 from tf_agents.trajectories.time_step import StepType, TimeStep
 from tf_agents.typing import types
 from tf_agents.utils import common
+from decisions import DecisionTreeConsultant
+from decisions import Experience
 
 from beans import ActionBean, RewardBean, RewardsBean, StateBean
 
@@ -24,6 +26,7 @@ class AgentFacade():
             self.message_id = message_id
 
     def __init__(self, max_neighbours=10):
+
         self._max_neighbours = max_neighbours
         node_spec = [
             # one list element for each tensor (state variable) 
@@ -42,42 +45,31 @@ class AgentFacade():
 
         observation_spec = node_spec + neighbour_spec
 
-        action_spec = [
-            
-            # TODO: Predictions return an object with same shape as the action_spec.
-            #       This means that if we give one tensor to each action, predictions will
-            #       return an entire list of action. Same result is achieved if we use a
-            #       single tensor with one dimension for each action.
-            #
-            #       This means that we are unable to choose one different type of action
-            #       at each policy interrogation 
-            #       (i.e we can't choose to predict send_message without predicting on/off state change).
-            #
-            #       One possible solution could leverage a hierarchical structure of actions,
-            #       where the agents first decides which kind of action must be taken, and then
-            #       chooses the specific value for that action.
-            #       An example: agent chooses from {send_message, change_power_state}. If it 
-            #       chooses send_message, it then predicts the tensor (which_neighbour, send_rate),
-            #       else it chooses the power state from {on, off}.
-            #       This solution brings a more difficult handling of the reward. How should the reward
-            #       distribute among the hierachy levels? Should we use more agents, one for each level?
+        action_spec_root = tensor_spec.BoundedTensorSpec(shape=(1), dtype=tf.int32, minimum=0, maximum=1, name = "root_action")
+        action_spec_change_power_state = tensor_spec.BoundedTensorSpec(shape=(1), dtype=tf.int32, minimum=0, maximum=1, name = "change_power_state")
+        action_spec_send_message = tensor_spec.BoundedTensorSpec(shape=(max_neighbours), dtype=tf.float32 , minimum=0, maximum=1, name = "rates")
 
-            # TODO: How to handle actions with variable action space? 
-            #       (e.g: choose a relay node from a variable set of neighbours)
-
-            # TODO: update TimeStep spec with all actions described in the model
-
-            # one list element for each tensor (action)
-
-            tensor_spec.BoundedTensorSpec(
-            shape=(1), dtype=tf.int32, minimum=0, maximum=1)
-        ]
         time_step_spec = ts.time_step_spec(observation_spec)
 
         # TODO: make the agent implementation easily configurable
-        self._agent = random_agent.RandomAgent(
+        agent_root = random_agent.RandomAgent(
             time_step_spec=time_step_spec,
-            action_spec=action_spec)
+            action_spec=action_spec_root)
+        
+        agent_change_power_state = random_agent.RandomAgent(
+            time_step_spec=time_step_spec,
+            action_spec=action_spec_change_power_state)
+        
+        agent_send_message = random_agent.RandomAgent(
+            time_step_spec=time_step_spec,
+            action_spec=action_spec_send_message)
+        
+        self._root = DecisionTreeConsultant(agent_root, "root")
+        chang_power_state_node = DecisionTreeConsultant(agent_change_power_state, "change_power_state")
+        send_message_node =DecisionTreeConsultant(agent_send_message, "send_message")
+        self._root.add_choice(chang_power_state_node)
+        self._root.add_choice(send_message_node)
+
         self._unrw_buff = []
     
 
@@ -88,20 +80,21 @@ class AgentFacade():
 
         # updates agent policy using new rewards
         experiences = self._assemble_experience_list(rewards)
-        self._update_policy(experiences)
+        #self._update_policy(experiences)
+        self._root.train(experiences)
 
         # Computes TimeStep object by resetting the environment
         # at the given state
         # and uses it to get the action
-        time_step = self._state_to_time_step(state)
-        action = self._agent.policy.action(time_step)
+        time_step = state.to_tensor(self._max_neighbours)
+        action = []
+        self._root.get_decisions(parent_state=time_step, decision_path=action)
 
         # Uses the action-state pair among the experiences waiting to be rewarded
         self._unrw_buff.append(self.UnrewardedExperience(state, action, 1))
         
-        # TODO: convert all actions, not only changePowerState
         action_bean = ActionBean()
-        action_bean.changePowerState = action.action[0][0]
+        action_bean.changePowerState = action
 
         return action_bean
 
@@ -115,7 +108,11 @@ class AgentFacade():
         for r in rewards:
             for ue in self._unrw_buff:
                 if r.message_id == ue.message_id:
-                    experience = self._assemble_experience(ue.state, ue.action, r.reward)
+                    experience = Experience(
+                        state=ue.state.to_tensor(self._max_neighbours),
+                        decision_path=ue.action,
+                        message_id=ue.message_id,
+                        reward=r.reward)
                     experiences.append(experience)
         return experiences
 
