@@ -30,10 +30,15 @@ add_library(project_library SHARED ${SOURCES})
 # Define your messages as well
 set(MESSAGE_SOURCES
     messages/ActionRequest.msg
-    messages/NodeStateMsg.msg
-    messages/SinkRewardMsg.msg
     messages/ActionResponse.msg
+    messages/AdvertiseNeighbour.msg
     messages/AgentClientMsg.msg
+    messages/Data.msg
+    messages/NodeStateMsg.msg
+    messages/Reward.msg
+    messages/SimulationMsg.msg
+    messages/SinkRewardMsg.msg
+
 )
 
 foreach(MESSAGE ${MESSAGE_SOURCES})
