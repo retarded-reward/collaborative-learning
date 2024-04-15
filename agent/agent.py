@@ -13,10 +13,15 @@ from tf_agents.typing import types
 from tf_agents.utils import common
 from decisions import DecisionTreeConsultant
 from decisions import Experience
+from typing import Callable, Union
 
 from beans import ActionBean, RewardBean, RewardsBean, StateBean
 
+from agent_factory import AgentEnum, AgentFactory
+from conf_parser import ConfParser
+import json
 class AgentFacade():
+    
     
     class UnrewardedExperience():
 
@@ -25,7 +30,7 @@ class AgentFacade():
             self.action = action
             self.message_id = message_id
 
-    def __init__(self, max_neighbours=10):
+    def __init__(self, max_neighbours = 10, agent_description = {"agent_type": AgentEnum.RANDOM_AGENT}):
 
         self._max_neighbours = max_neighbours
         node_spec = [
@@ -52,17 +57,20 @@ class AgentFacade():
         time_step_spec = ts.time_step_spec(observation_spec)
 
         # TODO: make the agent implementation easily configurable
-        agent_root = random_agent.RandomAgent(
-            time_step_spec=time_step_spec,
-            action_spec=action_spec_root)
+        agent_root = AgentFactory.create_agent(
+            agent_description = agent_description, 
+            time_step_spec = time_step_spec,
+            action_spec = action_spec_root)
         
-        agent_change_power_state = random_agent.RandomAgent(
-            time_step_spec=time_step_spec,
-            action_spec=action_spec_change_power_state)
+        agent_change_power_state = AgentFactory.create_agent(
+            agent_description = agent_description, 
+            time_step_spec = time_step_spec,
+            action_spec = action_spec_change_power_state)
         
-        agent_send_message = random_agent.RandomAgent(
-            time_step_spec=time_step_spec,
-            action_spec=action_spec_send_message)
+        agent_send_message = AgentFactory.create_agent(
+            agent_description = agent_description, 
+            time_step_spec = time_step_spec,
+            action_spec = action_spec_send_message)
         
         self._root = DecisionTreeConsultant(agent_root, "root")
         chang_power_state_node = DecisionTreeConsultant(agent_change_power_state, "change_power_state")
@@ -133,7 +141,9 @@ class AgentFacade():
             
 # Test main
 if __name__ == '__main__':
-    agent = AgentFacade()
+    agent_desc = ConfParser.parse_agent_from_json(json.load(open("agent/agent_conf.json")))
+    agent = AgentFacade(
+        agent_description=agent_desc)
     neighbour = StateBean(energy=1)
     state = StateBean(energy=1)
     state.add_neighbour(neighbour)
