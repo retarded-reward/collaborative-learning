@@ -4,6 +4,6 @@ package org.cl.simulations.node;
 simple Controller
 {
     gates:
-        inout network_port;
+        inout network_port[];
         inout agent_port;   
 }

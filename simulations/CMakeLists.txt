@@ -23,6 +23,7 @@ set(SOURCES
     src/node/agentc/agent_client.cc
     src/node/agentc/agent_client_pybind.cc
     src/node/agentc/python_interpreter.cc
+    src/srcnode/src_node.cc
 )
 
 add_library(project_library SHARED ${SOURCES})
@@ -34,6 +35,10 @@ set(MESSAGE_SOURCES
     messages/SinkRewardMsg.msg
     messages/ActionResponse.msg
     messages/AgentClientMsg.msg
+    messages/SimulationMsg.msg
+    messages/RewardMsg.msg
+    messages/DataMsg.msg
+    messages/AdvertiseNeighbour.msg
 )
 
 foreach(MESSAGE ${MESSAGE_SOURCES})

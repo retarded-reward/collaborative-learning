@@ -3,7 +3,7 @@ import SimulationMsg;
 
 
 cplusplus(Reward::Reward){{
-    this->setKind((int)SimulationMsgType::REWARD);
+    this->setKind((int)SimulationMsgKind::REWARD_MSG);
 }}
 
 message Reward extends SimulationMsg{

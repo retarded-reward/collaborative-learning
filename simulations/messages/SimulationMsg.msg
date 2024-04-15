@@ -6,20 +6,20 @@ cplusplus(h){{
 
 }}
 
-enum SimulationMsgType{
+enum SimulationMsgKind{
     
-    UNSPECIFIED = 0;
+    UNSPECIFIED_MSG = 0;
 
     // Message contains data to be forwarded to the sink
-    DATA = 1;
+    DATA_MSG = 1;
 
     // Message contains neighbour state information
-    ADVERTISEMENT = 2;
+    ADVERTISEMENT_MSG = 2;
 
     // Message contains reward from sink
-    REWARD = 3;
+    REWARD_MSG = 3;
 
-    }
+}
 
 message SimulationMsg extends cMessage{   
     int a=0;

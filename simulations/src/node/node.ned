@@ -24,12 +24,12 @@ module Node
 {
     gates:
         inout port;
+        inout src_port;
     submodules:
         controller: Controller;
         agent: AgentClient;
-    connections:
-        port <--> controller.network_port;
-        agent.port <--> IdealChannel <--> controller.agent_port;
-        
-    
+    connections allowunconnected:
+        src_port <--> controller.network_port++; 
+        port <--> controller.network_port++;
+        agent.port <--> IdealChannel <--> controller.agent_port; 
 }

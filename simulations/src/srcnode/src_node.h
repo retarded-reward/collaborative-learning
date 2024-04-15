@@ -13,18 +13,24 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package org.cl.simulations;
-import org.cl.simulations.node.Node;
-import org.cl.simulations.srcnode.SrcNode;
+#ifndef __DEMO_NODE_H_
+#define __DEMO_NODE_H_
 
-//Network description including nodes and their connections
-network NodeNetwork
-{	
-    submodules:
-        node_A: Node;
-        node_B: Node;
-        srcNode: SrcNode;
-    connections allowunconnected:
-    	node_A.port <--> node_B.port;
-        srcNode.port++ <--> node_A.src_port;            
-}
+#include <omnetpp.h>
+#include "DataMsg_m.h"
+
+using namespace omnetpp;
+
+class SrcNode : public cSimpleModule
+{
+  protected:
+    int message_count;
+  protected:
+    virtual void initialize() override;
+    virtual void handleMessage(cMessage *msg) override;
+    void sendData();
+  private:
+    float randomDataGenerator(float max);
+};
+
+#endif

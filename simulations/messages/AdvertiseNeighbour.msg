@@ -3,7 +3,7 @@ import SimulationMsg;
 
 
 cplusplus(AdvertiseNeighbour::AdvertiseNeighbour){{
-    this->setKind((int)SimulationMsgType::ADVERTISEMENT);
+    this->setKind((int)SimulationMsgKind::ADVERTISEMENT_MSG);
 }}
 
 message AdvertiseNeighbour extends SimulationMsg{
