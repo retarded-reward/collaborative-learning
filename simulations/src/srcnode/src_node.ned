@@ -14,10 +14,16 @@
 // 
 
 package org.cl.simulations.srcnode;
+import org.cl.simulations.srcnode.SrcController;
 
-// a node of the network
-simple SrcNode
+
+// a node of the network that generates data
+module SrcNode
 {
     gates:
-        inout port[];       
+        inout port[];
+    submodules:
+        srcController: SrcController;    
+    connections allowunconnected:
+        port++ <--> srcController.network_port++;
 }

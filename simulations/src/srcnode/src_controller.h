@@ -21,7 +21,7 @@
 
 using namespace omnetpp;
 
-class SrcNode : public cSimpleModule
+class SrcController : public cSimpleModule
 {
   protected:
     int message_count;

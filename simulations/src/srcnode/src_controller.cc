@@ -13,20 +13,20 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#include "src_node.h"
+#include "src_controller.h"
 #include "SimulationMsg_m.h"
 #include "DataMsg_m.h"
 
-Define_Module(SrcNode);
+Define_Module(SrcController);
 
 //Node behaviour when started
-void SrcNode::initialize()
+void SrcController::initialize()
 {
     //Send message to node itself cause can't enter loop in initialize
     scheduleAt(simTime(), new cMessage());	
 }
 
-void SrcNode::handleMessage(cMessage *msg)
+void SrcController::handleMessage(cMessage *msg)
 {
     // Handle incoming messages
     if (msg->isSelfMessage()) {
@@ -36,7 +36,7 @@ void SrcNode::handleMessage(cMessage *msg)
     
 }
 
-float SrcNode::randomDataGenerator(float max)
+float SrcController::randomDataGenerator(float max)
 {
     float data = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/max));
     return data;
@@ -44,13 +44,13 @@ float SrcNode::randomDataGenerator(float max)
 
 
 //Send random data with exponential distribution of mean 12
-void SrcNode::sendData()
+void SrcController::sendData()
 {   
-    int n = gateSize("port");
+    int n = gateSize("network_port");
     message_count++;
     DataMsg *data = new DataMsg();
     data->setMsg_id(message_count);
     data->setData(randomDataGenerator(200.0));
-    send(data, "port$o", n-1);
+    send(data, "network_port$o", n-1);
     scheduleAt(simTime()+exponential(12), new cMessage());
 }
