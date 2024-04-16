@@ -31,6 +31,7 @@ class SrcController : public cSimpleModule
     void sendData();
   private:
     float randomDataGenerator(float max);
+    int randomIntGenerator(int max);
 };
 
 #endif

@@ -1,8 +1,8 @@
 package org.cl.simulations.srcnode;
 
-// Node control logic, such as neighbour discovery, action attuation, etc.
+// SrcNode control logic such as generating packets and sending them to the network
 simple SrcController
 {
     gates:
-        inout network_port[];
+        inout network_port[10];
 }
