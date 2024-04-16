@@ -2,10 +2,10 @@ import SinkRewardMsg;
 import SimulationMsg;
 
 
-cplusplus(Reward::Reward){{
+cplusplus(RewardMsg::RewardMsg){{
     this->setKind((int)SimulationMsgKind::REWARD_MSG);
 }}
 
-message Reward extends SimulationMsg{
-    SinkRewardMsg sinkReward;
+message RewardMsg extends SimulationMsg{
+    SinkRewardMsg sink_reward;
 };

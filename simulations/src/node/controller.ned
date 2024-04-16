@@ -4,6 +4,8 @@ package org.cl.simulations.node;
 simple Controller
 {
     gates:
-        inout network_port[12]; //Port 0 reserved for srcNode and port 1 for sink
+        inout network_port[10];
+        inout src_port[1];
+        inout sink_port[1];
         inout agent_port;   
 }

@@ -17,21 +17,19 @@
 #define __DEMO_NODE_H_
 
 #include <omnetpp.h>
-#include "ActionResponse_m.h"
 #include "DataMsg_m.h"
-#include "RewardMsg_m.h"
 
 using namespace omnetpp;
 
-class Controller : public cSimpleModule
+class SinkController : public cSimpleModule
 {
+  protected:
+    int last_message_id;
   protected:
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
-  private:
-    void handleActionResponse(ActionResponse *msg); 
     void handleDataMsg(DataMsg *msg);
-    void handleRewardMsg(RewardMsg *msg);
+    void sendReward(int message_id);
 };
 
 #endif

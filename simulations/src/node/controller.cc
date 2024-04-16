@@ -27,7 +27,7 @@ void Controller::initialize()
     // Normal workflow should expect a response from the agent client containing
     // the action to take.
 
-    NodeStateMsg *neighbour = new NodeStateMsg();
+    /*NodeStateMsg *neighbour = new NodeStateMsg();
     neighbour->setEnergy(100);
     neighbour->setHas_packet_in_buffer(false);
     neighbour->setPower_state(NodePowerState::ON);
@@ -43,7 +43,7 @@ void Controller::initialize()
     ar->getRewardForUpdate(0).setMessage_id(1);
     ar->getRewardForUpdate(0).setValue(10);
 
-    send(ar, "agent_port$o");
+    send(ar, "agent_port$o");*/
 }
 
 void Controller::handleActionResponse(ActionResponse *msg)
@@ -60,7 +60,14 @@ void Controller::handleDataMsg(DataMsg *msg)
     // TODO: implement this method
     
     EV << "Data received "<< msg->getData();
+    send(msg, "sink_port$o", 0);
 
+}
+
+void Controller::handleRewardMsg(RewardMsg *msg)
+{
+    //TODO implement this method
+    EV << "Received reward: " << msg->getSink_reward().getValue() << " for message id: " << msg->getSink_reward().getMessage_id() << endl;
 }
 
 //Node behaviour at message reception
@@ -87,6 +94,9 @@ void Controller::handleMessage(cMessage *msg)
         case (int) SimulationMsgKind::DATA_MSG:
             handleDataMsg((DataMsg *) msg);
             break;
+        case (int) SimulationMsgKind::REWARD_MSG:
+            handleRewardMsg((RewardMsg *) msg);
+            break;
         //Add cases for other message types
         default:
             EV_ERROR << "Controller: unrecognized simulation message kind " 
@@ -94,7 +104,5 @@ void Controller::handleMessage(cMessage *msg)
             break;
         }
     }
-
-    delete msg;
 
 }

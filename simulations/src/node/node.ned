@@ -30,10 +30,10 @@ module Node
         controller: Controller;
         agent: AgentClient;
     connections allowunconnected:
-        src_port <--> controller.network_port[0]; 
-        sink_port <--> controller.network_port[1];
+        src_port <--> controller.src_port[0]; 
+        sink_port <--> controller.sink_port[0];
         agent.port <--> IdealChannel <--> controller.agent_port; 
         for i=0..9 {
-            port[i] <--> controller.network_port[i+2];
+            port[i] <--> controller.network_port[i];
         }
 }
