@@ -13,18 +13,17 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package org.cl.simulations;
-import org.cl.simulations.node.Node;
-import org.cl.simulations.srcnode.SrcNode;
+package org.cl.simulations.srcnode;
+import org.cl.simulations.srcnode.SrcController;
 
-//Network description including nodes and their connections
-network NodeNetwork
-{	
+
+// a node of the network that generates data
+module SrcNode
+{
+    gates:
+        inout port[];
     submodules:
-        node_A: Node;
-        node_B: Node;
-        srcNode: SrcNode;
+        srcController: SrcController;    
     connections allowunconnected:
-    	node_A.port <--> node_B.port;
-        srcNode.port++ <--> node_A.src_port;            
+        port++ <--> srcController.network_port++;
 }

@@ -18,6 +18,7 @@
 
 #include <omnetpp.h>
 #include "ActionResponse_m.h"
+#include "DataMsg_m.h"
 
 using namespace omnetpp;
 
@@ -27,7 +28,8 @@ class Controller : public cSimpleModule
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
   private:
-    void handleActionResponse(ActionResponse *msg);
+    void handleActionResponse(ActionResponse *msg); 
+    void handleDataMsg(DataMsg *msg);
 };
 
 #endif

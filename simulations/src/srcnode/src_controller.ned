@@ -1,9 +1,8 @@
-package org.cl.simulations.node;
+package org.cl.simulations.srcnode;
 
 // Node control logic, such as neighbour discovery, action attuation, etc.
-simple Controller
+simple SrcController
 {
     gates:
         inout network_port[];
-        inout agent_port;   
 }

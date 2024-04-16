@@ -16,6 +16,7 @@
 #include "controller.h"
 #include "agentc/agent_client.h"
 #include "ActionRequest_m.h"
+#include "SimulationMsg_m.h"
 
 Define_Module(Controller);
 
@@ -54,6 +55,14 @@ void Controller::handleActionResponse(ActionResponse *msg)
     EV  << "Change power state: " << msg->getChange_power_state() << endl;
 }
 
+void Controller::handleDataMsg(DataMsg *msg)
+{
+    // TODO: implement this method
+    
+    EV << "Data received "<< msg->getData();
+
+}
+
 //Node behaviour at message reception
 void Controller::handleMessage(cMessage *msg)
 {
@@ -68,6 +77,19 @@ void Controller::handleMessage(cMessage *msg)
         
         default:
             EV_ERROR << "Controller: unrecognized agentc message kind " 
+            << msg->getKind();
+            break;
+        }
+    }
+    else if(is_sim_msg(msg)){
+        switch (msg->getKind())
+        {
+        case (int) SimulationMsgKind::DATA_MSG:
+            handleDataMsg((DataMsg *) msg);
+            break;
+        //Add cases for other message types
+        default:
+            EV_ERROR << "Controller: unrecognized simulation message kind " 
             << msg->getKind();
             break;
         }
