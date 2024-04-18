@@ -7,6 +7,8 @@ simple Controller
         int ask_action_timeout_delta @unit(ms); // timeout delta for asking action (in sim time)
     
     gates:
-        inout network_port[];
+        inout network_port[10];
+        inout src_port[1];
+        inout sink_port[1];
         inout agent_port;   
 }

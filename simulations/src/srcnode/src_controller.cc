@@ -42,15 +42,22 @@ float SrcController::randomDataGenerator(float max)
     return data;
 }
 
+int SrcController::randomIntGenerator(int max)
+{
+    int neigh = (rand()) / ((RAND_MAX/max));
+    return neigh;
+}
 
-//Send random data with exponential distribution of mean 12
+
+//Send random data with exponential distribution of mean 12 at a random neighbour
 void SrcController::sendData()
 {   
     int n = gateSize("network_port");
+    int neigh = randomIntGenerator(n-1);
     message_count++;
     DataMsg *data = new DataMsg();
     data->setMsg_id(message_count);
     data->setData(randomDataGenerator(200.0));
-    send(data, "network_port$o", n-1);
+    send(data, "network_port$o", neigh);
     scheduleAt(simTime()+exponential(12), new cMessage());
 }

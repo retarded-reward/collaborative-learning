@@ -23,13 +23,17 @@ import org.cl.simulations.node.Controller;
 module Node
 {
     gates:
-        inout port;
+        inout port[10];
         inout src_port;
+        inout sink_port;
     submodules:
         controller: Controller;
         agent: AgentClient;
     connections allowunconnected:
-        src_port <--> controller.network_port++; 
-        port <--> controller.network_port++;
+        src_port <--> controller.src_port[0]; 
+        sink_port <--> controller.sink_port[0];
         agent.port <--> IdealChannel <--> controller.agent_port; 
+        for i=0..9 {
+            port[i] <--> controller.network_port[i];
+        }
 }

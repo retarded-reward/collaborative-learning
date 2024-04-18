@@ -21,17 +21,15 @@
 
 using namespace omnetpp;
 
-class SrcController : public cSimpleModule
+class SinkController : public cSimpleModule
 {
   protected:
-    int message_count;
+    int last_message_id;
   protected:
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
-    void sendData();
-  private:
-    float randomDataGenerator(float max);
-    int randomIntGenerator(int max);
+    void handleDataMsg(DataMsg *msg);
+    void sendReward(int message_id);
 };
 
 #endif

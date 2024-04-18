@@ -115,17 +115,18 @@ void Controller::handleDataMsg(DataMsg *msg)
     // TODO: implement data buffering
     
     EV << "Data received "<< msg->getData();
-
+    send(msg, "sink_port$o", 0);
+    
     // Asks action after receiving data and resets action timer
     stop_timer(ask_action_timeout);
     ask_action();
 
 }
 
-void Controller::handleAskActionTimeout(Timeout *msg)
+void Controller::handleRewardMsg(RewardMsg *msg)
 {
-    EV_DEBUG << "Ask action timeout received" << endl;
-    ask_action();
+    //TODO implement this method
+    EV << "Received reward: " << msg->getSink_reward().getValue() << " for message id: " << msg->getSink_reward().getMessage_id() << endl;
 }
 
 //Node behaviour at message reception
@@ -151,6 +152,9 @@ void Controller::handleMessage(cMessage *msg)
         {
         case (int) SimulationMsgKind::DATA_MSG:
             handleDataMsg((DataMsg *) msg);
+            break;
+        case (int) SimulationMsgKind::REWARD_MSG:
+            handleRewardMsg((RewardMsg *) msg);
             break;
         //Add cases for other message types
         default:

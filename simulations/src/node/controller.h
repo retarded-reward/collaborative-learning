@@ -20,6 +20,7 @@
 #include "ActionResponse_m.h"
 #include "DataMsg_m.h"
 #include "Timeout_m.h"
+#include "RewardMsg_m.h"
 
 using namespace omnetpp;
 using namespace std;
@@ -75,6 +76,7 @@ class Controller : public cSimpleModule
     void handleActionResponse(ActionResponse *msg); 
     void handleDataMsg(DataMsg *msg);
     void handleAskActionTimeout(Timeout *msg);
+    void handleRewardMsg(RewardMsg *msg);
 };
 
 #endif

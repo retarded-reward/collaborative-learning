@@ -13,25 +13,19 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef __DEMO_NODE_H_
-#define __DEMO_NODE_H_
+package org.cl.simulations.sinknode;
+import org.cl.simulations.sinknode.SinkController;
 
-#include <omnetpp.h>
-#include "DataMsg_m.h"
 
-using namespace omnetpp;
-
-class SrcController : public cSimpleModule
+// Sink node of the network which receives data and sends reward
+module SinkNode
 {
-  protected:
-    int message_count;
-  protected:
-    virtual void initialize() override;
-    virtual void handleMessage(cMessage *msg) override;
-    void sendData();
-  private:
-    float randomDataGenerator(float max);
-    int randomIntGenerator(int max);
-};
-
-#endif
+    gates:
+        inout port[10];
+    submodules:
+        sinkController: SinkController;    
+    connections allowunconnected:
+        for i=0..9 {
+            port[i] <--> sinkController.network_port[i];
+        }
+}
