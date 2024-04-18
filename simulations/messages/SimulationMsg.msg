@@ -8,8 +8,6 @@ cplusplus(h){{
 
 enum SimulationMsgKind{
     
-    UNSPECIFIED_MSG = 0;
-
     // Message contains data to be forwarded to the sink
     DATA_MSG = 1;
 

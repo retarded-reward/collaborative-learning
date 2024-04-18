@@ -8,7 +8,6 @@ cplusplus(h){{
 
 enum AgentClientMsgKind{
     
-    UNSPECIFIED = 0;
 
    // /**
   //   * Request the agent what action the node should carry out.
