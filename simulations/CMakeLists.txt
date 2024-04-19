@@ -25,6 +25,7 @@ set(SOURCES
     src/node/agentc/python_interpreter.cc
     src/srcnode/src_controller.cc
     src/sinknode/sink_controller.cc
+    src/node/power/battery.cc
 )
 
 add_library(project_library SHARED ${SOURCES})
