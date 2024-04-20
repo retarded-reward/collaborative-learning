@@ -1,9 +1,9 @@
 import AgentClientMsg;
 
 enum ChangePowerStateAction{
-    DO_NOT_CHANGE = 0;
+    DO_NOT_CHANGE = -1;
     TURN_ON = 1;
-    TURN_OFF = 2;    
+    TURN_OFF = 0;    
 }
 
 class ForwardDataAction{

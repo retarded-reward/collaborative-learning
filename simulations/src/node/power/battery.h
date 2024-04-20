@@ -6,7 +6,7 @@
 class Battery : public PowerSource{
 protected:
     float charge;
-    float capacity;
+    float capacity; 
 
 public:
     Battery(float capacity);
@@ -16,8 +16,6 @@ public:
     float discharge(float amount) override;
         
     void recharge(float amount) override;
-
-    void deplete() override;
 };
 
 #endif // BATTERY_H

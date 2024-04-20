@@ -17,6 +17,8 @@
 #include "agentc/agent_client.h"
 #include "ActionRequest_m.h"
 #include "SimulationMsg_m.h"
+#include "NodeStateMsg_m.h"
+#include "power/battery.h"
 
 Define_Module(Controller);
 
@@ -37,7 +39,7 @@ void Controller::send_test_action_request(){
     ar->getStateForUpdate().setEnergy(100);
     ar->getStateForUpdate().setHas_packet_in_buffer(false);
     ar->getStateForUpdate().setPower_state(NodePowerState::OFF);
-    ar->getStateForUpdate().appendNeighbour(*neighbour);
+    ar->getStateForUpdate().appendNeighbour(neighbour);
 
     ar->setRewardArraySize(1);
     ar->getRewardForUpdate(0).setMessage_id(1);
@@ -53,6 +55,9 @@ void Controller::initialize()
 {
     init_module_params();
     init_ask_action_timer();
+    init_power_source();
+    init_data_buffer();
+    init_power_state();
     
     /** TESTS ******/
     //send_test_action_request();
@@ -64,8 +69,17 @@ void Controller::initialize()
 
 void Controller::ask_action(){
 
-    // TODO: implement this method
+    ActionRequest *ar;
+    
     EV_DEBUG << "Asking for action" << endl;
+
+    // sample state in a action request object and send it to the agent client
+    ar = new ActionRequest();
+    sample_state(ar->getStateForUpdate());
+
+    // TODO: compute reward and write it in the action request 
+
+    send(ar, "agent_port$o");
 
 }
 
@@ -88,6 +102,25 @@ void Controller::stop_timer(Timeout *timeout)
     cancelEvent(timeout);
 }
 
+void Controller::sample_state(NodeStateMsg &state)
+{    
+    NodeStateMsg *neighbour_state_msg;
+    NeighbourState neighbour_state;
+    
+    state.setEnergy(power_source->getCharge());
+    state.setHas_packet_in_buffer(data_buffer->getLength() > 0);
+    state.setId(id);
+    state.setPower_state(power_state);
+    state.setNeighbourArraySize(neighbours.size());
+    state.setData_cap(link_cap);
+    for (int i = 0; i < neighbours.size(); i++){
+        neighbour_state = neighbours.at(i);
+        neighbour_state_msg = new NodeStateMsg();
+        *neighbour_state_msg = *neighbour_state.state;
+        state.appendNeighbour(neighbour_state_msg);
+    }
+}
+
 void Controller::init_ask_action_timer()
 {
     this->ask_action_timeout = new Timeout(
@@ -96,8 +129,35 @@ void Controller::init_ask_action_timer()
 
 void Controller::init_module_params()
 {
-    this->ask_action_timeout_delta = par("ask_action_timeout_delta").intValue();
+    ask_action_timeout_delta = par("ask_action_timeout_delta").intValue();
+    battery_capacity = par("battery_capacity").doubleValue();
+    data_buffer_capacity = par("data_buffer_capacity").intValue();
+    max_neighbours = par("max_neighbours").intValue();
+    id = par("id").intValue();
+    link_cap = par("link_cap").doubleValue();
     // add more module params here ...
+}
+
+void Controller::init_power_source()
+{
+    power_source =  new Battery(battery_capacity);
+    power_source->plug();
+}
+
+void Controller::init_data_buffer()
+{
+    data_buffer = new FixedCapCQueue(data_buffer_capacity);
+}
+
+void Controller::init_neighbours()
+{
+    //neighbours = new vector<NeighbourState>();
+    neighbours.reserve(max_neighbours);
+}
+
+void Controller::init_power_state()
+{
+    power_state = NodePowerState::OFF;
 }
 
 void Controller::handleActionResponse(ActionResponse *msg)
@@ -115,12 +175,19 @@ void Controller::handleDataMsg(DataMsg *msg)
     // TODO: implement data buffering
     
     EV << "Data received "<< msg->getData();
-    send(msg, "sink_port$o", 0);
+
+    // TODO: implement data forwarding
     
     // Asks action after receiving data and resets action timer
     stop_timer(ask_action_timeout);
     ask_action();
 
+}
+
+void Controller::handleAskActionTimeout(Timeout *msg)
+{
+    EV_DEBUG << "Ask action timeout expired at " << simTime() << endl;
+    ask_action();
 }
 
 void Controller::handleRewardMsg(RewardMsg *msg)
@@ -192,4 +259,6 @@ handleMessage_do_not_delete_msg:
 Controller::~Controller()
 {
     cancelAndDelete(ask_action_timeout);
+    delete power_source;
+    delete data_buffer;
 }

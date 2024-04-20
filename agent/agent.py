@@ -15,7 +15,8 @@ from decisions import DecisionTreeConsultant
 from decisions import Experience
 from typing import Callable, Union
 
-from beans import ActionBean, RewardBean, RewardsBean, StateBean
+from beans import ActionBean, RewardBean, RewardsBean, StateBean, NodePowerState
+
 
 from agent_factory import AgentEnum, AgentFactory
 from conf_parser import ConfParser
@@ -33,22 +34,12 @@ class AgentFacade():
     def __init__(self, max_neighbours = 10, agent_description = {"agent_type": AgentEnum.RANDOM_AGENT}):
 
         self._max_neighbours = max_neighbours
-        node_spec = [
-            # one list element for each tensor (state variable) 
+        self._root_choices = {
+            "change_power_state": None,
+            "send_message": None
+        }
 
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32, name = "id"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.int32, name = "energy_state"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.bool, name = "power_state"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.bool, name = "has_packet_in_buffer"),
-            
-        ]
-        neighbour_spec = [
-            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.float32, name = "id_neighbour"),
-            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.int32, name = "energy_state_neighbour"),
-            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.float32, name = "link_capacity")
-        ]
-
-        observation_spec = node_spec + neighbour_spec
+        observation_spec = StateBean.observation_spec(max_neighbours)
 
         action_spec_root = tensor_spec.BoundedTensorSpec(shape=(1), dtype=tf.int32, minimum=0, maximum=1, name = "root_action")
         action_spec_change_power_state = tensor_spec.BoundedTensorSpec(shape=(1), dtype=tf.int32, minimum=0, maximum=1, name = "change_power_state")
@@ -75,14 +66,15 @@ class AgentFacade():
         self._root = DecisionTreeConsultant(agent_root, "root")
         chang_power_state_node = DecisionTreeConsultant(agent_change_power_state, "change_power_state")
         send_message_node =DecisionTreeConsultant(agent_send_message, "send_message")
-        self._root.add_choice(chang_power_state_node)
-        self._root.add_choice(send_message_node)
+        self._root_choices["change_power_state"] = self._root.add_choice(
+            chang_power_state_node)
+        self._root_choices["send_message"] = self._root.add_choice(send_message_node)
 
         self._unrw_buff = []
     
 
     def get_action(self, state_bean, rewards_bean):
-        return self._get_action(state_bean, rewards_bean)
+        return self._get_action(state_bean, rewards_bean.rewards)
     
     def _get_action(self, state, rewards):
 
@@ -101,8 +93,14 @@ class AgentFacade():
         # Uses the action-state pair among the experiences waiting to be rewarded
         self._unrw_buff.append(self.UnrewardedExperience(state, action, 1))
         
+        # parses decision path in an action bean
         action_bean = ActionBean()
-        action_bean.changePowerState = action
+        root_decision = action[0]
+        if root_decision.value.action[0] == self._root_choices["change_power_state"]:
+            action_bean.changePowerState = int(action[1].value.action[0])
+        else:
+            action_bean.changePowerState = NodePowerState.DO_NOT_CHANGE
+        # TODO: parse other branches of decision path
 
         return action_bean
 
@@ -147,8 +145,9 @@ if __name__ == '__main__':
     neighbour = StateBean(energy=1)
     state = StateBean(energy=1)
     state.add_neighbour(neighbour)
-    rewards = [RewardBean(1, 10)]
-    action = agent.get_action(state, [])
+    rewards = RewardsBean()
+    rewards.add_reward(0, 10)
+    action = agent.get_action(state, rewards)
     print("Manda messagio: " + str(action.send_message))
     action = agent.get_action(state, rewards)
     print("Manda messagio: " + str(action.send_message))

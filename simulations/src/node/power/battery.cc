@@ -13,7 +13,11 @@ float Battery::getCharge(){
 
 float Battery::discharge(float amount){
     
-    float actual_amount = amount;
+    float actual_amount;
+    
+    abort_if_unplugged(0);
+
+    actual_amount = amount;
     
     sanitize_amount(amount);
     charge -= amount;
@@ -26,13 +30,12 @@ float Battery::discharge(float amount){
 }
 
 void Battery::recharge(float amount){
+    
+    abort_if_unplugged();
+
     sanitize_amount(amount);
     charge += amount;
     if(charge > capacity){
         charge = capacity;
     }
 }
-
-void Battery::deplete(){
-    charge = 0;
-}    

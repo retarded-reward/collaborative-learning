@@ -19,16 +19,18 @@ AgentClientPybind::AgentClientPybind()
 void AgentClientPybind::state_msg_to_bean(NodeStateMsg state, py::object bean){
     
     py::object neighbour_state_bean;
-    NodeStateMsg neighbour_state;
+    const NodeStateMsg *neighbour_state;
 
     bean.attr("energy") = state.getEnergy();
     bean.attr("has_packet_in_buffer") = state.getHas_packet_in_buffer();
     bean.attr("power_state") = (int) state.getPower_state();
+    bean.attr("link_capacity") = state.getData_cap();
+    bean.attr("id") = state.getId();
     for (int i = 0; i < state.getNeighbourArraySize(); i++)
     {
         neighbour_state = state.getNeighbour(i);
         neighbour_state_bean = this->agent_module.attr("StateBean")();
-        state_msg_to_bean(neighbour_state, neighbour_state_bean);
+        state_msg_to_bean(*neighbour_state, neighbour_state_bean);
         bean.attr("add_neighbour")(neighbour_state_bean);
     }
 }
