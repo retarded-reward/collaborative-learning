@@ -59,10 +59,6 @@ void Controller::initialize()
     init_data_buffer();
     init_power_state();
     
-    /** TESTS ******/
-    //send_test_action_request();
-    /** TESTS (END)*/
-
     start_timer(ask_action_timeout);
 
 }
@@ -151,7 +147,6 @@ void Controller::init_data_buffer()
 
 void Controller::init_neighbours()
 {
-    //neighbours = new vector<NeighbourState>();
     neighbours.reserve(max_neighbours);
 }
 
