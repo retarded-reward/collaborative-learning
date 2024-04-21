@@ -1,7 +1,7 @@
 import AgentClientMsg;
 
 enum ChangePowerStateAction{
-    DO_NOT_CHANGE = -1;
+    DO_NOT_CHANGE = 2;
     TURN_ON = 1;
     TURN_OFF = 0;    
 }

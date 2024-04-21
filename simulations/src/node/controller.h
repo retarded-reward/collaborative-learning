@@ -61,8 +61,6 @@ class Controller : public cSimpleModule
      * Neighbours state informations 
     */
     vector<NeighbourState> neighbours;
-
-    // TODO: implement neighbours state
        
     Timeout *ask_action_timeout;
     
@@ -88,13 +86,24 @@ class Controller : public cSimpleModule
      * timer timeout    => ask action 
     */
     
+    /**
+     * Interrogates agent client to get the next action to be executed.
+    */
     void ask_action();
+    /**
+     * Executes the action received from the agent client.
+    */
     void do_action(ActionResponse *action);
+    void do_change_power_state(ChangePowerStateAction change_power_state);
+    void do_forward_data(ForwardDataAction relay_set[]);
     /**Action Event Flow (END)*/
     
     void start_timer(Timeout *timeout);
     void stop_timer(Timeout *timeout);
 
+    /**
+     * Samples state and writes it in the NodeStateMsg object
+    */
     void sample_state(NodeStateMsg &state_msg);
     
     /**
@@ -130,6 +139,7 @@ class Controller : public cSimpleModule
     /**Specialized handlers (END)*/
 
     /* test methods*/
+
     void send_test_action_request();
     /* test methods (END)*/
 

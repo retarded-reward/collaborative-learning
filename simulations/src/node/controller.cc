@@ -81,8 +81,43 @@ void Controller::ask_action(){
 
 void Controller::do_action(ActionResponse *action)
 {
-    // TODO: implement this method
     EV_DEBUG << "Doing action" << endl;
+
+    ForwardDataAction *relay_buffer;
+
+    do_change_power_state(action->getChange_power_state());
+    
+    relay_buffer = new ForwardDataAction[action->getRelayArraySize()];
+    for (int i = 0; i < action->getRelayArraySize(); i ++){
+        relay_buffer[i] = action->getRelay(i);
+    }
+    do_forward_data(relay_buffer);
+    delete[] relay_buffer;
+}
+
+void Controller::do_change_power_state(ChangePowerStateAction change_power_state)
+{
+    EV_DEBUG << "power state is " << power_state << endl;
+    
+    switch(change_power_state){
+        case ChangePowerStateAction::TURN_ON:
+            power_state = NodePowerState::ON;
+            break;
+        case ChangePowerStateAction::TURN_OFF:
+            power_state = NodePowerState::OFF;
+            break;
+        case ChangePowerStateAction::DO_NOT_CHANGE:
+        default:
+        ;
+    }
+
+    EV_DEBUG << "power state changed to " << power_state << endl;
+}
+
+void Controller::do_forward_data(ForwardDataAction relay_set[])
+{
+    // TODO: implement data forwarding
+    // TODO: data can be forwarded only if power state is ON
 }
 
 void Controller::start_timer(Timeout *timeout)
@@ -170,8 +205,6 @@ void Controller::handleDataMsg(DataMsg *msg)
     // TODO: implement data buffering
     
     EV << "Data received "<< msg->getData();
-
-    // TODO: implement data forwarding
     
     // Asks action after receiving data and resets action timer
     stop_timer(ask_action_timeout);

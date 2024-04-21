@@ -15,7 +15,7 @@ from decisions import DecisionTreeConsultant
 from decisions import Experience
 from typing import Callable, Union
 
-from beans import ActionBean, RewardBean, RewardsBean, StateBean, NodePowerState
+from beans import ActionBean, RewardBean, RewardsBean, StateBean, ChangeNodePowerState
 
 
 from agent_factory import AgentEnum, AgentFactory
@@ -99,7 +99,7 @@ class AgentFacade():
         if root_decision.value.action[0] == self._root_choices["change_power_state"]:
             action_bean.changePowerState = int(action[1].value.action[0])
         else:
-            action_bean.changePowerState = NodePowerState.DO_NOT_CHANGE
+            action_bean.changePowerState = ChangeNodePowerState.DO_NOT_CHANGE
         # TODO: parse other branches of decision path
 
         return action_bean

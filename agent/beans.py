@@ -3,8 +3,8 @@ from enum import IntEnum
 import tensorflow as tf
 from tf_agents.specs import tensor_spec
 
-class NodePowerState(IntEnum):
-    DO_NOT_CHANGE = -1
+class ChangeNodePowerState(IntEnum):
+    DO_NOT_CHANGE = 2
     TURN_ON = 1
     TURN_OFF = 0    
 
@@ -32,7 +32,7 @@ class StateBean():
     
     def __init__(self,
         energy : float = 0, 
-        power_state : NodePowerState = False,
+        power_state : ChangeNodePowerState = False,
         has_packet_in_buffer : bool = False,
         link_capacity : float = -1, 
         id : float = -1):
