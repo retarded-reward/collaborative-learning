@@ -11,11 +11,8 @@ enum SimulationMsgKind{
     // Message contains data to be forwarded to the sink
     DATA_MSG = 1;
 
-    // Message contains neighbour state information
-    ADVERTISEMENT_MSG = 2;
-
-    // Message contains reward from sink
-    REWARD_MSG = 3;
+    // Message contains reward 
+    REWARD_MSG = 2;
 
 }
 

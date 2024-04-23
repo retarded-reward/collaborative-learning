@@ -84,6 +84,8 @@ void Controller::init_ask_action_timer()
 
 void Controller::init_module_params()
 {   
+    a=par("a").intValue();
+    EV << "a: " << a << endl;
     ask_action_timeout_delta = par("ask_action_timeout_delta").intValue();
     data_buffer_capacity = par("data_buffer_capacity").intValue();
     max_neighbours = par("max_neighbours").intValue();

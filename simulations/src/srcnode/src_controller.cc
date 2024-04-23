@@ -23,7 +23,8 @@ Define_Module(SrcController);
 void SrcController::initialize()
 {
     //Send message to node itself cause can't enter loop in initialize
-    scheduleAt(simTime(), new cMessage());	
+    scheduleAt(simTime(), new cMessage());
+    srand(0);	
 }
 
 void SrcController::handleMessage(cMessage *msg)
@@ -44,7 +45,7 @@ float SrcController::randomDataGenerator(float max)
 
 int SrcController::randomIntGenerator(int max)
 {
-    int neigh = (rand()) / ((RAND_MAX/max));
+    int neigh = rand() % (max+1);
     return neigh;
 }
 

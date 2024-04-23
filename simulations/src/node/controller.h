@@ -43,7 +43,6 @@ struct NeighbourState
 class Controller : public cSimpleModule
 {
   protected:
-
     /**
      * A node needs energy to execute actions.
     */
@@ -72,7 +71,6 @@ class Controller : public cSimpleModule
     /**
      * Module parameters:
     */
-
     int ask_action_timeout_delta;
     int data_buffer_capacity;
     int max_neighbours;

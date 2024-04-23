@@ -11,8 +11,6 @@ simple Controller
         object power_models; // defines power consumptions for node operations
         object power_source_models;
     gates:
-        inout network_port[10];
-        inout src_port[1];
-        inout sink_port[1];
+        inout network_port[1];
         inout agent_port;   
 }
