@@ -21,8 +21,10 @@ import org.cl.simulations.sinknode.SinkNode;
 //Network description including nodes and their connections
 network NodeNetwork
 {	
+    parameters:
+        int number_of_nodes @value(number_of_nodes);//= default(1);
     submodules:
-        node[1]: Node;
+        node[number_of_nodes]: Node;
         srcNode: SrcNode;
     connections allowunconnected:
         srcNode.port[0] <--> node[0].port[0]; 

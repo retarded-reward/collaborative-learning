@@ -22,14 +22,16 @@ import org.cl.simulations.node.Controller;
 // a node of the network
 module Node
 {
+    parameters:
+        int number_of_ports  @value(number-of-ports);//=default(1);
     gates:
-        inout port[1];
+        inout port[number_of_ports];
     submodules:
         controller: Controller;
         agent: AgentClient;
     connections allowunconnected:
         agent.port <--> IdealChannel <--> controller.agent_port; 
-        for i=0..0 {
+        for i=0..number_of_ports-1 {
             port[i] <--> controller.network_port[i];
         }
 }
