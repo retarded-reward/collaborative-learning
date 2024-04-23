@@ -19,45 +19,17 @@
 #include "SimulationMsg_m.h"
 #include "NodeStateMsg_m.h"
 #include "power/battery.h"
+#include "power/power_chord.h"
 
 Define_Module(Controller);
-
-/*********************** TEST METHODS - BEGIN **************************************/
-
-void Controller::send_test_action_request(){
-    // Tests the agent client by sending it a request for an action.
-    // Normal workflow should expect a response from the agent client containing
-    // the action to take.
-
-    NodeStateMsg *neighbour = new NodeStateMsg();
-    neighbour->setEnergy(100);
-    neighbour->setHas_packet_in_buffer(false);
-    neighbour->setPower_state(NodePowerState::ON);
-
-    ActionRequest *ar = new ActionRequest();
-
-    ar->getStateForUpdate().setEnergy(100);
-    ar->getStateForUpdate().setHas_packet_in_buffer(false);
-    ar->getStateForUpdate().setPower_state(NodePowerState::OFF);
-    ar->getStateForUpdate().appendNeighbour(neighbour);
-
-    ar->setRewardArraySize(1);
-    ar->getRewardForUpdate(0).setMessage_id(1);
-    ar->getRewardForUpdate(0).setValue(10);
-
-    send(ar, "agent_port$o");
-}
-
-/*********************** TEST METHODS - END **************************************/
 
 //Node behaviour when started
 void Controller::initialize()
 {
     init_module_params();
     init_ask_action_timer();
-    init_power_source();
+    init_power_sources();
     init_data_buffer();
-    init_power_state();
     
     start_timer(ask_action_timeout);
 
@@ -83,41 +55,7 @@ void Controller::do_action(ActionResponse *action)
 {
     EV_DEBUG << "Doing action" << endl;
 
-    ForwardDataAction *relay_buffer;
-
-    do_change_power_state(action->getChange_power_state());
-    
-    relay_buffer = new ForwardDataAction[action->getRelayArraySize()];
-    for (int i = 0; i < action->getRelayArraySize(); i ++){
-        relay_buffer[i] = action->getRelay(i);
-    }
-    do_forward_data(relay_buffer);
-    delete[] relay_buffer;
-}
-
-void Controller::do_change_power_state(ChangePowerStateAction change_power_state)
-{
-    EV_DEBUG << "power state is " << power_state << endl;
-    
-    switch(change_power_state){
-        case ChangePowerStateAction::TURN_ON:
-            power_state = NodePowerState::ON;
-            break;
-        case ChangePowerStateAction::TURN_OFF:
-            power_state = NodePowerState::OFF;
-            break;
-        case ChangePowerStateAction::DO_NOT_CHANGE:
-        default:
-        ;
-    }
-
-    EV_DEBUG << "power state changed to " << power_state << endl;
-}
-
-void Controller::do_forward_data(ForwardDataAction relay_set[])
-{
-    // TODO: implement data forwarding
-    // TODO: data can be forwarded only if power state is ON
+    // TODO: implement this method
 }
 
 void Controller::start_timer(Timeout *timeout)
@@ -134,22 +72,8 @@ void Controller::stop_timer(Timeout *timeout)
 }
 
 void Controller::sample_state(NodeStateMsg &state)
-{    
-    NodeStateMsg *neighbour_state_msg;
-    NeighbourState neighbour_state;
-    
-    state.setEnergy(power_source->getCharge());
-    state.setHas_packet_in_buffer(data_buffer->getLength() > 0);
-    state.setId(id);
-    state.setPower_state(power_state);
-    state.setNeighbourArraySize(neighbours.size());
-    state.setData_cap(link_cap);
-    for (int i = 0; i < neighbours.size(); i++){
-        neighbour_state = neighbours.at(i);
-        neighbour_state_msg = new NodeStateMsg();
-        *neighbour_state_msg = *neighbour_state.state;
-        state.appendNeighbour(neighbour_state_msg);
-    }
+{
+    // TODO: implement this method    
 }
 
 void Controller::init_ask_action_timer()
@@ -159,20 +83,17 @@ void Controller::init_ask_action_timer()
 }
 
 void Controller::init_module_params()
-{
+{   
     ask_action_timeout_delta = par("ask_action_timeout_delta").intValue();
-    battery_capacity = par("battery_capacity").doubleValue();
     data_buffer_capacity = par("data_buffer_capacity").intValue();
     max_neighbours = par("max_neighbours").intValue();
-    id = par("id").intValue();
     link_cap = par("link_cap").doubleValue();
+    power_model = new NICPowerModel();
+    power_models = (cValueMap *) par("power_models").objectValue()->dup();
+    power_source_models = (cValueMap *) par("power_source_models").objectValue()->dup();
+    
+    EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << endl;
     // add more module params here ...
-}
-
-void Controller::init_power_source()
-{
-    power_source =  new Battery(battery_capacity);
-    power_source->plug();
 }
 
 void Controller::init_data_buffer()
@@ -185,9 +106,20 @@ void Controller::init_neighbours()
     neighbours.reserve(max_neighbours);
 }
 
-void Controller::init_power_state()
+void Controller::init_power_sources()
 {
-    power_state = NodePowerState::OFF;
+    cValueMap *battery_params = (cValueMap *) power_source_models->get("belkin_BPB001_powerbank").objectValue();
+    cValueMap *power_chord_params = (cValueMap *) power_source_models->get("power_chord_standard").objectValue();
+    
+    battery = new Battery(battery_params->get("cap_mWh").doubleValueInUnit("mWh"));
+    battery->setCostPerMWh(battery_params->get("cost_per_mWh").doubleValue());
+    EV_DEBUG << "Battery capacity: " << battery->getCharge() << endl;
+    EV_DEBUG << "Battery cost per mWh: " << battery->getCostPerMWh() << endl;
+
+    power_chord = new PowerChord();
+    power_chord->setCostPerMWh(power_chord_params->get("cost_per_mWh").doubleValue());
+    EV_DEBUG << "Power chord cost per mWh: " << power_chord->getCostPerMWh() << endl;
+
 }
 
 void Controller::handleActionResponse(ActionResponse *msg)
@@ -206,22 +138,12 @@ void Controller::handleDataMsg(DataMsg *msg)
     
     EV << "Data received "<< msg->getData();
     
-    // Asks action after receiving data and resets action timer
-    stop_timer(ask_action_timeout);
-    ask_action();
-
 }
 
 void Controller::handleAskActionTimeout(Timeout *msg)
 {
     EV_DEBUG << "Ask action timeout expired at " << simTime() << endl;
     ask_action();
-}
-
-void Controller::handleRewardMsg(RewardMsg *msg)
-{
-    //TODO implement this method
-    EV << "Received reward: " << msg->getSink_reward().getValue() << " for message id: " << msg->getSink_reward().getMessage_id() << endl;
 }
 
 //Node behaviour at message reception
@@ -247,9 +169,6 @@ void Controller::handleMessage(cMessage *msg)
         {
         case (int) SimulationMsgKind::DATA_MSG:
             handleDataMsg((DataMsg *) msg);
-            break;
-        case (int) SimulationMsgKind::REWARD_MSG:
-            handleRewardMsg((RewardMsg *) msg);
             break;
         //Add cases for other message types
         default:
@@ -287,6 +206,11 @@ handleMessage_do_not_delete_msg:
 Controller::~Controller()
 {
     cancelAndDelete(ask_action_timeout);
-    delete power_source;
+    
+    delete battery;
+    delete power_chord;
+    delete power_model;
     delete data_buffer;
+    delete power_models;
+    delete power_source_models;
 }

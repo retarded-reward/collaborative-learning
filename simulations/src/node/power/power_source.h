@@ -15,7 +15,8 @@ protected:
      * When unplugged, the power source is not providing energy and charging it is 
      * uneffective.
     */
-    bool is_plugged;
+    bool is_plugged = false;
+    float cost_per_mWh;
 
 public:
     /**
@@ -27,7 +28,7 @@ public:
      * Discharges the power source by the given amount.
      * Returns the actual amount discharged.
     */
-    virtual float discharge(float amount){return 0;};
+    virtual float discharge(float amount) = 0;
 
     /**
      * Charges the power source by the given amount.
@@ -40,6 +41,18 @@ public:
 
     void unplug(){
         is_plugged = false;
+    }
+
+    bool isPlugged(){
+        return is_plugged;
+    }
+
+    void setCostPerMWh(float cost){
+        cost_per_mWh = cost;
+    }
+
+    float getCostPerMWh(){
+        return cost_per_mWh;
     }
 
 };

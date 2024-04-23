@@ -26,6 +26,7 @@ set(SOURCES
     src/srcnode/src_controller.cc
     src/sinknode/sink_controller.cc
     src/node/power/battery.cc
+    src/node/power/power_chord.cc
 )
 
 add_library(project_library SHARED ${SOURCES})

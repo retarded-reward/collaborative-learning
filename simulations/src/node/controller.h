@@ -24,6 +24,7 @@
 #include "NodeStateMsg_m.h"
 #include "fc_cqueue.h"
 #include "power/power_source.h"
+#include "power/nic_power_model.h"
 #include <vector>
 
 using namespace omnetpp;
@@ -46,7 +47,11 @@ class Controller : public cSimpleModule
     /**
      * A node needs energy to execute actions.
     */
-    PowerSource *power_source;
+    PowerSource *battery;
+    PowerSource *power_chord;
+
+    NICPowerModel *power_model;
+
     /**
      * Buffer where the nodes stores the data messages that it receives
      * before forwarding them.
@@ -68,12 +73,14 @@ class Controller : public cSimpleModule
      * Module parameters:
     */
 
-    int id;
     int ask_action_timeout_delta;
-    double battery_capacity;
     int data_buffer_capacity;
     int max_neighbours;
     float link_cap;
+    cValueMap *power_models;
+    cValueMap *power_source_models;
+
+
     /* Module parameters (END)*/
     
     /**
@@ -94,8 +101,6 @@ class Controller : public cSimpleModule
      * Executes the action received from the agent client.
     */
     void do_action(ActionResponse *action);
-    void do_change_power_state(ChangePowerStateAction change_power_state);
-    void do_forward_data(ForwardDataAction relay_set[]);
     /**Action Event Flow (END)*/
     
     void start_timer(Timeout *timeout);
@@ -118,6 +123,8 @@ class Controller : public cSimpleModule
     void init_data_buffer();
     void init_neighbours();
     void init_power_state();
+    void init_power_model();
+    void init_power_sources();
     /** Init methods (END)*/
 
     virtual void initialize() override;
@@ -135,13 +142,9 @@ class Controller : public cSimpleModule
     void handleActionResponse(ActionResponse *msg); 
     void handleDataMsg(DataMsg *msg);
     void handleAskActionTimeout(Timeout *msg);
-    void handleRewardMsg(RewardMsg *msg);
     /**Specialized handlers (END)*/
 
     /* test methods*/
-
-    void send_test_action_request();
-    /* test methods (END)*/
 
 };
 
