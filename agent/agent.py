@@ -72,7 +72,7 @@ class AgentFacade():
     
 
     def get_action(self, state_bean, rewards_bean):
-        return self._get_action(state_bean, rewards_bean.rewards)
+        return self._get_action(state_bean, rewards_bean)
     
     def _get_action(self, state, reward):
 

@@ -1,35 +1,18 @@
+# TODO: maybe is better to move creation of *_spec objects in static methods
+#       of the beans. For example, the StateBean class knows what is the structure
+#       of the state tensor, so it can provide a method that returns the observation_spec.
+
 from enum import IntEnum
 
 import tensorflow as tf
 from typing import Iterable
 
-class ChangeNodePowerState(IntEnum):
-    DO_NOT_CHANGE = 2
-    TURN_ON = 1
-    TURN_OFF = 0    
+class NodePowerState(IntEnum):
+    OFF = 0
+    ON = 1
 
 class StateBean():
 
-    @staticmethod
-    def observation_spec(max_neighbours):
-        node_spec = [
-            # one list element for each tensor (state variable) 
-
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32, name = "id"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32, name = "energy"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.int32, name = "power_state"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.bool, name = "has_packet_in_buffer"),
-            
-        ]
-        neighbour_spec = [
-            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.float32, name = "id_neighbour"),
-            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.int32, name = "energy_state_neighbour"),
-            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.float32, name = "link_capacity")
-        ]
-
-        observation_spec = node_spec + neighbour_spec
-        return observation_spec
-    
     def __init__(self,
         energy_level : float = 0, 
         queue_state : Iterable[float] = [],
@@ -85,8 +68,8 @@ class StateBean():
     """
     def to_tensor(self, max_neighbours):
         
-        # NOTE: keep in sync with observation_spec and with the state variables
-        #  in the constructor
+        # NOTE: keep in sync with observation_spec in AgentFacade constructor
+        #      and with the state variables in the constructor
 
         node_spec = [
             tf.constant(shape=(1), dtype=tf.float32, name = "energy_level", value=self.energy_level),
@@ -162,4 +145,3 @@ class ActionBean():
         return "ActionBean(send_message={}, power_source={}, queue={})".format(
             self.send_message, self.power_source, self.queue)
     
-
