@@ -1,121 +1,66 @@
+# TODO: maybe is better to move creation of *_spec objects in static methods
+#       of the beans. For example, the StateBean class knows what is the structure
+#       of the state tensor, so it can provide a method that returns the observation_spec.
+
 from enum import IntEnum
 
 import tensorflow as tf
-from tf_agents.specs import tensor_spec
+from typing import Iterable
 
-class ChangeNodePowerState(IntEnum):
-    DO_NOT_CHANGE = 2
-    TURN_ON = 1
-    TURN_OFF = 0    
+class NodePowerState(IntEnum):
+    OFF = 0
+    ON = 1
 
 class StateBean():
 
-    @staticmethod
-    def observation_spec(max_neighbours):
-        node_spec = [
-            # one list element for each tensor (state variable) 
-
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32, name = "id"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32, name = "energy"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.int32, name = "power_state"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.bool, name = "has_packet_in_buffer"),
-            
-        ]
-        neighbour_spec = [
-            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.float32, name = "id_neighbour"),
-            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.int32, name = "energy_state_neighbour"),
-            tensor_spec.TensorSpec(shape=(max_neighbours), dtype=tf.float32, name = "link_capacity")
-        ]
-
-        observation_spec = node_spec + neighbour_spec
-        return observation_spec
-    
     def __init__(self,
-        energy : float = 0, 
-        power_state : ChangeNodePowerState = False,
-        has_packet_in_buffer : bool = False,
-        link_capacity : float = -1, 
-        id : float = -1):
+        energy_level : float = 0, 
+        queue_state : Iterable[float] = [],
+        charge_rate : float = 0,
+        ):
         
-        self._energy = energy
+        self._energy_level = energy_level
         """
-        Energy available for the node to perform actions.
-        energy is a int value from 0 to 10.
-        """
-
-        self._power_state = power_state
-        """
-        Power state of the node. Can be 0 (OFF) or 1 (ON).
-        If node is ON, it can exchange messages to neighbours.
-        If node is OFF, it can exchange control traffic only.
+        Percentage battery energy level available for the node to perform actions.
+        energy_level is a float value from 0 to 1.
         """
 
-        self._has_packet_in_buffer = has_packet_in_buffer
+        self._queue_state = queue_state
         """
-        True if the node has a packet in the buffer ready to send, False otherwise.
-        """
-
-        self._link_capacity = link_capacity
-        """
-        Max bandwidth available on the link connecting to the node.
+        Percentage of the buffer capacity that is currently used.
+        queue_state is a float value from 0 to 1.
         """
 
-        self._id = id
+        self._charge_rate = charge_rate
         """
-        Unique identifier of the node, if available/needed/meaningful.
-        Can be a global identifier or a neighbour identifier, according to the needs.
+        Rate at which the battery is being charged.
+        charge_rate is a float value from 0 to 1.
         """
-
-        self._neighbours = []
-        """
-        List of state of neighbour nodes.
-        Each neighbour is represented by a StateBean object.
-        Different properties can be set according if the state bean represents
-        the node owning the agent or a neighbour.
-        """
-
-    @property
-    def energy(self):
-        return self._energy
-    
-    @energy.setter
-    def energy(self, energy):
-        self._energy = energy
     
     @property
-    def power_state(self):
-        return self._power_state
+    def energy_level(self):
+        return self._energy_level
     
-    @power_state.setter
-    def power_state(self, power_state):
-        self._power_state = power_state
-    
+    @energy_level.setter
+    def energy_level(self, energy_level):
+        self._energy_level = energy_level
+
     @property
-    def has_packet_in_buffer(self):
-        return self._has_packet_in_buffer
+    def queue_state(self):
+        return self._queue_state
     
-    @has_packet_in_buffer.setter
-    def has_packet_in_buffer(self, has_packet_in_buffer):
-        self._has_packet_in_buffer = has_packet_in_buffer
-    
+    @queue_state.setter
+    def queue_state(self, queue_state):
+        self._queue_state = queue_state
+
     @property
-    def link_capacity(self):
-        return self._link_capacity
+    def charge_rate(self):
+        return self._charge_rate
     
-    @link_capacity.setter
-    def link_capacity(self, link_capacity):
-        self._link_capacity = link_capacity
-    
-    @property
-    def id(self):
-        return self._id
-    
-    @id.setter
-    def id(self, id):
-        self._id = id
-    
-    def add_neighbour(self, neighbour):
-        self._neighbours.append(neighbour)
+    @charge_rate.setter
+    def charge_rate(self, charge_rate):
+        self._charge_rate = charge_rate
+
     
     """
     Returns a list of tensors representing the state of the agent.
@@ -123,54 +68,26 @@ class StateBean():
     """
     def to_tensor(self, max_neighbours):
         
-        # NOTE: keep in sync with observation_spec and with the state variables
-        #  in the constructor
+        # NOTE: keep in sync with observation_spec in AgentFacade constructor
+        #      and with the state variables in the constructor
 
         node_spec = [
-            tf.constant(shape=(1), dtype=tf.float32, name = "id", value=self.id),
-            tf.constant(shape=(1), dtype=tf.float32, name = "energy_state", value=self.energy),
-            tf.constant(shape=(1), dtype=tf.int32, name = "power_state", value=self.power_state),
-            tf.constant(shape=(1), dtype=tf.bool, name = "has_packet_in_buffer", value=self.has_packet_in_buffer)
+            tf.constant(shape=(1), dtype=tf.float32, name = "energy_level", value=self.energy_level),
+            tf.constant(shape=(1), dtype=tf.float32, name = "queue_state", value=self.queue_state),
+            tf.constant(shape=(1), dtype=tf.float32, name = "charge_rate", value=self.charge_rate)
         ]
-        ngs = {"id_neighbour": [], "energy_state_neighbour": [], "link_capacity": []}
-        for i in range(max_neighbours):
-            if i >= len(self._neighbours):
-                ngs["id_neighbour"].append(-1)
-                ngs["energy_state_neighbour"].append(0)
-                ngs["link_capacity"].append(0)
-            else:
-                neighbour = self._neighbours[i] 
-                ngs["id_neighbour"].append(neighbour.id)
-                ngs["energy_state_neighbour"].append(neighbour.energy)
-                ngs["link_capacity"].append(neighbour.link_capacity)
-
-        
-        node_spec.append(tf.constant(shape=(max_neighbours), dtype=tf.float32, name = "id_neighbour", value=ngs["id_neighbour"]))
-        node_spec.append(tf.constant(shape=(max_neighbours), dtype=tf.int32, name = "energy_state_neighbour", value=ngs["energy_state_neighbour"]))
-        node_spec.append(tf.constant(shape=(max_neighbours), dtype=tf.float32, name = "link_capacity", value=ngs["link_capacity"]))
             
         return node_spec
     
-    
-    
     def __str__(self):
-        return "StateBean(energy={}, power_state={}, has_packet_in_buffer={}, link_capacity={}, id={}, neighbours={})".format(
-            self.energy, self.power_state, self.has_packet_in_buffer, self.link_capacity, self.id, self._neighbours)
+        return "StateBean(energy_level={}, queue_state={}, charge_rate={})".format(
+            self.energy_level, self.queue_state, self.charge_rate)
     
 class RewardBean():
 
-    def __init__(self, message_id : int = None, reward : int = None):
+    def __init__(self, reward : int = None):
         # id of the message corresponding to the reward
-        self._message_id = message_id
         self._reward = reward
-
-    @property
-    def message_id(self):
-        return self._message_id
-    
-    @message_id.setter
-    def message_id(self, message_id):
-        self._message_id = message_id
     
     @property
     def reward(self):
@@ -179,65 +96,53 @@ class RewardBean():
     @reward.setter
     def reward(self, reward):
         self._reward = reward
-    
-class RewardsBean():
-    
-    def __init__(self, rewards : [RewardBean] = []):
-        self._rewards = rewards
 
-    @property
-    def rewards(self):
-        return self._rewards
+    def __str__(self):
+        return "RewardBean(reward={})".format(self.reward)
     
-    def add_reward(self, msg_id : int, reward : int):
-        self._rewards.append(RewardBean(message_id=msg_id, reward=reward))
-
-class RelayBean():
-
-    def __init__(self):
-        self._neighbour_id = -1
-        self._rate = 0.0
-        @property
-        def neighbour_id(self):
-            return self._neighbour_id
-        
-        @neighbour_id.setter
-        def neighbour_id(self, neighbour_id: int):
-            self._neighbour_id = neighbour_id
-        
-        @property
-        def rate(self):
-            return self._rate
-        
-        @rate.setter
-        def rate(self, rate: float):
-            self._rate = rate
 
 # TODO: implement the other actions according to the model
 class ActionBean():
-    
-    def __init__(self):
-        self._changePowerState = -1
-        self.relaySet = []
+
+    class SendEnum(IntEnum):
+        DO_NOTHING = 0
+        SEND_MESSAGE = 1
+        
+
+    class PowerSourceEnum(IntEnum):
+        BATTERY = 0
+        POWER_CHORD = 1
+
+    def __init__(self, send_message : SendEnum, power_source : PowerSourceEnum = None, queue : int = 0):
+        self._send_message = send_message
+        self._power_source = power_source
+        self._queue = queue
 
     @property
     def send_message(self):
-        return self.changePowerState
+        return self._send_message
     
-    @property
-    def changePowerState(self):
-        return self._changePowerState
-    
-    @changePowerState.setter
-    def changePowerState(self, changePowerState):
-        self._changePowerState = changePowerState
-    
-    def add_relay(self, relay: RelayBean):
-        self.relaySet.append(relay)
-    
-    def get_relay(self, index: int) -> RelayBean:
-        return self.relaySet[index]
-    
-    def get_relay_count(self) -> int:
-        return len(self.relaySet)
+    @send_message.setter
+    def send_message(self, send_message):
+        self._send_message = send_message
 
+    @property
+    def power_source(self):
+        return self._power_source
+    
+    @power_source.setter
+    def power_source(self, power_source):
+        self._power_source = power_source
+
+    @property
+    def queue(self):
+        return self._queue
+    
+    @queue.setter
+    def queue(self, queue):
+        self._queue = queue
+    
+    def __str__(self):
+        return "ActionBean(send_message={}, power_source={}, queue={})".format(
+            self.send_message, self.power_source, self.queue)
+    

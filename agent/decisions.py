@@ -151,11 +151,9 @@ class DecisionTreeConsultant():
     def add_choice(self, child: DecisionTreeConsultant):
         """
         Adds a consultant as a choice for the current consultant.
-        Returns the index of the corresponding choice
         """
         self._choices.append(child)
         self._choices_name_to_index[child.decision_name] = len(self._choices) - 1
-        return self._choices_name_to_index[child.decision_name]
 
 
     def get_decisions(self, parent_state : Tensor,
