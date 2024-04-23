@@ -105,8 +105,9 @@ class RewardBean():
 class ActionBean():
 
     class SendEnum(IntEnum):
-        SEND_MESSAGE = 0
-        DO_NOTHING = 1
+        DO_NOTHING = 0
+        SEND_MESSAGE = 1
+        
 
     class PowerSourceEnum(IntEnum):
         BATTERY = 0
