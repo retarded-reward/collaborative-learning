@@ -30,16 +30,6 @@
 using namespace omnetpp;
 using namespace std;
 
-struct NeighbourState
-{
-  NodeStateMsg *state;
-  /**
-   * if false, we do not know if the neighbour is reachable. This entry can be replaced
-   * by a new one of a reachable neighbour.
-  */
-  bool reachable;
-};
-
 class Controller : public cSimpleModule
 {
   protected:
@@ -59,11 +49,6 @@ class Controller : public cSimpleModule
      * before forwarding them.
     */
     FixedCapCQueue *data_buffer;
-
-    /**
-     * Neighbours state informations 
-    */
-    vector<NeighbourState> neighbours;
        
     Timeout *ask_action_timeout;
     
@@ -93,7 +78,6 @@ class Controller : public cSimpleModule
      * 
      * When to ask/do actions?
      * 
-     * data received    => stop timer, ask action
      * action received  => do action, start timer
      * timer timeout    => ask action 
     */
@@ -103,7 +87,8 @@ class Controller : public cSimpleModule
     */
     void ask_action();
     /**
-     * Executes the action received from the agent client.
+     * Executes the action received from the agent client and restarts
+     * ask action timer.
     */
     void do_action(ActionResponse *action);
     /**Action Event Flow (END)*/
@@ -126,10 +111,7 @@ class Controller : public cSimpleModule
     void init_ask_action_timer();
     void init_reward_params();
     void init_module_params();
-    void init_power_source();
     void init_data_buffer();
-    void init_neighbours();
-    void init_power_state();
     void init_power_model();
     void init_power_sources();
     /** Init methods (END)*/
@@ -153,8 +135,6 @@ class Controller : public cSimpleModule
 
     //Util methods
     float compute_reward();
-
-    /* test methods*/
 
 };
 

@@ -141,11 +141,6 @@ void Controller::init_data_buffer()
         data_buffer=new FixedCapCQueue(data_buffer_capacity);
 }
 
-void Controller::init_neighbours()
-{
-    neighbours.reserve(max_neighbours);
-}
-
 void Controller::init_power_sources()
 {
     cValueMap *battery_params = (cValueMap *) power_source_models->get("belkin_BPB001_powerbank").objectValue();
