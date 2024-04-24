@@ -1,11 +1,8 @@
-# TODO: maybe is better to move creation of *_spec objects in static methods
-#       of the beans. For example, the StateBean class knows what is the structure
-#       of the state tensor, so it can provide a method that returns the observation_spec.
-
 from enum import IntEnum
 
 import tensorflow as tf
 from typing import Iterable
+from tf_agents.specs.tensor_spec import TensorSpec
 
 class NodePowerState(IntEnum):
     OFF = 0
@@ -37,6 +34,15 @@ class StateBean():
         charge_rate is a float value from 0 to 1.
         """
     
+    @staticmethod
+    def observation_spec():
+        return [
+            # one list element for each tensor (state variable) 
+            TensorSpec(shape=(1), dtype=tf.float32, name = "energy_level"),
+            TensorSpec(shape=(1), dtype=tf.float32, name = "queue_state"),
+            TensorSpec(shape=(1), dtype=tf.float32, name = "charge_rate")
+        ]
+    
     @property
     def energy_level(self):
         return self._energy_level
@@ -61,19 +67,22 @@ class StateBean():
     def charge_rate(self, charge_rate):
         self._charge_rate = charge_rate
 
+    def add_queue_state(self, queue_state):
+        self._queue_state.append(queue_state)
+
     
     """
     Returns a list of tensors representing the state of the agent.
     Each tensor is a state variable.
     """
-    def to_tensor(self, max_neighbours):
+    def to_tensor(self):
         
         # NOTE: keep in sync with observation_spec in AgentFacade constructor
         #      and with the state variables in the constructor
 
         node_spec = [
             tf.constant(shape=(1), dtype=tf.float32, name = "energy_level", value=self.energy_level),
-            tf.constant(shape=(1), dtype=tf.float32, name = "queue_state", value=self.queue_state),
+            tf.constant(shape=(1), dtype=tf.float32, name = "queue_state", value=self.queue_state[0] if len(self.queue_state) > 0 else 0),
             tf.constant(shape=(1), dtype=tf.float32, name = "charge_rate", value=self.charge_rate)
         ]
             
@@ -110,10 +119,11 @@ class ActionBean():
         
 
     class PowerSourceEnum(IntEnum):
-        BATTERY = 0
-        POWER_CHORD = 1
+        NO_SOURCE = 0
+        BATTERY = 1
+        POWER_CHORD = 2
 
-    def __init__(self, send_message : SendEnum, power_source : PowerSourceEnum = None, queue : int = 0):
+    def __init__(self, send_message : SendEnum, power_source : PowerSourceEnum = PowerSourceEnum.NO_SOURCE, queue : int = 0):
         self._send_message = send_message
         self._power_source = power_source
         self._queue = queue

@@ -1,4 +1,3 @@
-import SinkRewardMsg;
 import SimulationMsg;
 
 
@@ -7,5 +6,5 @@ cplusplus(RewardMsg::RewardMsg){{
 }}
 
 message RewardMsg extends SimulationMsg{
-    SinkRewardMsg sink_reward;
+    float value;
 };

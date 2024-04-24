@@ -20,6 +20,8 @@ from beans import ActionBean, RewardBean, StateBean
 from agent_factory import AgentEnum, AgentFactory
 from conf_parser import ConfParser
 import json
+import logging
+
 class AgentFacade():
     
     
@@ -33,12 +35,7 @@ class AgentFacade():
     def __init__(self, max_neighbours = 10, agent_description = {"agent_type": AgentEnum.RANDOM_AGENT}):
         self._last_experience = None
         self._max_neighbours = max_neighbours
-        node_spec = [
-            # one list element for each tensor (state variable) 
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32, name = "energy_level"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32, name = "queue_state"),
-            tensor_spec.TensorSpec(shape=(1), dtype=tf.float32, name = "charge_rate")
-        ]
+        node_spec = StateBean.observation_spec()
 
         observation_spec = node_spec
 
@@ -72,19 +69,20 @@ class AgentFacade():
     
 
     def get_action(self, state_bean, rewards_bean):
+        logging.info("Getting action for state: " + str(state_bean))
         return self._get_action(state_bean, rewards_bean)
     
     def _get_action(self, state, reward):
 
         # updates agent policy using reward from previous action
-        if(reward is not None):
+        if(self._last_experience is not None):
             exp = Experience(self._last_experience[0], self._last_experience[1], reward)
             self._root.train([exp])
 
         # Computes TimeStep object by resetting the environment
         # at the given state
         # and uses it to get the action
-        time_step = state.to_tensor(self._max_neighbours)
+        time_step = state.to_tensor()
         action = []
         self._root.get_decisions(parent_state=time_step, decision_path=action)
         

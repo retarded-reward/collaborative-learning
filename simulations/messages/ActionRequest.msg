@@ -17,7 +17,7 @@
 
 import AgentClientMsg;
 import NodeStateMsg;
-import SinkRewardMsg;
+import RewardMsg;
 
 
 cplusplus(ActionRequest::ActionRequest){{
@@ -27,5 +27,5 @@ cplusplus(ActionRequest::ActionRequest){{
 message ActionRequest extends AgentClientMsg{
     
     NodeStateMsg state;
-    SinkRewardMsg reward[];
+    RewardMsg reward;
 };

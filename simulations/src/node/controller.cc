@@ -16,6 +16,7 @@
 #include "controller.h"
 #include "agentc/agent_client.h"
 #include "ActionRequest_m.h"
+#include "ActionResponse_m.h"
 #include "SimulationMsg_m.h"
 #include "NodeStateMsg_m.h"
 #include "power/battery.h"
@@ -45,7 +46,8 @@ void Controller::ask_action(){
     ar = new ActionRequest();
     sample_state(ar->getStateForUpdate());
 
-    // TODO: compute reward and write it in the action request 
+    // TODO: compute reward and write it in the action request
+    ar->getRewardForUpdate().setValue(0); 
 
     send(ar, "agent_port$o");
 
@@ -56,6 +58,9 @@ void Controller::do_action(ActionResponse *action)
     EV_DEBUG << "Doing action" << endl;
 
     // TODO: implement this method
+    EV_DEBUG << "Action: send_message: " << action->getSend_message() << endl;
+    EV_DEBUG << "Action: select_power_source: " << action->getSelect_power_source() << endl;
+    EV_DEBUG << "Action: queue: " << action->getQueue() << endl;
 }
 
 void Controller::start_timer(Timeout *timeout)
@@ -73,7 +78,7 @@ void Controller::stop_timer(Timeout *timeout)
 
 void Controller::sample_state(NodeStateMsg &state)
 {
-    // TODO: implement this method    
+    // TODO: implement this method
 }
 
 void Controller::init_ask_action_timer()
@@ -111,21 +116,22 @@ void Controller::init_power_sources()
     cValueMap *battery_params = (cValueMap *) power_source_models->get("belkin_BPB001_powerbank").objectValue();
     cValueMap *power_chord_params = (cValueMap *) power_source_models->get("power_chord_standard").objectValue();
     
-    battery = new Battery(battery_params->get("cap_mWh").doubleValueInUnit("mWh"));
-    battery->setCostPerMWh(battery_params->get("cost_per_mWh").doubleValue());
-    EV_DEBUG << "Battery capacity: " << battery->getCharge() << endl;
-    EV_DEBUG << "Battery cost per mWh: " << battery->getCostPerMWh() << endl;
+    power_sources.resize(2);
+    
+    power_sources[SelectPowerSource::BATTERY] = new Battery(battery_params->get("cap_mWh").doubleValueInUnit("mWh"));
+    power_sources[SelectPowerSource::BATTERY]->setCostPerMWh(battery_params->get("cost_per_mWh").doubleValue());
+    EV_DEBUG << "Battery capacity: " << power_sources[SelectPowerSource::BATTERY]->getCharge() << endl;
+    EV_DEBUG << "Battery cost per mWh: " << power_sources[SelectPowerSource::BATTERY]->getCostPerMWh() << endl;
 
-    power_chord = new PowerChord();
-    power_chord->setCostPerMWh(power_chord_params->get("cost_per_mWh").doubleValue());
-    EV_DEBUG << "Power chord cost per mWh: " << power_chord->getCostPerMWh() << endl;
+    power_sources[SelectPowerSource::POWER_CHORD] = new PowerChord();
+    power_sources[SelectPowerSource::POWER_CHORD]->setCostPerMWh(power_chord_params->get("cost_per_mWh").doubleValue());
+    EV_DEBUG << "Power chord cost per mWh: " << power_sources[SelectPowerSource::POWER_CHORD]->getCostPerMWh() << endl;
 
 }
 
 void Controller::handleActionResponse(ActionResponse *msg)
 {    
     EV_DEBUG << "Action response received";
-    EV_DEBUG  << "Change power state: " << msg->getChange_power_state() << endl;
 
     do_action(msg);
     start_timer(ask_action_timeout);
@@ -207,8 +213,6 @@ Controller::~Controller()
 {
     cancelAndDelete(ask_action_timeout);
     
-    delete battery;
-    delete power_chord;
     delete power_model;
     delete data_buffer;
     delete power_models;

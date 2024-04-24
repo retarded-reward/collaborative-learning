@@ -44,11 +44,7 @@ class Controller : public cSimpleModule
 {
   protected:
 
-    /**
-     * A node needs energy to execute actions.
-    */
-    PowerSource *battery;
-    PowerSource *power_chord;
+    vector<PowerSource *> power_sources;
 
     NICPowerModel *power_model;
 
@@ -57,10 +53,6 @@ class Controller : public cSimpleModule
      * before forwarding them.
     */
     FixedCapCQueue *data_buffer;
-    /**
-     * The power state of the node.
-    */
-    NodePowerState power_state;
 
     /**
      * Neighbours state informations 

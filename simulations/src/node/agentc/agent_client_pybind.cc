@@ -16,44 +16,32 @@ AgentClientPybind::AgentClientPybind()
     this->agent = this->agent_module.attr("AgentFacade")();
 }
 
-void AgentClientPybind::state_msg_to_bean(NodeStateMsg state, py::object bean){
-    
-    py::object neighbour_state_bean;
-    const NodeStateMsg *neighbour_state;
+void AgentClientPybind::state_msg_to_bean(const NodeStateMsg &state, py::object bean){
 
-    bean.attr("energy") = state.getEnergy();
-    bean.attr("has_packet_in_buffer") = state.getHas_packet_in_buffer();
-    bean.attr("power_state") = (int) state.getPower_state();
-    bean.attr("link_capacity") = state.getData_cap();
-    bean.attr("id") = state.getId();
-    for (int i = 0; i < state.getNeighbourArraySize(); i++)
-    {
-        neighbour_state = state.getNeighbour(i);
-        neighbour_state_bean = this->agent_module.attr("StateBean")();
-        state_msg_to_bean(*neighbour_state, neighbour_state_bean);
-        bean.attr("add_neighbour")(neighbour_state_bean);
+    bean.attr("energy_level") = state.getEnergy_percentage();
+    bean.attr("charge_rate") = state.getCharge_rate_percentage();
+    for (int i = 0; i < state.getQueue_pop_percentageArraySize(); i ++){
+        bean.attr("add_queue_state")(state.getQueue_pop_percentage(i));
     }
+
+}
+
+void AgentClientPybind::reward_msg_to_bean(const RewardMsg &msg, py::object reward_bean)
+{
+    reward_bean.attr("reward") = msg.getValue();
 }
 
 void AgentClientPybind::action_bean_to_msg(py::object bean, ActionResponse *msg){
 
-    py::object relay_bean;
-
-    msg->setChange_power_state(ChangePowerStateAction(bean.attr("changePowerState").cast<int>()));
-    msg->setRelayArraySize(bean.attr("get_relay_count")().cast<size_t>());
-    for (int i = 0; i < msg->getRelayArraySize(); i++)
-    {
-        relay_bean = bean.attr("get_relay")(i);
-        msg->getRelayForUpdate(i)
-        .setNeighbour_id(relay_bean.attr("neighbour_id").cast<int>());
-        msg->getRelayForUpdate(i).setRate(relay_bean.attr("rate").cast<float>());
-    }
+    msg->setSend_message(bean.attr("send_message").cast<bool>());
+    msg->setSelect_power_source((SelectPowerSource)bean.attr("power_source").cast<int>());
+    msg->setQueue(bean.attr("queue").cast<int>());
 }
 
 void AgentClientPybind::handleActionRequest(ActionRequest *msg)
 {    
     py::object state_bean = this->agent_module.attr("StateBean")();
-    py::object rewards_bean = this->agent_module.attr("RewardsBean")();
+    py::object reward_bean = this->agent_module.attr("RewardBean")();
     py::object action_bean;
     py::object current_action_bean;
     ActionResponse *response;
@@ -62,15 +50,9 @@ void AgentClientPybind::handleActionRequest(ActionRequest *msg)
 
     // converts request params in state and reward beans
     state_msg_to_bean(msg->getState(), state_bean);
-    for (int i = 0; i < msg->getRewardArraySize(); i++)
-    {
-        const SinkRewardMsg &current_reward = msg->getReward(i);
-        rewards_bean.attr("add_reward")(current_reward.getMessage_id(),
-         current_reward.getValue());
-    }
-
+    reward_msg_to_bean(msg->getReward(), reward_bean);
     // interrogates agent for the next action
-    action_bean = this->agent.attr("get_action")(state_bean, rewards_bean);
+    action_bean = this->agent.attr("get_action")(state_bean, reward_bean);
 
     // converts the action bean in a ActionResponse message and send it
     // back to the controller
