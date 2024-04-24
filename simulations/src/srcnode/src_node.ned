@@ -21,11 +21,11 @@ import org.cl.simulations.srcnode.SrcController;
 module SrcNode
 {
     gates:
-        inout port[10];
+        inout port[1];
     submodules:
         srcController: SrcController;    
     connections allowunconnected:
-        for i=0..9 {
+        for i=0..0 {
             port[i] <--> srcController.network_port[i];
         }
 }

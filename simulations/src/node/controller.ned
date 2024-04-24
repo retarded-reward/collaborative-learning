@@ -4,6 +4,13 @@ package org.cl.simulations.node;
 simple Controller
 {
     parameters:
+        int number_of_ports @value(number-of-ports);//=default(1);
+        double pkt_drop_cost; // packet drop cost of each queue
+        double queue_occ_cost; // queue occupancy cost of each queue
+        double energy_cost; // energy cost of each power source
+        double pkt_drop_penalty_weight; // weight of packet drop in the reward function
+        double queue_occ_penalty_weight; // weight of queue occupancy in the reward function
+        double energy_penalty_weight; // weight of energy cost in the reward function
         int ask_action_timeout_delta @unit(ms); // timeout delta for asking action (in sim time)
         int data_buffer_capacity; // how many data msgs fit in the buffer
         int max_neighbours; // how many neighbours the node can keep track of at most
@@ -11,8 +18,6 @@ simple Controller
         object power_models; // defines power consumptions for node operations
         object power_source_models;
     gates:
-        inout network_port[10];
-        inout src_port[1];
-        inout sink_port[1];
+        inout network_port[number_of_ports];
         inout agent_port;   
 }

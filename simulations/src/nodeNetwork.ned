@@ -21,18 +21,12 @@ import org.cl.simulations.sinknode.SinkNode;
 //Network description including nodes and their connections
 network NodeNetwork
 {	
+    parameters:
+        int number_of_nodes @value(number_of_nodes);//= default(1);
     submodules:
-        node[11]: Node;
+        node[number_of_nodes]: Node;
         srcNode: SrcNode;
-        sinkNode: SinkNode;
     connections allowunconnected:
-    	for i=0..9 {
-            sinkNode.port[i] <--> node[i].sink_port; 
-            
-            // TODO Change with proper connection criteria based on distance
-            node[i].port[i] <--> node[i+1].port[i];
-            srcNode.port[i] <--> node[i].src_port; 
-                 
-        }
+        srcNode.port[0] <--> node[0].port[0]; 
               
 }

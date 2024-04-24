@@ -24,7 +24,6 @@ set(SOURCES
     src/node/agentc/agent_client_pybind.cc
     src/node/agentc/python_interpreter.cc
     src/srcnode/src_controller.cc
-    src/sinknode/sink_controller.cc
     src/node/power/battery.cc
     src/node/power/power_chord.cc
 )

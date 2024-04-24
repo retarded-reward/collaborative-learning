@@ -22,8 +22,10 @@ Define_Module(SrcController);
 //Node behaviour when started
 void SrcController::initialize()
 {
+    srand(0);	
+    message_count = 0;
     //Send message to node itself cause can't enter loop in initialize
-    scheduleAt(simTime(), new cMessage());	
+    scheduleAt(simTime(), new cMessage());
 }
 
 void SrcController::handleMessage(cMessage *msg)
@@ -44,7 +46,7 @@ float SrcController::randomDataGenerator(float max)
 
 int SrcController::randomIntGenerator(int max)
 {
-    int neigh = (rand()) / ((RAND_MAX/max));
+    int neigh = rand() % (max+1);
     return neigh;
 }
 
@@ -54,10 +56,10 @@ void SrcController::sendData()
 {   
     int n = gateSize("network_port");
     int neigh = randomIntGenerator(n-1);
-    message_count++;
     DataMsg *data = new DataMsg();
     data->setMsg_id(message_count);
     data->setData(randomDataGenerator(200.0));
+    message_count++;
     send(data, "network_port$o", neigh);
     scheduleAt(simTime()+exponential(12), new cMessage());
 }
