@@ -43,6 +43,13 @@ struct NeighbourState
 class Controller : public cSimpleModule
 {
   protected:
+    /*
+    * Reward components
+    */
+    float queue_occ;  //Percentage of the buffer that is occupied in this temporal istant
+    float pkt_drop_cnt; //Number of packets dropped in this temporal istant
+    float energy_consumed; //Percentage of energy consumed in this temporal istant
+
     /**
      * A node needs energy to execute actions.
     */
@@ -71,6 +78,14 @@ class Controller : public cSimpleModule
     /**
      * Module parameters:
     */
+    float pkt_drop_cost;
+    float queue_occ_cost;
+    float energy_cost; 
+    float pkt_drop_penalty_weight;
+    float queue_occ_penalty_weight;
+    float energy_penalty_weight;
+    int num_queues;
+    int num_energy_sources;
     int ask_action_timeout_delta;
     int data_buffer_capacity;
     int max_neighbours;
@@ -116,6 +131,7 @@ class Controller : public cSimpleModule
     */
     
     void init_ask_action_timer();
+    void init_reward_params();
     void init_module_params();
     void init_power_source();
     void init_data_buffer();
@@ -141,6 +157,9 @@ class Controller : public cSimpleModule
     void handleDataMsg(DataMsg *msg);
     void handleAskActionTimeout(Timeout *msg);
     /**Specialized handlers (END)*/
+
+    //Util methods
+    float compute_reward();
 
     /* test methods*/
 

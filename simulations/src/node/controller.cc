@@ -18,19 +18,21 @@
 #include "ActionRequest_m.h"
 #include "SimulationMsg_m.h"
 #include "NodeStateMsg_m.h"
+#include "SinkRewardMsg_m.h"
 #include "power/battery.h"
 #include "power/power_chord.h"
+#include <vector>
 
 Define_Module(Controller);
 
 //Node behaviour when started
 void Controller::initialize()
 {
+    init_reward_params();
     init_module_params();
     init_ask_action_timer();
     init_power_sources();
     init_data_buffer();
-    
     start_timer(ask_action_timeout);
 
 }
@@ -45,10 +47,26 @@ void Controller::ask_action(){
     ar = new ActionRequest();
     sample_state(ar->getStateForUpdate());
 
-    // TODO: compute reward and write it in the action request 
+    float reward=compute_reward();
+
+    //TODO Embed reward in the action request
 
     send(ar, "agent_port$o");
 
+}
+
+float Controller::compute_reward(){
+    // Compute reward and write it in the action request
+    float queue_term=queue_occ_cost*queue_occ;
+
+    float energy_term=energy_cost*energy_consumed;
+    energy_consumed=0;
+
+    float pkt_drop_term=pkt_drop_cost*pkt_drop_cnt;
+    pkt_drop_cnt=0;
+
+    float reward=pkt_drop_penalty_weight*pkt_drop_term+queue_occ_penalty_weight*queue_term+energy_penalty_weight*energy_term;
+    return reward;
 }
 
 void Controller::do_action(ActionResponse *action)
@@ -82,6 +100,20 @@ void Controller::init_ask_action_timer()
         TimeoutKind::ASK_ACTION, ask_action_timeout_delta);
 }
 
+void Controller::init_reward_params()
+{
+    pkt_drop_penalty_weight = par("pkt_drop_penalty_weight").doubleValue();
+    queue_occ_penalty_weight = par("queue_occ_penalty_weight").doubleValue();
+    energy_penalty_weight = par("energy_penalty_weight").doubleValue();
+    pkt_drop_cost = par("pkt_drop_cost").doubleValue();
+    queue_occ_cost = par("queue_occ_cost").doubleValue();
+    energy_cost = par("energy_cost").doubleValue();
+    pkt_drop_cnt=0;
+    queue_occ=0;
+    energy_consumed=0;
+}
+
+
 void Controller::init_module_params()
 {   
     ask_action_timeout_delta = par("ask_action_timeout_delta").intValue();
@@ -98,7 +130,7 @@ void Controller::init_module_params()
 
 void Controller::init_data_buffer()
 {
-    data_buffer = new FixedCapCQueue(data_buffer_capacity);
+        data_buffer=new FixedCapCQueue(data_buffer_capacity);
 }
 
 void Controller::init_neighbours()
@@ -137,11 +169,14 @@ void Controller::handleDataMsg(DataMsg *msg)
     
     EV << "Data received inserting into buffer msg_id="<< msg->getMsg_id();
     try{
+        //TODO With priority queue choose queue
         data_buffer->insert(msg);
     }
     catch (std::out_of_range &e){
         EV_ERROR << "Data buffer is full, dropping message" << endl;
-        //TODO Reward negativa per drop messaggio
+        //TODO With priority queue choose queue
+        pkt_drop_cnt++;
+        EV_ERROR<< "Packet drop count=" << pkt_drop_cnt <<endl;
     }
     
 }
