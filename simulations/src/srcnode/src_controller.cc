@@ -60,5 +60,6 @@ void SrcController::sendData()
     data->setData(randomDataGenerator(200.0));
     message_count++;
     send(data, "network_port", neigh);
-    scheduleAt(simTime()+exponential(12), new cMessage());
+    simtime_t delay = par("send_interval").doubleValue();
+    scheduleAt(simTime()+delay, new cMessage());
 }
