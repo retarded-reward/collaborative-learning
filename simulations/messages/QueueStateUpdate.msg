@@ -1,0 +1,13 @@
+import QueueMsg;
+
+cplusplus(QueueStateUpdate::QueueStateUpdate){{
+    this->setKind((int)QueueMsgKind::QUEUE_STATE_UPDATE);
+}}
+
+message QueueStateUpdate extends QueueMsg{
+    // percentage of queue buffer occupied by data
+    int buffer_pop_percentage;
+    
+    // how many packets have been dropped since last update
+    int num_of_dropped;
+};

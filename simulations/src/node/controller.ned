@@ -4,6 +4,7 @@ package org.cl.simulations.node;
 simple Controller
 {
     parameters:
+        @display("i=block/app");
         int number_of_ports @value(number-of-ports);//=default(1);
         double pkt_drop_cost; // packet drop cost of each queue
         double queue_occ_cost; // queue occupancy cost of each queue
@@ -18,6 +19,7 @@ simple Controller
         object power_models; // defines power consumptions for node operations
         object power_source_models;
     gates:
-        inout network_port[number_of_ports];
-        inout agent_port;   
+        output network_port[number_of_ports];
+        inout agent_port;
+        inout queue_ports[];   
 }

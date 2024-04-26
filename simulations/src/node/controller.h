@@ -22,7 +22,6 @@
 #include "Timeout_m.h"
 #include "RewardMsg_m.h"
 #include "NodeStateMsg_m.h"
-#include "fc_cqueue.h"
 #include "power/power_source.h"
 #include "power/nic_power_model.h"
 #include <vector>
@@ -43,12 +42,6 @@ class Controller : public cSimpleModule
     vector<PowerSource *> power_sources;
 
     NICPowerModel *power_model;
-
-    /**
-     * Buffer where the nodes stores the data messages that it receives
-     * before forwarding them.
-    */
-    FixedCapCQueue *data_buffer;
        
     Timeout *ask_action_timeout;
     
@@ -111,7 +104,6 @@ class Controller : public cSimpleModule
     void init_ask_action_timer();
     void init_reward_params();
     void init_module_params();
-    void init_data_buffer();
     void init_power_model();
     void init_power_sources();
     /** Init methods (END)*/

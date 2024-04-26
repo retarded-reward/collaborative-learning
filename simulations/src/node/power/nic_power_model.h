@@ -2,7 +2,9 @@
 #define POWER_MODEL_H_
 
 #include <cstddef>
+#include <omnetpp.h>
 
+using namespace omnetpp;
 using namespace std;
 
 class NICPowerModel{

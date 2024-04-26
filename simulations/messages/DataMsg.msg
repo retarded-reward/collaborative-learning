@@ -7,5 +7,4 @@ cplusplus(DataMsg::DataMsg){{
 
 message DataMsg extends SimulationMsg{
     float data;
-	int msg_id;
 };

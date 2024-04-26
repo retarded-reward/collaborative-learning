@@ -20,12 +20,13 @@ import org.cl.simulations.srcnode.SrcController;
 // a node of the network that generates data
 module SrcNode
 {
+    @display("i=block/source");
     gates:
-        inout port[1];
+        output data_out[1];
     submodules:
         srcController: SrcController;    
     connections allowunconnected:
         for i=0..0 {
-            port[i] <--> srcController.network_port[i];
+            data_out[i] <-- srcController.network_port[i];
         }
 }

@@ -32,7 +32,7 @@ void Controller::initialize()
     init_module_params();
     init_ask_action_timer();
     init_power_sources();
-    init_data_buffer();
+    
     start_timer(ask_action_timeout);
 
 }
@@ -136,11 +136,6 @@ void Controller::init_module_params()
     // add more module params here ...
 }
 
-void Controller::init_data_buffer()
-{
-        data_buffer=new FixedCapCQueue(data_buffer_capacity);
-}
-
 void Controller::init_power_sources()
 {
     cValueMap *battery_params = (cValueMap *) power_source_models->get("belkin_BPB001_powerbank").objectValue();
@@ -170,19 +165,8 @@ void Controller::handleActionResponse(ActionResponse *msg)
 
 void Controller::handleDataMsg(DataMsg *msg)
 {
-    
-    EV << "Data received inserting into buffer msg_id="<< msg->getMsg_id();
-    try{
-        //TODO With priority queue choose queue
-        data_buffer->insert(msg);
-    }
-    catch (std::out_of_range &e){
-        EV_ERROR << "Data buffer is full, dropping message" << endl;
-        //TODO With priority queue choose queue
-        pkt_drop_cnt++;
-        EV_ERROR<< "Packet drop count=" << pkt_drop_cnt <<endl;
-    }
-    
+    // TODO: implement this method
+    EV_DEBUG << "Data message received" << endl;    
 }
 
 void Controller::handleAskActionTimeout(Timeout *msg)
@@ -253,7 +237,6 @@ Controller::~Controller()
     cancelAndDelete(ask_action_timeout);
     
     delete power_model;
-    delete data_buffer;
     delete power_models;
     delete power_source_models;
 }

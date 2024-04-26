@@ -57,9 +57,8 @@ void SrcController::sendData()
     int n = gateSize("network_port");
     int neigh = randomIntGenerator(n-1);
     DataMsg *data = new DataMsg();
-    data->setMsg_id(message_count);
     data->setData(randomDataGenerator(200.0));
     message_count++;
-    send(data, "network_port$o", neigh);
+    send(data, "network_port", neigh);
     scheduleAt(simTime()+exponential(12), new cMessage());
 }

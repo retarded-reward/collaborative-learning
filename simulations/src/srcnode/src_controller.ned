@@ -4,5 +4,5 @@ package org.cl.simulations.srcnode;
 simple SrcController
 {
     gates:
-        inout network_port[1];
+        output network_port[1];
 }

@@ -26,6 +26,7 @@ set(SOURCES
     src/srcnode/src_controller.cc
     src/node/power/battery.cc
     src/node/power/power_chord.cc
+    src/node/queue/queue.cpp
 )
 
 add_library(project_library SHARED ${SOURCES})
@@ -40,6 +41,10 @@ set(MESSAGE_SOURCES
     messages/SimulationMsg.msg
     messages/RewardMsg.msg
     messages/DataMsg.msg
+    messages/QueueDataRequest.msg
+    messages/QueueDataResponse.msg
+    messages/QueueMsg.msg
+    messages/QueueStateUpdate.msg
 )
 
 foreach(MESSAGE ${MESSAGE_SOURCES})

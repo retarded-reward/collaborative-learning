@@ -1,0 +1,151 @@
+#include "queue.h"
+#include <omnetpp/cqueue.h>
+
+Define_Module(Queue);
+
+#define sample_and_send_queue_state(_queue_state_update)\
+{\
+    queue_state_update = new QueueStateUpdate();\
+    sample_queue_state(_queue_state_update);\
+    send_queue_state(_queue_state_update);   \
+}
+
+void Queue::initialize()
+{
+    init_module_params();
+    init_data_buffer();
+
+    EV_DEBUG << "Queue initialized with capacity "
+     << capacity << " and priority " << priority << endl;
+
+}
+
+void Queue::init_module_params()
+{
+    capacity = par("capacity").intValue();
+    priority = par("priority").intValue();
+}
+
+void Queue::init_data_buffer()
+{
+    data_buffer =
+     new FixedCapCQueue(new PriorityCQueue(new cQueue(), priority),capacity);
+}
+
+void Queue::handleMessage(cMessage *msg)
+{
+    if (is_sim_msg(msg)){
+        switch (msg->getKind())
+        {
+        case DATA_MSG:
+            handleDataMsg((DataMsg *)msg);
+            /**
+             * FIXME: per qualche oscuro motivo, se non si cancella il messaggio dati
+             * anche quando è stato accettato e quindi accodato, si ha un memory leak.
+             * Questo non dovrebbe succedere perché, quando si invoca la delete sulla
+             * coda, in teoria dovrebbe distruggere tutti i messaggi accodati, e infatti
+             * lo fa. Tuttavia, rimane comunque un riferimento al messaggio dati.
+             * È come se il messaggio dati fosse duplicato quando è inserito nella coda,
+             * ma in teoria un oggetto cQueue non lo fa! (Nella documentazione e negli
+             * esempi non c'è traccia di un comportamento del genere).
+             * BOH!
+            */
+            break;
+        default:
+            break;
+        }
+    }
+    else if (is_queue_msg(msg)){
+        switch (msg->getKind())
+        {
+        case QUEUE_DATA_REQUEST:
+            handleQueueDataRequest((QueueDataRequest *)msg);
+            break;
+        default:
+            break;
+        }
+    }
+    else{
+        EV_ERROR << getName() << ": message name is not an expected topic: "
+         << msg->getName() << endl;
+    }
+
+    delete msg;    
+}
+
+void Queue::handleDataMsg(DataMsg *msg)
+{
+    QueueStateUpdate *queue_state_update;
+
+    // tries to enqueue the message. If there is no space, drops the message.
+    try
+    {
+        accept_data(msg);
+    }
+    catch(const std::out_of_range& e)
+    {
+        drop_data(msg);
+    }
+
+    // state might have changed, so we sample it and send it to servers
+    sample_and_send_queue_state(queue_state_update);
+    EV_DEBUG << "queue full at " << queue_state_update->getBuffer_pop_percentage() 
+     << "%, num of dropped packets: " << queue_state_update->getNum_of_dropped() 
+     << endl;   
+}
+
+void Queue::handleQueueDataRequest(QueueDataRequest *msg)
+{
+    // TODO: implement this method
+}
+
+void Queue::drop_data(DataMsg *msg)
+{
+    EV_DEBUG << "Data message dropped: id=" << msg->getId() << endl;
+    dropped ++;
+}
+
+void Queue::accept_data(DataMsg *msg)
+{
+    data_buffer->insert(msg);
+    EV_DEBUG << "Data message accepted: id=" << msg->getId() << endl;
+}
+
+void Queue::send_data(DataMsg *msg, cGate *server_gate)
+{
+    // TODO: implement this method
+}
+
+void Queue::sample_queue_state(QueueStateUpdate *msg)
+{
+    float buffer_pop_percentage;
+
+    buffer_pop_percentage = (capacity == 0) ? 100.0 : data_buffer->getLength() * 100.0 / capacity;
+    
+    // calcs percentage of queue occupation
+    msg->setBuffer_pop_percentage(buffer_pop_percentage);
+    
+    // samples num of dropped packets and resets counter
+    msg->setNum_of_dropped(dropped);
+    dropped = 0;
+}
+
+void Queue::send_queue_state(QueueStateUpdate *msg)
+{
+    int server_port_id_start;
+    int num_of_servers;
+    const char *server_gate_array_name = "servers_inout$o";
+
+    // Sends queue state update to all servers connected to it
+    server_port_id_start = gateBaseId(server_gate_array_name);
+    num_of_servers = gateSize(server_gate_array_name);
+    for (int i = 0; i < num_of_servers; i ++){
+        send(i == num_of_servers - 1 ? msg : msg->dup(), server_port_id_start + i);
+    }
+}
+
+Queue::~Queue()
+{       
+    delete data_buffer;
+}
+

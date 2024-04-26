@@ -5,6 +5,7 @@ simple AgentClient{
 
     parameters:
         @class(AgentClientPybind);
+        @display("i=device/cpu");
     
     gates:
         inout port;

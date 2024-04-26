@@ -18,20 +18,28 @@ package org.cl.simulations.node;
 import ned.IdealChannel;
 import org.cl.simulations.node.agentc.AgentClient;
 import org.cl.simulations.node.Controller;
+import org.cl.simulations.node.queue.Queue;
 
 // a node of the network
 module Node
 {
     parameters:
         int number_of_ports  @value(number-of-ports);//=default(1);
+        int number_of_queues;
     gates:
-        inout port[number_of_ports];
+        output network_out[number_of_ports] @loose;
+        input queue_ports[number_of_queues] @loose;
     submodules:
         controller: Controller;
         agent: AgentClient;
+        queues[number_of_queues]: Queue;
     connections allowunconnected:
         agent.port <--> IdealChannel <--> controller.agent_port; 
         for i=0..number_of_ports-1 {
-            port[i] <--> controller.network_port[i];
+            network_out[i] <-- controller.network_port[i];
+        }
+        for i=0..number_of_queues-1 {
+            controller.queue_ports++ <--> queues[i].servers_inout++;
+            queue_ports[i] --> queues[i].data_in;
         }
 }

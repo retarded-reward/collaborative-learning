@@ -25,8 +25,9 @@ network NodeNetwork
         int number_of_nodes @value(number_of_nodes);//= default(1);
     submodules:
         node[number_of_nodes]: Node;
-        srcNode: SrcNode;
+        srcNode[2]: SrcNode;
     connections allowunconnected:
-        srcNode.port[0] <--> node[0].port[0]; 
+        srcNode[0].data_out[0] --> node[0].queue_ports[0];
+        srcNode[1].data_out[0] --> node[0].queue_ports[1];
               
 }
