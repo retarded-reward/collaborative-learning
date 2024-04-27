@@ -25,6 +25,7 @@
 #include "power/power_source.h"
 #include "power/nic_power_model.h"
 #include <vector>
+#include "QueueDataResponse_m.h"
 
 using namespace omnetpp;
 using namespace std;
@@ -123,6 +124,8 @@ class Controller : public cSimpleModule
     void handleActionResponse(ActionResponse *msg); 
     void handleDataMsg(DataMsg *msg);
     void handleAskActionTimeout(Timeout *msg);
+    void handleQueueDataResponse(QueueDataResponse *msg);
+    void handleQueueStateUpdate(QueueStateUpdate *msg);
     /**Specialized handlers (END)*/
 
     //Util methods

@@ -96,7 +96,13 @@ void Queue::handleDataMsg(DataMsg *msg)
 
 void Queue::handleQueueDataRequest(QueueDataRequest *msg)
 {
-    // TODO: implement this method
+    QueueDataResponse *queueDataResponse = new QueueDataResponse();
+
+    // try to fetch the desired number of packets from the queue
+    fetch_data(queueDataResponse, msg->getData_n());
+    
+    // send the fetched data to the server requesting it
+    send_data(queueDataResponse, msg->getArrivalGate()->getOtherHalf());
 }
 
 void Queue::drop_data(DataMsg *msg)
@@ -111,9 +117,29 @@ void Queue::accept_data(DataMsg *msg)
     EV_DEBUG << "Data message accepted: id=" << msg->getId() << endl;
 }
 
-void Queue::send_data(DataMsg *msg, cGate *server_gate)
+void Queue::fetch_data(QueueDataResponse *response, size_t desired_n)
 {
-    // TODO: implement this method
+    try {
+        for (int i = 0; i < desired_n; i ++){
+            response->appendData((DataMsg *)data_buffer->pop());
+        }
+    }
+    catch (cRuntimeError e){
+        // not enough elements in queue, we return the ones we managed to fetch
+    }
+}
+
+void Queue::send_data(QueueDataResponse *response, cGate *server_gate)
+{
+    QueueStateUpdate *queueStateUpdate;
+
+    queueStateUpdate = new QueueStateUpdate();
+    sample_queue_state(queueStateUpdate);
+    response->setStateUpdate(queueStateUpdate);
+
+    EV_DEBUG << "Sending " << response->getDataArraySize() << " data messages to server" << endl;
+
+    send(response, server_gate);    
 }
 
 void Queue::sample_queue_state(QueueStateUpdate *msg)

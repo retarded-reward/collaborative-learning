@@ -67,8 +67,6 @@ public:
     virtual void insert(cObject *obj) {
         queue->insert(obj);
 
-        EV_DEBUG<< "elements in base: " << cQueue::getLength() << endl;
-        EV_DEBUG << "elements in decorated: " << queue->getLength() << endl;
     };
 
     /**
@@ -253,7 +251,9 @@ protected:
 
     void drop_data(DataMsg *msg);
     void accept_data(DataMsg *msg);
-    void send_data(DataMsg *msg, cGate *server_gate);
+    void send_data(QueueDataResponse *response, cGate *server_gate);
+    void fetch_data(QueueDataResponse *response, size_t desired_n);
+
     void sample_queue_state(QueueStateUpdate *msg);
     void send_queue_state(QueueStateUpdate *msg);
 

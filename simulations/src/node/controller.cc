@@ -21,6 +21,7 @@
 #include "NodeStateMsg_m.h"
 #include "power/battery.h"
 #include "power/power_chord.h"
+#include "QueueDataRequest_m.h"
 #include <vector>
 
 Define_Module(Controller);
@@ -71,12 +72,18 @@ float Controller::compute_reward(){
 
 void Controller::do_action(ActionResponse *action)
 {
-    EV_DEBUG << "Doing action" << endl;
-
     // TODO: implement this method
     EV_DEBUG << "Action: send_message: " << action->getSend_message() << endl;
     EV_DEBUG << "Action: select_power_source: " << action->getSelect_power_source() << endl;
     EV_DEBUG << "Action: queue: " << action->getQueue() << endl;
+
+    /*
+    Test code to request data from queue.
+
+    QueueDataRequest *queueDataRequest = new QueueDataRequest();
+    queueDataRequest->setData_n(100);
+    send(queueDataRequest, "queue_ports$o", action->getQueue());
+    */
 }
 
 void Controller::start_timer(Timeout *timeout)
@@ -175,6 +182,18 @@ void Controller::handleAskActionTimeout(Timeout *msg)
     ask_action();
 }
 
+void Controller::handleQueueDataResponse(QueueDataResponse *msg)
+{
+    // TODO: implement this method
+
+    EV_DEBUG << "Queue data response size: " << msg->getDataArraySize() << endl;
+}
+
+void Controller::handleQueueStateUpdate(QueueStateUpdate *msg)
+{
+    // TODO: implement this method
+}
+
 //Node behaviour at message reception
 void Controller::handleMessage(cMessage *msg)
 {
@@ -219,6 +238,16 @@ void Controller::handleMessage(cMessage *msg)
         }
         // do not delete timeout messages
         goto handleMessage_do_not_delete_msg;
+    }
+    else if (is_queue_msg(msg)){
+        switch (msg->getKind())
+        {
+        case (int) QueueMsgKind::QUEUE_DATA_RESPONSE:
+            handleQueueDataResponse((QueueDataResponse *)msg);
+            break;
+        default:
+            break;
+        }
     }
     else{
         EV_ERROR << "Controller: message name is not an expected topic: "

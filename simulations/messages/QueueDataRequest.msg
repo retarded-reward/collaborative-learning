@@ -6,4 +6,6 @@ cplusplus(QueueDataRequest::QueueDataRequest){{
 
 message QueueDataRequest extends QueueMsg{
     
+    // how many msgs we are fetching from the queue.
+    int data_n;
 };
