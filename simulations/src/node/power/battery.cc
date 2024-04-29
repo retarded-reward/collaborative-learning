@@ -5,6 +5,7 @@
 Battery::Battery(float capacity){
     this->capacity = capacity;
     this->charge = capacity;
+    this->cost_per_mWh = 0;
 }
 
 float Battery::getCharge(){
