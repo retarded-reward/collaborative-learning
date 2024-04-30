@@ -52,6 +52,8 @@ class Controller : public cSimpleModule
     Timeout *ask_action_timeout;
     Timeout *charge_battery_timeout;
 
+    percentage_t last_charge_rate = 0;
+
     /**
      * The i-th element of this vector represents the up-to-date state
      * of the i-th queue.

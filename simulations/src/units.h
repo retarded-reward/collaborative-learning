@@ -4,6 +4,7 @@
 #include <cstddef>
 
 typedef float percentage_t;
+#define calc_percentage(_part, _full) (_full != 0)? _part * 100/ _full : 0  
 
 // MilliWatt per Hour
 typedef double mWh_t;

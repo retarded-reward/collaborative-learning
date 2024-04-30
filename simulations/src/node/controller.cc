@@ -97,6 +97,9 @@ void Controller::charge_battery()
     battery = power_sources[SelectPowerSource::BATTERY];
     battery->recharge(charge);
 
+    // updates last charge rate percentage
+    last_charge_rate = calc_percentage(charge, battery->getCapacity()); 
+
     EV_DEBUG << "battery charger outputted " << charge << "mWh" << endl;
 }
 
@@ -143,11 +146,11 @@ void Controller::sample_power_sources(NodeStateMsg &state_msg)
 
     // sample battery level
     battery = power_sources[SelectPowerSource::BATTERY];
-    battery_level
-     = battery->getCapacity()? battery->getCharge() * 100 / battery->getCapacity() : 0;
+    battery_level = calc_percentage(battery->getCharge(), battery->getCapacity());
     state_msg.setEnergy_percentage(battery_level);
 
-    // TODO: sample battery charge rate
+    // samples last measured battery charge rate
+    state_msg.setCharge_rate_percentage(last_charge_rate);
 }
 
 void Controller::sample_queue_states(NodeStateMsg &state_msg)
@@ -269,6 +272,7 @@ void Controller::handleChargeBatteryTimeout(Timeout *msg)
 {
     charge_battery();
     EV_DEBUG << "battery charged at " << power_sources[SelectPowerSource::BATTERY]->getCharge() << endl;
+        
     start_timer(charge_battery_timeout);
 }
 
