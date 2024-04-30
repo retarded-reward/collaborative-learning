@@ -95,6 +95,9 @@ class Controller : public cSimpleModule
      * Samples state and writes it in the NodeStateMsg object
     */
     void sample_state(NodeStateMsg &state_msg);
+    void sample_power_sources(NodeStateMsg &state_msg);
+    void sample_queues_state(NodeStateMsg &state_msg);
+    
     void sample_reward(RewardMsg &reward_msg);
     
     /**

@@ -16,6 +16,8 @@ public:
     mWh_t discharge(mWh_t amount) override;
         
     void recharge(mWh_t amount) override;
+
+    mWh_t getCapacity() override;
 };
 
 #endif // BATTERY_H

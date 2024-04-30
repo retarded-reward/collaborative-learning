@@ -52,6 +52,13 @@ void Controller::ask_action(){
     // compute reward and write it in the action request
     sample_reward(ar->getRewardForUpdate());
 
+    EV_DEBUG<< "sending state:" << endl;
+    EV_DEBUG<< "battery level: " << ar->getState().getEnergy_percentage() << endl;
+    EV_DEBUG << "charge rate: " << ar->getState().getCharge_rate_percentage() << endl;
+    for (int i = 0; i < ar->getState().getQueue_pop_percentageArraySize(); i ++){
+        EV_DEBUG << "queue  "<< i<< "full at " 
+         << ar->getState().getQueue_pop_percentage(i) << "%" << endl;
+    }
     send(ar, "agent_port$o");
 
 }
@@ -101,8 +108,28 @@ void Controller::stop_timer(Timeout *timeout)
 
 void Controller::sample_state(NodeStateMsg &state)
 {
+    sample_power_sources(state);
+    sample_queues_state(state);
+}
+
+void Controller::sample_power_sources(NodeStateMsg &state_msg)
+{
+    percentage_t battery_level;
+    PowerSource *battery;
+
+    // sample battery level
+    battery = power_sources[SelectPowerSource::BATTERY];
+    battery_level
+     = battery->getCapacity()? battery->getCharge() * 100 / battery->getCapacity() : 0;
+    state_msg.setEnergy_percentage(battery_level);
+
+    // TODO: sample battery charge rate
+}
+
+void Controller::sample_queues_state(NodeStateMsg &state_msg)
+{
     // TODO: implement this method
-    
+
 }
 
 void Controller::sample_reward(RewardMsg &reward_msg)

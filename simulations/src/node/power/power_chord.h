@@ -9,6 +9,7 @@ protected:
     
     mWh_t discharge(mWh_t amount) override;
     mWh_t getCharge() override;
+    mWh_t getCapacity() override;
 };
 
 #endif // POWER_CHORD_H

@@ -10,3 +10,8 @@ mWh_t PowerChord::discharge(mWh_t amount){
 float PowerChord::getCharge(){
     return numeric_limits<float>::max();
 }
+
+mWh_t PowerChord::getCapacity()
+{
+    return numeric_limits<float>::max();
+}

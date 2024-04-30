@@ -27,6 +27,11 @@ public:
     virtual mWh_t getCharge() = 0;
 
     /**
+     * Return max charge storable in the Power Source
+    */
+    virtual mWh_t getCapacity() = 0;
+
+    /**
      * Discharges the power source by the given amount.
      * Returns the actual amount discharged.
     */

@@ -40,3 +40,8 @@ void Battery::recharge(mWh_t amount){
         charge = capacity;
     }
 }
+
+mWh_t Battery::getCapacity()
+{
+    return capacity;
+}
