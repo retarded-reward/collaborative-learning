@@ -16,13 +16,12 @@
 #include "controller.h"
 #include "agentc/agent_client.h"
 #include "ActionRequest_m.h"
-#include "ActionResponse_m.h"
 #include "SimulationMsg_m.h"
 #include "NodeStateMsg_m.h"
 #include "power/battery.h"
 #include "power/power_chord.h"
 #include "QueueDataRequest_m.h"
-#include <vector>
+#include <cstddef>
 
 Define_Module(Controller);
 
@@ -33,6 +32,7 @@ void Controller::initialize()
     init_module_params();
     init_ask_action_timer();
     init_power_sources();
+    init_queue_states();
     
     start_timer(ask_action_timeout);
 
@@ -77,6 +77,14 @@ reward_t Controller::compute_reward(){
     return reward;
 }
 
+void Controller::update_queue_state(QueueStateUpdate *msg)
+{
+    size_t queue_idx; 
+    
+    queue_idx = msg->getArrivalGate()->getIndex();
+    queue_states[queue_idx].occupancy = msg->getBuffer_pop_percentage();
+}
+
 void Controller::do_action(ActionResponse *action)
 {
     // TODO: implement this method
@@ -109,7 +117,7 @@ void Controller::stop_timer(Timeout *timeout)
 void Controller::sample_state(NodeStateMsg &state)
 {
     sample_power_sources(state);
-    sample_queues_state(state);
+    sample_queue_states(state);
 }
 
 void Controller::sample_power_sources(NodeStateMsg &state_msg)
@@ -126,10 +134,11 @@ void Controller::sample_power_sources(NodeStateMsg &state_msg)
     // TODO: sample battery charge rate
 }
 
-void Controller::sample_queues_state(NodeStateMsg &state_msg)
+void Controller::sample_queue_states(NodeStateMsg &state_msg)
 {
-    // TODO: implement this method
-
+    for (struct QueueState &qstate : queue_states){
+        state_msg.appendQueue_pop_percentage(qstate.occupancy);
+    }
 }
 
 void Controller::sample_reward(RewardMsg &reward_msg)
@@ -166,7 +175,7 @@ void Controller::init_module_params()
     power_model = new NICPowerModel();
     power_models = (cValueMap *) par("power_models").objectValue()->dup();
     power_source_models = (cValueMap *) par("power_source_models").objectValue()->dup();
-    
+    num_queues = getParentModule()->par("num_queues").intValue();
     EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << endl;
     // add more module params here ...
 }
@@ -176,7 +185,7 @@ void Controller::init_power_sources()
     cValueMap *battery_params = (cValueMap *) power_source_models->get("belkin_BPB001_powerbank").objectValue();
     cValueMap *power_chord_params = (cValueMap *) power_source_models->get("power_chord_standard").objectValue();
     
-    power_sources.resize(2);
+    power_sources.resize(2, (PowerSource *) nullptr);
     
     power_sources[SelectPowerSource::BATTERY] = new Battery(battery_params->get("cap_mWh").doubleValueInUnit("mWh"));
     power_sources[SelectPowerSource::BATTERY]->setCostPerMWh(battery_params->get("cost_per_mWh").doubleValue());
@@ -187,6 +196,11 @@ void Controller::init_power_sources()
     power_sources[SelectPowerSource::POWER_CHORD]->setCostPerMWh(power_chord_params->get("cost_per_mWh").doubleValue());
     EV_DEBUG << "Power chord cost per mWh: " << power_sources[SelectPowerSource::POWER_CHORD]->getCostPerMWh() << endl;
 
+}
+
+void Controller::init_queue_states()
+{
+    queue_states.resize(num_queues, (struct QueueState){0});  
 }
 
 void Controller::handleActionResponse(ActionResponse *msg)
@@ -218,8 +232,11 @@ void Controller::handleQueueDataResponse(QueueDataResponse *msg)
 }
 
 void Controller::handleQueueStateUpdate(QueueStateUpdate *msg)
-{
-    // TODO: implement this method
+{    
+    update_queue_state(msg);
+
+    // TODO: track num of dropped packets in order to use it to compute reward
+
 }
 
 //Node behaviour at message reception
@@ -272,6 +289,9 @@ void Controller::handleMessage(cMessage *msg)
         {
         case (int) QueueMsgKind::QUEUE_DATA_RESPONSE:
             handleQueueDataResponse((QueueDataResponse *)msg);
+            break;
+        case (int) QueueMsgKind::QUEUE_STATE_UPDATE:
+            handleQueueStateUpdate((QueueStateUpdate *)msg);
             break;
         default:
             break;

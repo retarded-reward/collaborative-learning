@@ -31,6 +31,10 @@
 using namespace omnetpp;
 using namespace std;
 
+struct QueueState {
+  percentage_t occupancy;
+};
+
 class Controller : public cSimpleModule
 {
   protected:
@@ -42,10 +46,15 @@ class Controller : public cSimpleModule
     float energy_consumed; //Percentage of energy consumed in this temporal istant
 
     vector<PowerSource *> power_sources;
-
     NICPowerModel *power_model;
        
     Timeout *ask_action_timeout;
+
+    /**
+     * The i-th element of this vector represents the up-to-date state
+     * of the i-th queue.
+    */
+    vector<QueueState> queue_states;
     
     /**
      * Module parameters:
@@ -57,7 +66,6 @@ class Controller : public cSimpleModule
     float queue_occ_penalty_weight;
     float energy_penalty_weight;
     int num_queues;
-    int num_energy_sources;
     int ask_action_timeout_delta;
     int data_buffer_capacity;
     int max_neighbours;
@@ -96,8 +104,8 @@ class Controller : public cSimpleModule
     */
     void sample_state(NodeStateMsg &state_msg);
     void sample_power_sources(NodeStateMsg &state_msg);
-    void sample_queues_state(NodeStateMsg &state_msg);
-    
+    void sample_queue_states(NodeStateMsg &state_msg);
+
     void sample_reward(RewardMsg &reward_msg);
     
     /**
@@ -111,6 +119,7 @@ class Controller : public cSimpleModule
     void init_module_params();
     void init_power_model();
     void init_power_sources();
+    void init_queue_states();
     /** Init methods (END)*/
 
     virtual void initialize() override;
@@ -134,6 +143,10 @@ class Controller : public cSimpleModule
 
     //Util methods
     reward_t compute_reward();
+    /**
+     * Updates tracked state of corresponing queue
+    */
+    void update_queue_state(QueueStateUpdate *msg);
 
 };
 

@@ -25,20 +25,20 @@ module Node
 {
     parameters:
         int number_of_ports  @value(number-of-ports);//=default(1);
-        int number_of_queues;
+        int num_queues;
     gates:
         output network_out[number_of_ports] @loose;
-        input queue_ports[number_of_queues] @loose;
+        input queue_ports[num_queues] @loose;
     submodules:
         controller: Controller;
         agent: AgentClient;
-        queues[number_of_queues]: Queue;
+        queues[num_queues]: Queue;
     connections allowunconnected:
         agent.port <--> IdealChannel <--> controller.agent_port; 
         for i=0..number_of_ports-1 {
             network_out[i] <-- controller.network_port[i];
         }
-        for i=0..number_of_queues-1 {
+        for i=0..num_queues-1 {
             controller.queue_ports++ <--> queues[i].servers_inout++;
             queue_ports[i] --> queues[i].data_in;
         }
