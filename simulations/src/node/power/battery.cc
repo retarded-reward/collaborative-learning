@@ -2,19 +2,19 @@
 
 #define sanitize_amount(amount) if (amount < 0) amount = - amount
 
-Battery::Battery(float capacity){
+Battery::Battery(mWh_t capacity){
     this->capacity = capacity;
     this->charge = capacity;
     this->cost_per_mWh = 0;
 }
 
-float Battery::getCharge(){
+mWh_t Battery::getCharge(){
     return charge;
 }
 
-float Battery::discharge(float amount){
+mWh_t Battery::discharge(mWh_t amount){
     
-    float actual_amount;
+    mWh_t actual_amount;
     
     abort_if_unplugged(0);
 
@@ -30,7 +30,7 @@ float Battery::discharge(float amount){
     return actual_amount;
 }
 
-void Battery::recharge(float amount){
+void Battery::recharge(mWh_t amount){
     
     abort_if_unplugged();
 

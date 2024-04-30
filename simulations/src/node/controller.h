@@ -26,6 +26,7 @@
 #include "power/nic_power_model.h"
 #include <vector>
 #include "QueueDataResponse_m.h"
+#include "units.h"
 
 using namespace omnetpp;
 using namespace std;
@@ -129,7 +130,7 @@ class Controller : public cSimpleModule
     /**Specialized handlers (END)*/
 
     //Util methods
-    float compute_reward();
+    reward_t compute_reward();
 
 };
 

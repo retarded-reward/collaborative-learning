@@ -7,8 +7,8 @@ class PowerChord : public PowerSource
 {
 protected:
     
-    float discharge(float amount) override;
-    float getCharge() override;
+    mWh_t discharge(mWh_t amount) override;
+    mWh_t getCharge() override;
 };
 
 #endif // POWER_CHORD_H

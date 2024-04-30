@@ -1,5 +1,6 @@
 #include "queue.h"
 #include <omnetpp/cqueue.h>
+#include "units.h"
 
 Define_Module(Queue);
 
@@ -144,7 +145,7 @@ void Queue::send_data(QueueDataResponse *response, cGate *server_gate)
 
 void Queue::sample_queue_state(QueueStateUpdate *msg)
 {
-    float buffer_pop_percentage;
+    percentage_t buffer_pop_percentage;
 
     buffer_pop_percentage = (capacity == 0) ? 100.0 : data_buffer->getLength() * 100.0 / capacity;
     

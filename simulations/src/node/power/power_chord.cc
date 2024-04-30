@@ -3,7 +3,7 @@
 
 using namespace std; 
 
-float PowerChord::discharge(float amount){
+mWh_t PowerChord::discharge(mWh_t amount){
     return amount;
 }
 

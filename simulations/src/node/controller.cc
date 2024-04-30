@@ -56,17 +56,17 @@ void Controller::ask_action(){
 
 }
 
-float Controller::compute_reward(){
+reward_t Controller::compute_reward(){
     // Compute reward and write it in the action request
-    float queue_term=queue_occ_cost*queue_occ;
+    reward_t queue_term=queue_occ_cost*queue_occ;
 
-    float energy_term=energy_cost*energy_consumed;
+    reward_t energy_term=energy_cost*energy_consumed;
     energy_consumed=0;
 
-    float pkt_drop_term=pkt_drop_cost*pkt_drop_cnt;
+    reward_t pkt_drop_term=pkt_drop_cost*pkt_drop_cnt;
     pkt_drop_cnt=0;
 
-    float reward=pkt_drop_penalty_weight*pkt_drop_term+queue_occ_penalty_weight*queue_term+energy_penalty_weight*energy_term;
+    reward_t reward=pkt_drop_penalty_weight*pkt_drop_term+queue_occ_penalty_weight*queue_term+energy_penalty_weight*energy_term;
     return reward;
 }
 
@@ -102,6 +102,7 @@ void Controller::stop_timer(Timeout *timeout)
 void Controller::sample_state(NodeStateMsg &state)
 {
     // TODO: implement this method
+    
 }
 
 void Controller::sample_reward(RewardMsg &reward_msg)

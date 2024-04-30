@@ -3,38 +3,38 @@
 
 #include <cstddef>
 #include <omnetpp.h>
+#include "units.h"
 
 using namespace omnetpp;
 using namespace std;
 
 class NICPowerModel{
 protected:
-    float tx_mW;
-    float idle_mW;
+    mW_t tx_mW;
+    mW_t idle_mW;
 
 public:
-    //     
-    float calc_tx_consumption_mWs(size_t bits, float rate_bps){
+    mWs_t calc_tx_consumption_mWs(b_t bits, Mbps_t rate_bps){
         return tx_mW * (bits / rate_bps);
     }
 
-    float calc_idle_consumption_mWs(simtime_t idle_time) {
+    mWs_t calc_idle_consumption_mWs(simtime_t idle_time) {
         return idle_mW * idle_time.dbl();
     }
 
-    float getTx_mW() const {
+    mW_t getTx_mW() const {
         return tx_mW;
     }
 
-    void setTx_mW(float value) {
+    void setTx_mW(mW_t value) {
         tx_mW = value;
     }
 
-    float getIdle_mW() const {
+    mW_t getIdle_mW() const {
         return idle_mW;
     }
 
-    void setIdle_mW(float value) {
+    void setIdle_mW(mW_t value) {
         idle_mW = value;
     }
 };

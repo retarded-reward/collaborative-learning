@@ -5,17 +5,17 @@
 
 class Battery : public PowerSource{
 protected:
-    float charge;
-    float capacity; 
+    mWh_t charge;
+    mWh_t capacity; 
 
 public:
-    Battery(float capacity);
+    Battery(mWh_t capacity);
 
-    float getCharge() override;
+    mWh_t getCharge() override;
 
-    float discharge(float amount) override;
+    mWh_t discharge(mWh_t amount) override;
         
-    void recharge(float amount) override;
+    void recharge(mWh_t amount) override;
 };
 
 #endif // BATTERY_H

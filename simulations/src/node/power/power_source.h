@@ -1,6 +1,8 @@
 #ifndef POWER_SOURCE_H
 #define POWER_SOURCE_H
 
+#include "units.h"
+
 #define abort_if_unplugged(_ret) if(!is_plugged) return _ret
 
 /**
@@ -16,19 +18,19 @@ protected:
      * uneffective.
     */
     bool is_plugged = false;
-    float cost_per_mWh;
+    reward_t cost_per_mWh;
 
 public:
     /**
      * Returns charge left in the power source.
     */
-    virtual float getCharge() = 0;
+    virtual mWh_t getCharge() = 0;
 
     /**
      * Discharges the power source by the given amount.
      * Returns the actual amount discharged.
     */
-    virtual float discharge(float amount) = 0;
+    virtual mWh_t discharge(mWh_t amount) = 0;
 
     /**
      * Charges the power source by the given amount.
@@ -47,11 +49,11 @@ public:
         return is_plugged;
     }
 
-    void setCostPerMWh(float cost){
+    void setCostPerMWh(reward_t cost){
         cost_per_mWh = cost;
     }
 
-    float getCostPerMWh(){
+    reward_t getCostPerMWh(){
         return cost_per_mWh;
     }
 
