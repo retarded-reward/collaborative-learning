@@ -47,8 +47,10 @@ class Controller : public cSimpleModule
 
     vector<PowerSource *> power_sources;
     NICPowerModel *power_model;
+    PowerSource *battery_charger;
        
     Timeout *ask_action_timeout;
+    Timeout *charge_battery_timeout;
 
     /**
      * The i-th element of this vector represents the up-to-date state
@@ -66,10 +68,11 @@ class Controller : public cSimpleModule
     float queue_occ_penalty_weight;
     float energy_penalty_weight;
     int num_queues;
-    int ask_action_timeout_delta;
+    s_t ask_action_timeout_delta;
     int data_buffer_capacity;
     int max_neighbours;
     float link_cap;
+    s_t charge_battery_timeout_delta;
     cValueMap *power_models;
     cValueMap *power_source_models;
 
@@ -114,12 +117,12 @@ class Controller : public cSimpleModule
      * Must be called in initialize() method
     */
     
-    void init_ask_action_timer();
+    void init_timers();
     void init_reward_params();
     void init_module_params();
     void init_power_model();
     void init_power_sources();
-    void init_queue_states();
+    void init_queue_states();    
     /** Init methods (END)*/
 
     virtual void initialize() override;
@@ -137,6 +140,7 @@ class Controller : public cSimpleModule
     void handleActionResponse(ActionResponse *msg); 
     void handleDataMsg(DataMsg *msg);
     void handleAskActionTimeout(Timeout *msg);
+    void handleChargeBatteryTimeout(Timeout *msg);
     void handleQueueDataResponse(QueueDataResponse *msg);
     void handleQueueStateUpdate(QueueStateUpdate *msg);
     /**Specialized handlers (END)*/
@@ -147,6 +151,7 @@ class Controller : public cSimpleModule
      * Updates tracked state of corresponing queue
     */
     void update_queue_state(QueueStateUpdate *msg);
+    void charge_battery();
 
 };
 

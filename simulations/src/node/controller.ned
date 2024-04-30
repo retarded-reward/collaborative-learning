@@ -12,12 +12,14 @@ simple Controller
         double pkt_drop_penalty_weight; // weight of packet drop in the reward function
         double queue_occ_penalty_weight; // weight of queue occupancy in the reward function
         double energy_penalty_weight; // weight of energy cost in the reward function
-        int ask_action_timeout_delta @unit(ms); // timeout delta for asking action (in sim time)
+        double ask_action_timeout_delta @unit(s); // timeout delta for asking action (in sim time)
         int data_buffer_capacity; // how many data msgs fit in the buffer
         int max_neighbours; // how many neighbours the node can keep track of at most
         double link_cap @unit(Mbps); // link capacity
         object power_models; // defines power consumptions for node operations
         object power_source_models;
+        volatile double battery_charge_rate_distribution;
+        double charge_battery_timeout_delta @unit(s);
     gates:
         output network_port[number_of_ports];
         inout agent_port;

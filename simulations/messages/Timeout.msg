@@ -1,5 +1,6 @@
 cplusplus(h){{
 #include <string>
+#include "units.h"
 
 #define TIMEOUT_TOPIC "timeout"
 #define is_timeout_msg(_msg) strcmp(_msg->getName(), TIMEOUT_TOPIC) == 0
@@ -9,6 +10,7 @@ cplusplus(h){{
 enum TimeoutKind {
     
     ASK_ACTION = 1;
+    CHARGE_BATTERY = 2;
 }
 
 
@@ -20,10 +22,13 @@ message Timeout{
 
 cplusplus(Timeout){{
     public:
-        Timeout(enum TimeoutKind timeout_kind, int delta){
+        Timeout(enum TimeoutKind timeout_kind, s_t delta){
             
             this->setKind(TimeoutKind::ASK_ACTION);
             this->delta = delta;
             this->setName(TIMEOUT_TOPIC);
         }
+}}
+cplusplus(Timeout::Timeout){{
+    this->setName(TIMEOUT_TOPIC);
 }}

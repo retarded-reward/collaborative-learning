@@ -20,6 +20,7 @@
 #include "NodeStateMsg_m.h"
 #include "power/battery.h"
 #include "power/power_chord.h"
+#include "power/random_charger.h"
 #include "QueueDataRequest_m.h"
 #include <cstddef>
 
@@ -30,12 +31,12 @@ void Controller::initialize()
 {
     init_reward_params();
     init_module_params();
-    init_ask_action_timer();
+    init_timers();
     init_power_sources();
     init_queue_states();
     
     start_timer(ask_action_timeout);
-
+    start_timer(charge_battery_timeout);
 }
 
 void Controller::ask_action(){
@@ -85,6 +86,20 @@ void Controller::update_queue_state(QueueStateUpdate *msg)
     queue_states[queue_idx].occupancy = msg->getBuffer_pop_percentage();
 }
 
+void Controller::charge_battery()
+{
+    mWh_t charge;
+    PowerSource *battery;
+
+    // tries to charge battery by the maximum amount the charger is able to output.
+    // The actual amount depends on the inner distribution of the RandomCharger.
+    charge = battery_charger->discharge(battery_charger->getCapacity());
+    battery = power_sources[SelectPowerSource::BATTERY];
+    battery->recharge(charge);
+
+    EV_DEBUG << "battery charger outputted " << charge << "mWh" << endl;
+}
+
 void Controller::do_action(ActionResponse *action)
 {
     // TODO: implement this method
@@ -105,6 +120,7 @@ void Controller::start_timer(Timeout *timeout)
 {
     EV_DEBUG << "Starting timer at " << simTime() << endl;
     EV_DEBUG << "Timeout delta: " << timeout->getDelta() << endl;
+
     scheduleAfter(timeout->getDelta(), timeout);
 }
 
@@ -146,10 +162,14 @@ void Controller::sample_reward(RewardMsg &reward_msg)
     reward_msg.setValue(compute_reward());
 }
 
-void Controller::init_ask_action_timer()
+void Controller::init_timers()
 {
+    charge_battery_timeout = new Timeout();
+    charge_battery_timeout->setKind(TimeoutKind::CHARGE_BATTERY);
+    charge_battery_timeout->setDelta(charge_battery_timeout_delta);
+
     this->ask_action_timeout = new Timeout(
-        TimeoutKind::ASK_ACTION, ask_action_timeout_delta);
+     TimeoutKind::ASK_ACTION, ask_action_timeout_delta);
 }
 
 void Controller::init_reward_params()
@@ -168,7 +188,7 @@ void Controller::init_reward_params()
 
 void Controller::init_module_params()
 {   
-    ask_action_timeout_delta = par("ask_action_timeout_delta").intValue();
+    ask_action_timeout_delta = par("ask_action_timeout_delta").doubleValue();
     data_buffer_capacity = par("data_buffer_capacity").intValue();
     max_neighbours = par("max_neighbours").intValue();
     link_cap = par("link_cap").doubleValue();
@@ -176,26 +196,47 @@ void Controller::init_module_params()
     power_models = (cValueMap *) par("power_models").objectValue()->dup();
     power_source_models = (cValueMap *) par("power_source_models").objectValue()->dup();
     num_queues = getParentModule()->par("num_queues").intValue();
+    charge_battery_timeout_delta 
+     = par("charge_battery_timeout_delta").doubleValue();
+    EV_DEBUG << "charge battery timeout delta: "<< charge_battery_timeout_delta << endl;
+    EV_DEBUG << "ask action timeout delta: " << ask_action_timeout_delta << endl;
     EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << endl;
     // add more module params here ...
 }
 
 void Controller::init_power_sources()
 {
-    cValueMap *battery_params = (cValueMap *) power_source_models->get("belkin_BPB001_powerbank").objectValue();
-    cValueMap *power_chord_params = (cValueMap *) power_source_models->get("power_chord_standard").objectValue();
+    const size_t num_power_sources = 2;
     
-    power_sources.resize(2, (PowerSource *) nullptr);
+    cValueMap *battery_params
+     = (cValueMap *) power_source_models->get("belkin_BPB001_powerbank").objectValue();
+    cValueMap *power_chord_params
+     = (cValueMap *) power_source_models->get("power_chord_standard").objectValue();
+    cValueMap *battery_charger_params
+     = (cValueMap *) power_source_models->get("solar_panel").objectValue();
     
-    power_sources[SelectPowerSource::BATTERY] = new Battery(battery_params->get("cap_mWh").doubleValueInUnit("mWh"));
-    power_sources[SelectPowerSource::BATTERY]->setCostPerMWh(battery_params->get("cost_per_mWh").doubleValue());
+    power_sources.resize(num_power_sources, (PowerSource *) nullptr);
+    
+    power_sources[SelectPowerSource::BATTERY]
+     = new Battery(battery_params->get("cap_mWh").doubleValueInUnit("mWh"));
+    power_sources[SelectPowerSource::BATTERY]
+     ->setCostPerMWh(battery_params->get("cost_per_mWh").doubleValue());
+    power_sources[SelectPowerSource::BATTERY]->plug();
     EV_DEBUG << "Battery capacity: " << power_sources[SelectPowerSource::BATTERY]->getCharge() << endl;
     EV_DEBUG << "Battery cost per mWh: " << power_sources[SelectPowerSource::BATTERY]->getCostPerMWh() << endl;
 
     power_sources[SelectPowerSource::POWER_CHORD] = new PowerChord();
-    power_sources[SelectPowerSource::POWER_CHORD]->setCostPerMWh(power_chord_params->get("cost_per_mWh").doubleValue());
+    power_sources[SelectPowerSource::POWER_CHORD]
+     ->setCostPerMWh(power_chord_params->get("cost_per_mWh").doubleValue());
+    power_sources[SelectPowerSource::POWER_CHORD]->plug();
     EV_DEBUG << "Power chord cost per mWh: " << power_sources[SelectPowerSource::POWER_CHORD]->getCostPerMWh() << endl;
 
+    // init battery charger
+    cPar &charge_rate_distribution = par("battery_charge_rate_distribution");
+    battery_charger = new RandomCharger(par("battery_charge_rate_distribution"),
+     battery_charger_params->get("cap_mWh").doubleValueInUnit("mWh"));
+    EV_DEBUG << "max charge is " << battery_charger->getCapacity() << endl;
+    battery_charger->plug();
 }
 
 void Controller::init_queue_states()
@@ -222,6 +263,13 @@ void Controller::handleAskActionTimeout(Timeout *msg)
 {
     EV_DEBUG << "Ask action timeout expired at " << simTime() << endl;
     ask_action();
+}
+
+void Controller::handleChargeBatteryTimeout(Timeout *msg)
+{
+    charge_battery();
+    EV_DEBUG << "battery charged at " << power_sources[SelectPowerSource::BATTERY]->getCharge() << endl;
+    start_timer(charge_battery_timeout);
 }
 
 void Controller::handleQueueDataResponse(QueueDataResponse *msg)
@@ -276,6 +324,9 @@ void Controller::handleMessage(cMessage *msg)
         case (int) TimeoutKind::ASK_ACTION:
             handleAskActionTimeout((Timeout *)msg);
             break;
+        case (int) TimeoutKind::CHARGE_BATTERY:
+            handleChargeBatteryTimeout((Timeout *)msg);
+            break;
         default:
             EV_ERROR << "Controller: unrecognized timeoutkind " 
             << msg->getKind() << endl;
@@ -312,6 +363,7 @@ handleMessage_do_not_delete_msg:
 Controller::~Controller()
 {
     cancelAndDelete(ask_action_timeout);
+    cancelAndDelete(charge_battery_timeout);
     
     delete power_model;
     delete power_models;

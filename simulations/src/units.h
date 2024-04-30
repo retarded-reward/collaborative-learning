@@ -6,14 +6,17 @@
 typedef float percentage_t;
 
 // MilliWatt per Hour
-typedef float mWh_t;
+typedef double mWh_t;
 // MilliWatt per Second
 typedef float mWs_t;
 // MilliWatt
 typedef float mW_t;
 
-// Seconds
+// Seconds. Note that simtime_t uses seconds.
 typedef float s_t;
+
+// millisecond
+typedef float ms_t;
 
 // MegaBit per Second
 typedef float Mbps_t;

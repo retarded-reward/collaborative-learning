@@ -40,7 +40,7 @@ public:
     /**
      * Charges the power source by the given amount.
     */
-    virtual void recharge(float amount){};
+    virtual void recharge(mWh_t amount){};
 
     void plug(){
         is_plugged = true;
