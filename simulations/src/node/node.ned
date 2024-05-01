@@ -25,12 +25,14 @@ module Node
 {
     parameters:
         int number_of_ports  @value(number-of-ports);//=default(1);
-        int num_queues;
+        int num_queues @value(num_queues);
     gates:
         output network_out[number_of_ports] @loose;
         input queue_ports[num_queues] @loose;
     submodules:
-        controller: Controller;
+        controller: Controller{
+            num_queues = parent.num_queues;
+        };
         agent: AgentClient;
         queues[num_queues]: Queue;
     connections allowunconnected:

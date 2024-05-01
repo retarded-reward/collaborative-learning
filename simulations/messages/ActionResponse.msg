@@ -15,5 +15,7 @@ message ActionResponse extends AgentClientMsg{
     
     // selects the queue to pick the msg to send
     int queue;
+
+    int msg_to_send = 1; //Change it to make agent support multisend
 };
 

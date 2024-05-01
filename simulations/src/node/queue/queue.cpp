@@ -140,7 +140,7 @@ void Queue::send_data(QueueDataResponse *response, cGate *server_gate)
 
     EV_DEBUG << "Sending " << response->getDataArraySize() << " data messages to server" << endl;
 
-    send(response, server_gate);    
+    send(response, server_gate); 
 }
 
 void Queue::sample_queue_state(QueueStateUpdate *msg)
@@ -167,7 +167,7 @@ void Queue::send_queue_state(QueueStateUpdate *msg)
     server_port_id_start = gateBaseId(server_gate_array_name);
     num_of_servers = gateSize(server_gate_array_name);
     for (int i = 0; i < num_of_servers; i ++){
-        send(i == num_of_servers - 1 ? msg : msg->dup(), server_port_id_start + i);
+        send(i == num_of_servers - 1 ? msg : msg->dup(), server_port_id_start + i); 
     }
 }
 

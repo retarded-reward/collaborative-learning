@@ -6,9 +6,11 @@ simple Controller
     parameters:
         @display("i=block/app");
         int number_of_ports @value(number-of-ports);//=default(1);
-        double pkt_drop_cost; // packet drop cost of each queue
-        double queue_occ_cost; // queue occupancy cost of each queue
-        double energy_cost; // energy cost of each power source
+        int num_queues;
+        double pkt_drop_cost_A;
+        double pkt_drop_cost_B;
+        double queue_occ_cost_A;
+        double queue_occ_cost_B;
         double pkt_drop_penalty_weight; // weight of packet drop in the reward function
         double queue_occ_penalty_weight; // weight of queue occupancy in the reward function
         double energy_penalty_weight; // weight of energy cost in the reward function

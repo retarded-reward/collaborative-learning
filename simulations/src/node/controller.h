@@ -33,17 +33,15 @@ using namespace std;
 
 struct QueueState {
   percentage_t occupancy;
+  int pkt_drop_cnt;
 };
 
 class Controller : public cSimpleModule
 {
   protected:
-    /*
-    * Reward components
-    */
-    float queue_occ;  //Percentage of the buffer that is occupied in this temporal istant
-    float pkt_drop_cnt; //Number of packets dropped in this temporal istant
-    float energy_consumed; //Percentage of energy consumed in this temporal istant
+    reward_t last_reward; //Last reward computed
+
+    ActionResponse *last_action_response; //Last action received
 
     vector<PowerSource *> power_sources;
     NICPowerModel *power_model;
@@ -59,9 +57,8 @@ class Controller : public cSimpleModule
     /**
      * Module parameters:
     */
-    float pkt_drop_cost;
-    float queue_occ_cost;
-    float energy_cost; 
+    vector<float> pkt_drop_cost;
+    vector<float> queue_occ_cost;
     float pkt_drop_penalty_weight;
     float queue_occ_penalty_weight;
     float energy_penalty_weight;
@@ -90,10 +87,15 @@ class Controller : public cSimpleModule
     */
     void ask_action();
     /**
+     * Perform action
+    */
+    void do_action(ActionResponse *action);    
+    void forward_data(const DataMsg *data[], size_t num_data);
+    void do_nothing();
+    /**
      * Executes the action received from the agent client and restarts
      * ask action timer.
     */
-    void do_action(ActionResponse *action);
     /**Action Event Flow (END)*/
     
     void start_timer(Timeout *timeout);
@@ -142,11 +144,11 @@ class Controller : public cSimpleModule
     /**Specialized handlers (END)*/
 
     //Util methods
-    reward_t compute_reward();
+    reward_t compute_reward(float energy_consumed, SelectPowerSource power_source, vector<float> queue_occ, vector<int> queue_pkt_drop_cnt);
     /**
      * Updates tracked state of corresponing queue
     */
-    void update_queue_state(QueueStateUpdate *msg);
+    void update_queue_state(QueueStateUpdate *msg, size_t queue_idx);
 
 };
 
