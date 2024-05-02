@@ -9,5 +9,5 @@ cplusplus(RewardMsg::RewardMsg){{
 }}
 
 message RewardMsg extends SimulationMsg{
-    float value; //TODO BUG if it is set as reward_t it doesn't build caus says reward_t type is unknown
-};
+    float value @cppType(reward_t);
+}
