@@ -29,6 +29,7 @@ public:
         abort_if_unplugged(0);
 
         random = distribution.doubleValue();
+        random = absolute(random);
         EV_DEBUG << "drawn random value " << random << endl;
         actual_amount = amount * random;
         return actual_amount;
