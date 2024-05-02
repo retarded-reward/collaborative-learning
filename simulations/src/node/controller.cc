@@ -108,11 +108,11 @@ void Controller::do_action(ActionResponse *action)
     }
     else{
         EV_DEBUG << "Received action " << action_type << "->Send data" << endl;
-        /*EV_DEBUG << "Asking data to queue " << queue << " for " << num_msg_to_send << " messages" << endl;
+        EV_DEBUG << "Asking data to queue " << queue << " for " << num_msg_to_send << " messages" << endl;
         //Pop packet from queue
         QueueDataRequest *queueDataRequest = new QueueDataRequest();
         queueDataRequest->setData_n(num_msg_to_send);
-        send(queueDataRequest, "queue_ports$o", queue);*/ 
+        send(queueDataRequest, "queue_ports$o", queue); 
     }
 }
 
