@@ -142,7 +142,6 @@ class Controller : public cSimpleModule
     */
     
     void handleActionResponse(ActionResponse *msg); 
-    void handleDataMsg(DataMsg *msg);
     void handleAskActionTimeout(Timeout *msg);
     void handleChargeBatteryTimeout(Timeout *msg);
     void handleQueueDataResponse(QueueDataResponse *msg);
