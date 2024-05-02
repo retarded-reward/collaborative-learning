@@ -41,7 +41,7 @@ class Controller : public cSimpleModule
   protected:
     reward_t last_reward; //Last reward computed
 
-    ActionResponse *last_action_response; //Last action received
+    SelectPowerSource last_select_power_source; //Last power source selected, needed cause data retrieving for queue is asynchroneous and so the "forward" action is splitted in 2 parts
 
     vector<PowerSource *> power_sources;
     NICPowerModel *power_model;

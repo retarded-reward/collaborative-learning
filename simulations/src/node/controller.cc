@@ -99,7 +99,7 @@ void Controller::do_action(ActionResponse *action)
     bool action_type = action->getSend_message();
     int queue = action->getQueue();
     int num_msg_to_send = action->getMsg_to_send();
-    last_action_response = action;
+    last_select_power_source = action->getSelect_power_source();
     
     //If action is "do nothing"
     if(!action_type){
@@ -159,16 +159,15 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
         }
 
         mWs_t energy_consumed = power_model->calc_tx_consumption_mWs(sizeof(*data)*8, link_cap); //*8 for bits
-        SelectPowerSource power_source = last_action_response->getSelect_power_source();
-        int num_msg_to_send = last_action_response->getMsg_to_send();
-
+        SelectPowerSource power_source = last_select_power_source;
+        
         //Consume energy
         switch(power_source){
             case SelectPowerSource::BATTERY:
-                power_sources[SelectPowerSource::BATTERY]->discharge(num_msg_to_send*energy_consumed); 
+                power_sources[SelectPowerSource::BATTERY]->discharge(num_data*energy_consumed); 
                 break;
             case SelectPowerSource::POWER_CHORD:
-                power_sources[SelectPowerSource::POWER_CHORD]->discharge(num_msg_to_send*energy_consumed);
+                power_sources[SelectPowerSource::POWER_CHORD]->discharge(num_data*energy_consumed);
                 break;
             default:
                 EV << "Error: do_action power source not recognized" << endl;
@@ -406,7 +405,6 @@ void Controller::handleMessage(cMessage *msg)
         {
         case (int) AgentClientMsgKind::ACTION_RESPONSE:
             handleActionResponse((ActionResponse *) msg);
-            goto handleMessage_do_not_delete_msg;
             break;
         
         default:
