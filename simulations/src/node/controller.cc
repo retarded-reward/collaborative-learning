@@ -151,15 +151,22 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
         vector<float> queue_occ;
         vector<int> queue_pkt_drop_cnt;
 
+        //Collect queues state
         for(int i=0;i<num_queues;i++){
             queue_occ.push_back(queue_states[i].occupancy);
             queue_pkt_drop_cnt.push_back(queue_states[i].pkt_drop_cnt);
             EV_DEBUG << "Queue " << i << " occupancy: " << queue_occ[i] << "%" << " pkt drop count: " << queue_pkt_drop_cnt[i] << endl;
             queue_states[i].pkt_drop_cnt=0; //Reset pkt drop count after taking the value useful for reward calculation
         }
-        
-        mWs_t energy_consumed = power_model->calc_tx_consumption_mWs(sizeof(*data)*8, link_cap); //*8 for bits
+
+        //Compute consumed energy
         SelectPowerSource power_source = last_select_power_source;
+        mWs_t energy_consumed= 0;
+        for(int i=0; i<num_data; i++){
+            EV_DEBUG << "Data id: " << data[i]->getId() << " size: " << sizeof(*data[i]) << endl;
+            energy_consumed += power_model->calc_tx_consumption_mWs(sizeof(*data[i])*8, link_cap); //*8 for bits
+        }
+        
         
         //Consume energy
         switch(power_source){
@@ -173,7 +180,7 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
                 EV << "Error: do_action power source not recognized" << endl;
                 break;
         }
-        EV_DEBUG << "Consumed energy: " << energy_consumed << " mWs from power source: " << power_source << endl;
+        EV_DEBUG << "Consumed energy: " << energy_consumed << "mWs from power source: " << power_source << endl;
         last_reward=compute_reward(energy_consumed, power_source, queue_occ, queue_pkt_drop_cnt);
     }
     
