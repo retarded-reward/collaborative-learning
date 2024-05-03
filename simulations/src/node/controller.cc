@@ -153,7 +153,7 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
 
         //Collect queues state
         for(int i=0;i<num_queues;i++){
-            queue_occ.push_back(queue_states[i].occupancy);
+            queue_occ.push_back((queue_states[i].occupancy)/100); //Normalize occupancy to [0,1]
             queue_pkt_drop_cnt.push_back(queue_states[i].pkt_drop_cnt);
             EV_DEBUG << "Queue " << i << " occupancy: " << queue_occ[i] << "%" << " pkt drop count: " << queue_pkt_drop_cnt[i] << endl;
             queue_states[i].pkt_drop_cnt=0; //Reset pkt drop count after taking the value useful for reward calculation
@@ -163,8 +163,7 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
         SelectPowerSource power_source = last_select_power_source;
         mWs_t energy_consumed= 0;
         for(int i=0; i<num_data; i++){
-            EV_DEBUG << "Data id: " << data[i]->getId() << " size: " << sizeof(*data[i]) << endl;
-            energy_consumed += power_model->calc_tx_consumption_mWs(sizeof(*data[i])*8, link_cap); //*8 for bits
+            energy_consumed += power_model->calc_tx_consumption_mWs(sizeof(*data[i])*8, link_cap); //*8 for bits, TODO Normalize [0,1] dividing by the energy consumed for the packet of maximum size
         }
         
         
@@ -192,7 +191,7 @@ reward_t Controller::compute_reward(float energy_consumed, SelectPowerSource pow
     EV_DEBUG << "Computing reward" << endl;
 
     // Compute reward and write it in the action request
-    reward_t energy_term=power_sources[power_source]->getCostPerMWh()*energy_consumed;
+    reward_t energy_term=(power_sources[power_source]->getCostPerMWh()*energy_consumed)/1000; //Convert from mW to W
 
     reward_t queue_term=0;
     reward_t pkt_drop_term=0;
@@ -293,16 +292,20 @@ void Controller::init_module_params()
     link_cap = par("link_cap").doubleValue();
     power_model = new NICPowerModel();
     power_models = (cValueMap *) par("power_models").objectValue()->dup();
+    cValueMap *raw_power_model = (cValueMap *) power_models->get("intel_dualband_wireless_AC_7256").objectValue();
+    //Parse power model parameters
+    power_model->setTx_mW(raw_power_model->get("tx_mW").doubleValueInUnit("mW"));
+    power_model->setIdle_mW(raw_power_model->get("idle_mW").doubleValueInUnit("mW"));
     power_source_models = (cValueMap *) par("power_source_models").objectValue()->dup();
     num_queues = getParentModule()->par("num_queues").intValue();
     charge_battery_timeout_delta 
      = par("charge_battery_timeout_delta").doubleValue();
     // add more module params here ...
 
-    EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << endl;
+    EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << "mW" <<endl;
+    EV_DEBUG << "Power model idle_mW: " << power_model->getIdle_mW() << "mW" << endl;
     EV_DEBUG << "charge battery timeout delta: "<< charge_battery_timeout_delta << endl;
     EV_DEBUG << "ask action timeout delta: " << ask_action_timeout_delta << endl;
-    EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << endl;
 }
 
 void Controller::init_power_sources()
