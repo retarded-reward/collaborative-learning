@@ -157,7 +157,7 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
             EV_DEBUG << "Queue " << i << " occupancy: " << queue_occ[i] << "%" << " pkt drop count: " << queue_pkt_drop_cnt[i] << endl;
             queue_states[i].pkt_drop_cnt=0; //Reset pkt drop count after taking the value useful for reward calculation
         }
-
+        
         mWs_t energy_consumed = power_model->calc_tx_consumption_mWs(sizeof(*data)*8, link_cap); //*8 for bits
         SelectPowerSource power_source = last_select_power_source;
         
@@ -174,7 +174,6 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
                 break;
         }
         EV_DEBUG << "Consumed energy: " << energy_consumed << " mWs from power source: " << power_source << endl;
-
         last_reward=compute_reward(energy_consumed, power_source, queue_occ, queue_pkt_drop_cnt);
     }
     
@@ -192,8 +191,8 @@ reward_t Controller::compute_reward(float energy_consumed, SelectPowerSource pow
     reward_t pkt_drop_term=0;
 
     for(int i=0; i<num_queues; i++){
-        queue_term+=queue_occ_cost[i]*queue_states[i].occupancy;
-        pkt_drop_term+=pkt_drop_cost[i]*queue_states[i].pkt_drop_cnt;
+        queue_term+=queue_occ_cost[i]*queue_occ[i];
+        pkt_drop_term+=pkt_drop_cost[i]*queue_pkt_drop_cnt[i];
     }
 
     EV_DEBUG << "Energy term: " << energy_term << endl;
@@ -398,9 +397,9 @@ void Controller::handleQueueStateUpdate(QueueStateUpdate *msg)
 //Node behaviour at message reception
 void Controller::handleMessage(cMessage *msg)
 {
-    EV << "Message received";
 
     if (is_agentc_msg(msg)){
+        EV_DEBUG << "Agent msg received by controller" << endl;
         switch (msg->getKind())
         {
         case (int) AgentClientMsgKind::ACTION_RESPONSE:
@@ -414,6 +413,7 @@ void Controller::handleMessage(cMessage *msg)
         }
     }
     else if(is_sim_msg(msg)){
+        EV_DEBUG << "Simulation msg received by controller" << endl;
         switch (msg->getKind())
         {
         //Add cases for other message types
@@ -424,6 +424,7 @@ void Controller::handleMessage(cMessage *msg)
         }
     }
     else if (is_timeout_msg(msg)){
+        EV_DEBUG << "Timeout msg received by controller" << endl;
         switch (msg->getKind())
         {
         case (int) TimeoutKind::ASK_ACTION:
@@ -441,6 +442,7 @@ void Controller::handleMessage(cMessage *msg)
         goto handleMessage_do_not_delete_msg;
     }
     else if (is_queue_msg(msg)){
+        EV_DEBUG << "Queue msg received by controller" << endl;
         switch (msg->getKind())
         {
         case (int) QueueMsgKind::QUEUE_DATA_RESPONSE:
