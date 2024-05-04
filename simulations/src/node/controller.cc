@@ -132,7 +132,7 @@ void Controller::do_nothing()
     float energy_consumed=0;
     SelectPowerSource power_source = SelectPowerSource::BATTERY;
 
-    last_reward=compute_reward(energy_consumed, power_source, queue_occ, queue_pkt_drop_cnt);
+    last_reward=compute_reward(energy_consumed, power_source);
      EV_DEBUG << "Doing nothing has generated reward: " << last_reward << endl;
 }
 
@@ -175,34 +175,65 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
         }
         EV_DEBUG << "Consumed energy: " << energy_consumed << " mWs from power source: " << power_source << endl;
 
-        last_reward=compute_reward(energy_consumed, power_source, queue_occ, queue_pkt_drop_cnt);
+        last_reward=compute_reward(energy_consumed, power_source);
     }
     
     EV_DEBUG << "Sending message has generated reward: " << last_reward << endl;
 }
 
-reward_t Controller::compute_reward(float energy_consumed, SelectPowerSource power_source, vector<float> queue_occ, vector<int> queue_pkt_drop_cnt){
+reward_t Controller::compute_reward(float energy_consumed, SelectPowerSource power_source){
 
     EV_DEBUG << "Computing reward" << endl;
 
-    // Compute reward and write it in the action request
-    reward_t energy_term=power_sources[power_source]->getCostPerMWh()*energy_consumed;
+    reward_t reward = 0;
+    vector<RewardTerm *> reward_terms;
 
-    reward_t queue_term=0;
-    reward_t pkt_drop_term=0;
-
-    for(int i=0; i<num_queues; i++){
-        queue_term+=queue_occ_cost[i]*queue_states[i].occupancy;
-        pkt_drop_term+=pkt_drop_cost[i]*queue_states[i].pkt_drop_cnt;
+    // includes energy term
+    include_reward_term("energy_penalty",
+     {
+        {"energy_consumed", cValue(energy_consumed)},
+        {"cost_per_mWh", cValue(power_sources[power_source]->getCostPerMWh())}
+     },reward_terms);
+    EV_DEBUG << "Energy term: " << reward_terms[0]->compute() << endl;
+    
+    // includes queue occ penalties, one term for each priority
+    for (int priority = 0; priority < num_queues; priority ++){
+        include_reward_term("queue_occ_penalty",
+         {
+            {"priority", cValue(priority)},
+            {"queue_occ", cValue(queue_states[priority].occupancy)}
+         }, reward_terms);
+        EV_DEBUG << "Queue occ term for priority "
+         << priority << ": " << reward_terms.back()->compute() << endl;
     }
 
-    EV_DEBUG << "Energy term: " << energy_term << endl;
-    EV_DEBUG << "Queue term: " << queue_term << endl;
-    EV_DEBUG << "Pkt drop term: " << pkt_drop_term << endl;
+    // includes pkt drop penalties, one term for each priority
+    for (int priority = 0; priority < num_queues; priority ++){
+        include_reward_term("pkt_drop_penalty",
+         {
+            {"priority", cValue(priority)},
+            {"pkt_drop_count", cValue(queue_states[priority].pkt_drop_cnt)}
+         }, reward_terms);
+        EV_DEBUG << "Pkt drop term for priority " 
+         << priority << ": " << reward_terms.back()->compute() << endl;
+    }
 
-    reward_t reward=-(pkt_drop_penalty_weight*pkt_drop_term+queue_occ_penalty_weight*queue_term+energy_penalty_weight*energy_term);
-    
+    // computes reward by consuming and reducing all included reward terms
+    for (RewardTerm *reward_term : reward_terms){
+        reward = reward + reward_term->compute();
+        delete reward_term;
+    }
     return reward;
+}
+
+void Controller::include_reward_term(const char* reward_term_model_name,
+ map<string, cValue> symbols, vector<RewardTerm *> &reward_terms)
+{
+    RewardTerm *reward_term;
+    
+    reward_term = new RewardTerm(reward_term_models, reward_term_model_name);
+    reward_term->bind_symbols(symbols);
+    reward_terms.push_back(reward_term);
 }
 
 void Controller::start_timer(Timeout *timeout)
@@ -262,20 +293,7 @@ void Controller::init_timers()
 
 void Controller::init_reward_params()
 {
-    pkt_drop_penalty_weight = par("pkt_drop_penalty_weight").doubleValue();
-    queue_occ_penalty_weight = par("queue_occ_penalty_weight").doubleValue();
-    energy_penalty_weight = par("energy_penalty_weight").doubleValue();
-    float pkt_drop_cost_A = par("pkt_drop_cost_A").doubleValue();
-    float pkt_drop_cost_B = par("pkt_drop_cost_B").doubleValue();
-    float queue_occ_cost_A = par("queue_occ_cost_A").doubleValue();
-    float queue_occ_cost_B = par("queue_occ_cost_B").doubleValue();
-
-    for(int i=0; i<num_queues; i++){
-        pkt_drop_cost.push_back(pkt_drop_cost_A*i+pkt_drop_cost_B);
-        queue_occ_cost.push_back(queue_occ_cost_A*i+queue_occ_cost_B);
-        queue_states[i].pkt_drop_cnt=0;
-        queue_states[i].occupancy=0;
-    }
+    // reward params are now written in the reward_term_models cValueMap
 }
 
 
@@ -291,6 +309,7 @@ void Controller::init_module_params()
     num_queues = getParentModule()->par("num_queues").intValue();
     charge_battery_timeout_delta 
      = par("charge_battery_timeout_delta").doubleValue();
+    reward_term_models = (cValueMap *) par("reward_term_models").objectValue()->dup();
     // add more module params here ...
 
     EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << endl;
@@ -301,16 +320,14 @@ void Controller::init_module_params()
 
 void Controller::init_power_sources()
 {
-    const size_t num_power_sources = 2;
-    
+   
     cValueMap *battery_params
      = (cValueMap *) power_source_models->get("belkin_BPB001_powerbank").objectValue();
     cValueMap *power_chord_params
      = (cValueMap *) power_source_models->get("power_chord_standard").objectValue();
     cValueMap *battery_charger_params
      = (cValueMap *) power_source_models->get("solar_panel").objectValue();
-    
-    power_sources.resize(num_power_sources, (PowerSource *) nullptr);
+        
     
     power_sources.insert(power_sources.begin() + SelectPowerSource::BATTERY,
      new Battery(battery_params->get("cap_mWh").doubleValueInUnit("mWh")));

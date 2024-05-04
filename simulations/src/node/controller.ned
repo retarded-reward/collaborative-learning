@@ -7,13 +7,18 @@ simple Controller
         @display("i=block/app");
         int number_of_ports @value(number-of-ports);//=default(1);
         int num_queues;
-        double pkt_drop_cost_A;
-        double pkt_drop_cost_B;
-        double queue_occ_cost_A;
-        double queue_occ_cost_B;
-        double pkt_drop_penalty_weight; // weight of packet drop in the reward function
-        double queue_occ_penalty_weight; // weight of queue occupancy in the reward function
-        double energy_penalty_weight; // weight of energy cost in the reward function
+
+        // Dictionary of reward term models.
+        // A reward term model can be used to construct one or more reward terms.
+        // Reward for the agent can be computed by combining all the reward terms.
+        // A reward term model is an object made at least of the following members:
+        // - weight: weight of the term in the reward computation;
+        // - signal: a function that measures a quantity and returns the corresponding
+        //           reward value for that term.
+        // If the signal function needs parameters, they can be specified in the
+        // reward term model as additional members.
+        object reward_term_models;
+        
         double ask_action_timeout_delta @unit(s); // timeout delta for asking action (in sim time)
         int data_buffer_capacity; // how many data msgs fit in the buffer
         int max_neighbours; // how many neighbours the node can keep track of at most

@@ -36,6 +36,58 @@ struct QueueState {
   int pkt_drop_cnt;
 };
 
+/**
+ * Reward can be computed as a combination of different terms.
+ * Each term comes with a signal along with its weight.
+ * 
+ * The signal is a function of a measured quantity which is informative about the
+ * agent perfomance (e.g. energy consumption, queue occupancy, etc.).
+ * 
+ * The weight is a scalar that determines the importance of the corresponding term in
+ * the reward computation.
+ * 
+ * Since signals are dynamic expressions (specified in .ini file), their symbols must
+ * be bound to actual values at runtime before computing the term value.
+*/
+class RewardTerm {
+  
+protected:
+  reward_t weight;
+  cOwnedDynamicExpression *signal;
+
+public:
+  RewardTerm(reward_t weight, cOwnedDynamicExpression *signal)
+   : weight(weight), signal(signal) {}
+  RewardTerm(cValueMap *reward_term_map)
+   : RewardTerm(reward_term_map->get("weight").doubleValue(),
+    (cOwnedDynamicExpression *)reward_term_map->get("signal").objectValue()) {}
+  RewardTerm(cValueMap *reward_term_models, const char *reward_term_model_name)
+   : RewardTerm((cValueMap *) reward_term_models->get(reward_term_model_name)
+    .objectValue()) {}
+
+  void bind_symbols(map<string, cValue> symbols){
+    // resolver is owned by the dynamic expression, no need to delete it
+    // before setting a new one
+    signal->setResolver(new cDynamicExpression::SymbolTable(symbols));
+  }
+
+  reward_t compute() {
+    if (signal->getResolver() == nullptr)
+      throw cRuntimeError("Signal resolver is not set. Call bind_symbols() first.");
+    return weight * signal->doubleValue();
+  }
+
+  reward_t getWeight() const {
+    return weight;
+  }
+
+  cOwnedDynamicExpression* getSignal() const {
+    return signal;
+  }
+
+
+
+};
 class Controller : public cSimpleModule
 {
   protected:
@@ -74,6 +126,7 @@ class Controller : public cSimpleModule
     s_t charge_battery_timeout_delta;
     cValueMap *power_models;
     cValueMap *power_source_models;
+    cValueMap *reward_term_models;
 
 
     /* Module parameters (END)*/
@@ -149,7 +202,15 @@ class Controller : public cSimpleModule
     /**Specialized handlers (END)*/
 
     //Util methods
-    reward_t compute_reward(float energy_consumed, SelectPowerSource power_source, vector<float> queue_occ, vector<int> queue_pkt_drop_cnt);
+    reward_t compute_reward(float energy_consumed, SelectPowerSource power_source);
+    /**
+     * Creates a RewardTerm object from a reward term model and adds it to the
+     * user provided vector of reward terms.
+     * The symbols used in the RewardTerm signal are bound to the values provided
+     * in the symbols map.
+    */
+    void include_reward_term(const char* reward_term_model_name,
+    map<string, cValue> symbols, vector<RewardTerm *> &reward_terms);
     /**
      * Updates tracked state of corresponing queue
     */
