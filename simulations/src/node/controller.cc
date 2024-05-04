@@ -151,15 +151,21 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
         vector<float> queue_occ;
         vector<int> queue_pkt_drop_cnt;
 
+        //Collect queues state
         for(int i=0;i<num_queues;i++){
-            queue_occ.push_back(queue_states[i].occupancy);
+            queue_occ.push_back((queue_states[i].occupancy)/100); //Normalize occupancy to [0,1]
             queue_pkt_drop_cnt.push_back(queue_states[i].pkt_drop_cnt);
             EV_DEBUG << "Queue " << i << " occupancy: " << queue_occ[i] << "%" << " pkt drop count: " << queue_pkt_drop_cnt[i] << endl;
             queue_states[i].pkt_drop_cnt=0; //Reset pkt drop count after taking the value useful for reward calculation
         }
 
-        mWs_t energy_consumed = power_model->calc_tx_consumption_mWs(sizeof(*data)*8, link_cap); //*8 for bits
+        //Compute consumed energy
         SelectPowerSource power_source = last_select_power_source;
+        mWs_t energy_consumed= 0;
+        for(int i=0; i<num_data; i++){
+            energy_consumed += power_model->calc_tx_consumption_mWs(sizeof(*data[i])*8, link_cap); //*8 for bits, TODO Normalize [0,1] dividing by the energy consumed for the packet of maximum size
+        }
+        
         
         //Consume energy
         switch(power_source){
@@ -173,8 +179,7 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
                 EV << "Error: do_action power source not recognized" << endl;
                 break;
         }
-        EV_DEBUG << "Consumed energy: " << energy_consumed << " mWs from power source: " << power_source << endl;
-
+        EV_DEBUG << "Consumed energy: " << energy_consumed << "mWs from power source: " << power_source << endl;
         last_reward=compute_reward(energy_consumed, power_source);
     }
     
@@ -305,6 +310,10 @@ void Controller::init_module_params()
     link_cap = par("link_cap").doubleValue();
     power_model = new NICPowerModel();
     power_models = (cValueMap *) par("power_models").objectValue()->dup();
+    cValueMap *raw_power_model = (cValueMap *) power_models->get("intel_dualband_wireless_AC_7256").objectValue();
+    //Parse power model parameters
+    power_model->setTx_mW(raw_power_model->get("tx_mW").doubleValueInUnit("mW"));
+    power_model->setIdle_mW(raw_power_model->get("idle_mW").doubleValueInUnit("mW"));
     power_source_models = (cValueMap *) par("power_source_models").objectValue()->dup();
     num_queues = getParentModule()->par("num_queues").intValue();
     charge_battery_timeout_delta 
@@ -312,10 +321,10 @@ void Controller::init_module_params()
     reward_term_models = (cValueMap *) par("reward_term_models").objectValue()->dup();
     // add more module params here ...
 
-    EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << endl;
+    EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << "mW" <<endl;
+    EV_DEBUG << "Power model idle_mW: " << power_model->getIdle_mW() << "mW" << endl;
     EV_DEBUG << "charge battery timeout delta: "<< charge_battery_timeout_delta << endl;
     EV_DEBUG << "ask action timeout delta: " << ask_action_timeout_delta << endl;
-    EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << endl;
 }
 
 void Controller::init_power_sources()
@@ -415,9 +424,9 @@ void Controller::handleQueueStateUpdate(QueueStateUpdate *msg)
 //Node behaviour at message reception
 void Controller::handleMessage(cMessage *msg)
 {
-    EV << "Message received";
 
     if (is_agentc_msg(msg)){
+        EV_DEBUG << "Agent msg received by controller" << endl;
         switch (msg->getKind())
         {
         case (int) AgentClientMsgKind::ACTION_RESPONSE:
@@ -431,6 +440,7 @@ void Controller::handleMessage(cMessage *msg)
         }
     }
     else if(is_sim_msg(msg)){
+        EV_DEBUG << "Simulation msg received by controller" << endl;
         switch (msg->getKind())
         {
         //Add cases for other message types
@@ -441,6 +451,7 @@ void Controller::handleMessage(cMessage *msg)
         }
     }
     else if (is_timeout_msg(msg)){
+        EV_DEBUG << "Timeout msg received by controller" << endl;
         switch (msg->getKind())
         {
         case (int) TimeoutKind::ASK_ACTION:
@@ -458,6 +469,7 @@ void Controller::handleMessage(cMessage *msg)
         goto handleMessage_do_not_delete_msg;
     }
     else if (is_queue_msg(msg)){
+        EV_DEBUG << "Queue msg received by controller" << endl;
         switch (msg->getKind())
         {
         case (int) QueueMsgKind::QUEUE_DATA_RESPONSE:
