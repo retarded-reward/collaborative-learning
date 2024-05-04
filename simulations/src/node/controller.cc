@@ -120,24 +120,14 @@ void Controller::do_nothing()
 {   
     EV_DEBUG << "Performing action do nothing" << endl;
 
-    vector<float> queue_occ;
-    vector<int> queue_pkt_drop_cnt;
+    last_energy_consumed=0;
 
-    for(int i=0;i<num_queues;i++){
-        queue_occ.push_back(queue_states[i].occupancy);
-        queue_pkt_drop_cnt.push_back(queue_states[i].pkt_drop_cnt);
-        EV_DEBUG << "Queue " << i << " occupancy: " << queue_occ[i] << "%" << " pkt drop count: " << queue_pkt_drop_cnt[i] << endl;
-    }
-
-    float energy_consumed=0;
-    SelectPowerSource power_source = SelectPowerSource::BATTERY;
-
-    last_reward=compute_reward(energy_consumed, power_source);
+    last_reward=compute_reward();
      EV_DEBUG << "Doing nothing has generated reward: " << last_reward << endl;
 }
 
 void Controller::forward_data(const DataMsg *data[], size_t num_data){
-
+    
     EV_DEBUG << "Performing action send data" << endl;
 
     //No data to send
@@ -146,47 +136,38 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
     }
     else{
         //TODO Implement the effective send, for now it's only simulated by causing the effects of send like discharge
-        
-        //Get data needed to reward computation
-        vector<float> queue_occ;
-        vector<int> queue_pkt_drop_cnt;
-
-        //Collect queues state
-        for(int i=0;i<num_queues;i++){
-            queue_occ.push_back((queue_states[i].occupancy)/100); //Normalize occupancy to [0,1]
-            queue_pkt_drop_cnt.push_back(queue_states[i].pkt_drop_cnt);
-            EV_DEBUG << "Queue " << i << " occupancy: " << queue_occ[i] << "%" << " pkt drop count: " << queue_pkt_drop_cnt[i] << endl;
-            queue_states[i].pkt_drop_cnt=0; //Reset pkt drop count after taking the value useful for reward calculation
-        }
-
+        // FIXME: what if the charge in the selected power source is not enough???      
         //Compute consumed energy
-        SelectPowerSource power_source = last_select_power_source;
-        mWs_t energy_consumed= 0;
         for(int i=0; i<num_data; i++){
-            energy_consumed += power_model->calc_tx_consumption_mWs(sizeof(*data[i])*8, link_cap); //*8 for bits, TODO Normalize [0,1] dividing by the energy consumed for the packet of maximum size
-        }
-        
+            // *8 for bits,
+            // TODO: Normalize [0,1] dividing by the energy consumed for the packet of
+            // maximum size
+            last_energy_consumed
+             += power_model->calc_tx_consumption_mWs(sizeof(*data[i])*8, link_cap);
+        }      
         
         //Consume energy
-        switch(power_source){
+        switch(last_select_power_source){
             case SelectPowerSource::BATTERY:
-                power_sources[SelectPowerSource::BATTERY]->discharge(num_data*energy_consumed); 
+                power_sources[SelectPowerSource::BATTERY]
+                 ->discharge(num_data*last_energy_consumed); 
                 break;
             case SelectPowerSource::POWER_CHORD:
-                power_sources[SelectPowerSource::POWER_CHORD]->discharge(num_data*energy_consumed);
+                power_sources[SelectPowerSource::POWER_CHORD]
+                 ->discharge(num_data*last_energy_consumed);
                 break;
             default:
                 EV << "Error: do_action power source not recognized" << endl;
                 break;
         }
-        EV_DEBUG << "Consumed energy: " << energy_consumed << "mWs from power source: " << power_source << endl;
-        last_reward=compute_reward(energy_consumed, power_source);
+        EV_DEBUG << "Consumed energy: " << last_energy_consumed << "mWs from power source: " << last_select_power_source << endl;
+        last_reward=compute_reward();
     }
     
     EV_DEBUG << "Sending message has generated reward: " << last_reward << endl;
 }
 
-reward_t Controller::compute_reward(float energy_consumed, SelectPowerSource power_source){
+reward_t Controller::compute_reward(){
 
     EV_DEBUG << "Computing reward" << endl;
 
@@ -196,10 +177,10 @@ reward_t Controller::compute_reward(float energy_consumed, SelectPowerSource pow
     // includes energy term
     include_reward_term("energy_penalty",
      {
-        {"energy_consumed", cValue(energy_consumed)},
-        {"cost_per_mWh", cValue(power_sources[power_source]->getCostPerMWh())}
+        {"energy_consumed", cValue(last_energy_consumed)},
+        {"cost_per_mWh", cValue(power_sources[last_select_power_source]->getCostPerMWh())}
      },reward_terms);
-    EV_DEBUG << "Energy term: " << reward_terms[0]->compute() << endl;
+    EV_DEBUG << "Energy term: " << reward_terms.back()->compute() << endl;
     
     // includes queue occ penalties, one term for each priority
     for (int priority = 0; priority < num_queues; priority ++){
@@ -219,6 +200,8 @@ reward_t Controller::compute_reward(float energy_consumed, SelectPowerSource pow
             {"priority", cValue(priority)},
             {"pkt_drop_count", cValue(queue_states[priority].pkt_drop_cnt)}
          }, reward_terms);
+        // resets pkt drop count after reading it
+        queue_states[priority].pkt_drop_cnt = 0;
         EV_DEBUG << "Pkt drop term for priority " 
          << priority << ": " << reward_terms.back()->compute() << endl;
     }

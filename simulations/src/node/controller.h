@@ -85,15 +85,15 @@ public:
     return signal;
   }
 
-
-
 };
 class Controller : public cSimpleModule
 {
   protected:
     reward_t last_reward; //Last reward computed
 
-    SelectPowerSource last_select_power_source; //Last power source selected, needed cause data retrieving for queue is asynchroneous and so the "forward" action is splitted in 2 parts
+    SelectPowerSource last_select_power_source = 0; //Last power source selected, needed cause data retrieving for queue is asynchroneous and so the "forward" action is splitted in 2 parts
+    mWh_t last_energy_consumed = 0; //Last energy consumed
+    percentage_t last_charge_rate = 0;
 
     vector<PowerSource *> power_sources;
     NICPowerModel *power_model;
@@ -101,8 +101,6 @@ class Controller : public cSimpleModule
        
     Timeout *ask_action_timeout;
     Timeout *charge_battery_timeout;
-
-    percentage_t last_charge_rate = 0;
 
     /**
      * The i-th element of this vector represents the up-to-date state
@@ -113,11 +111,6 @@ class Controller : public cSimpleModule
     /**
      * Module parameters:
     */
-    vector<float> pkt_drop_cost;
-    vector<float> queue_occ_cost;
-    float pkt_drop_penalty_weight;
-    float queue_occ_penalty_weight;
-    float energy_penalty_weight;
     int num_queues;
     s_t ask_action_timeout_delta;
     int data_buffer_capacity;
@@ -127,7 +120,6 @@ class Controller : public cSimpleModule
     cValueMap *power_models;
     cValueMap *power_source_models;
     cValueMap *reward_term_models;
-
 
     /* Module parameters (END)*/
     
@@ -198,7 +190,7 @@ class Controller : public cSimpleModule
     /**Specialized handlers (END)*/
 
     //Util methods
-    reward_t compute_reward(float energy_consumed, SelectPowerSource power_source);
+    reward_t compute_reward();
     /**
      * Creates a RewardTerm object from a reward term model and adds it to the
      * user provided vector of reward terms.
