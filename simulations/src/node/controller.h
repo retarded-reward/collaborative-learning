@@ -150,10 +150,6 @@ class Controller : public cSimpleModule
     void do_action(ActionResponse *action);    
     void forward_data(const DataMsg *data[], size_t num_data);
     void do_nothing();
-    /**
-     * Executes the action received from the agent client and restarts
-     * ask action timer.
-    */
     /**Action Event Flow (END)*/
     
     void start_timer(Timeout *timeout);
