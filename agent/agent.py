@@ -20,6 +20,7 @@ from beans import ActionBean, RewardBean, StateBean
 from agent_factory import AgentEnum, AgentFactory
 from conf_parser import ConfParser
 import json
+import os
 import logging
 
 class AgentFacade():
@@ -32,10 +33,12 @@ class AgentFacade():
             self.action = action
             self.message_id = message_id
 
-    def __init__(self, max_neighbours = 10, agent_description = {"agent_type": AgentEnum.RANDOM_AGENT}):
+    def __init__(self, max_neighbours = 10, agent_description = {"agent_type": AgentEnum.RANDOM_AGENT}, train_frequency = 2):
         self._last_experience = None
         self._max_neighbours = max_neighbours
-        node_spec = StateBean.observation_spec()
+        self._train_frequency = train_frequency
+        self._train_counter = 0
+        node_spec = tensor_spec.BoundedTensorSpec(shape=(1, 3), dtype=np.float32, minimum=[[0, 0, 0]], maximum=[1, 1, 1], name = "state")
 
         observation_spec = node_spec
 
@@ -48,6 +51,8 @@ class AgentFacade():
             agent_description = agent_description, 
             time_step_spec = time_step_spec,
             action_spec = action_spec_root)
+        
+        agent_root.initialize()
         
         '''
         agent_change_power_state = AgentFactory.create_agent(
@@ -76,18 +81,27 @@ class AgentFacade():
 
         # updates agent policy using reward from previous action
         if(self._last_experience is not None):
-            exp = Experience(self._last_experience[0], self._last_experience[1], reward)
-            self._root.train([exp])
+            print("Reward: " + str(reward.reward))
+            r = tf.constant(value=reward.reward, shape = (), dtype=tf.float32)
+            exp = Experience(self._last_experience[0], self._last_experience[1], r)
+            train_choose = False
+            self._train_counter += 1
+            if(self._train_counter == self._train_frequency):
+                train_choose = True
+                self._train_counter = 0
+            
+            self._root.train([exp], train = train_choose)
 
+        
+        
         # Computes TimeStep object by resetting the environment
         # at the given state
         # and uses it to get the action
         time_step = state.to_tensor()
         action = []
         self._root.get_decisions(parent_state=time_step, decision_path=action)
-        
         # Stores the last experience
-        self._last_experience = (state, action)
+        self._last_experience = (time_step, action)
 
         action_bean = self._decision_path_to_action_bean(action)
 
@@ -111,6 +125,7 @@ class AgentFacade():
             
 # Test main
 if __name__ == '__main__':
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
     agent_desc = ConfParser.parse_agent_from_json(json.load(open("agent/agent_conf.json")))
     agent = AgentFacade(
         agent_description=agent_desc)
@@ -120,4 +135,8 @@ if __name__ == '__main__':
     reward = RewardBean(10)
     action = agent.get_action(state, reward)
     print("Azione scelta: " + str(action))
+    reward = RewardBean(10)
+    action = agent.get_action(state, reward)
+    print("Azione scelta: " + str(action))
+    
     

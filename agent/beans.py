@@ -80,11 +80,14 @@ class StateBean():
         # NOTE: keep in sync with observation_spec in AgentFacade constructor
         #      and with the state variables in the constructor
 
+        '''
         node_spec = [
             tf.constant(shape=(1), dtype=tf.float32, name = "energy_level", value=self.energy_level),
             tf.constant(shape=(1), dtype=tf.float32, name = "queue_state", value=self.queue_state[0] if len(self.queue_state) > 0 else 0),
             tf.constant(shape=(1), dtype=tf.float32, name = "charge_rate", value=self.charge_rate)
         ]
+        '''
+        node_spec = tf.constant(shape=(1, 3), dtype=tf.float32, name = "state", value=[self.energy_level, self.queue_state[0], self.charge_rate])
             
         return node_spec
     

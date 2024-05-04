@@ -8,6 +8,7 @@ from tf_agents.trajectories import time_step
 from tf_agents.trajectories.time_step import StepType
 from tf_agents.trajectories.policy_step import PolicyStep
 from tf_agents.agents.tf_agent import TFAgent
+from tf_agents.replay_buffers import tf_uniform_replay_buffer
 
 from typing import Callable, Iterable, List, Tuple
 
@@ -36,8 +37,10 @@ class Decision():
 
 class Experience():
 
-    def __init__(self, state : Tensor, decision_path : Iterable[Tuple[str, Tensor]],
-     message_id : int, reward : int = None):
+    def __init__(self, 
+                 state : Tensor, 
+                 decision_path : Iterable[Tuple[str, Tensor]], 
+                 reward : int = None):
         self._state = state
         """ The state where the decision path led """
         self._decision_path = decision_path
@@ -54,6 +57,9 @@ class Experience():
     @property
     def reward(self):
         return self._reward
+    
+    def __str__(self):
+        return f"Experience(state={self._state}, decision_path={self._decision_path}, reward={self._reward})"
 
         
 class DecisionTreeConsultant():
@@ -137,6 +143,10 @@ class DecisionTreeConsultant():
         Specify an implementation in the constructor params if you want to use
         a refined experience starting from the one passed by the parent.
         """
+        self._replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
+            data_spec=self._agent.collect_data_spec,
+            batch_size=1,
+            max_length=1000)
 
     def _deduce_consultant_state(self, parent_state : Tensor) -> Tensor:
         return self._deduce_consultant_state_impl(self, parent_state)
@@ -177,38 +187,52 @@ class DecisionTreeConsultant():
             next_consultant = self._choices[decision.value.action[0]]
             next_consultant.get_decisions(decision_state, decision_path)
 
-    def train(self, experiences : Iterable[Experience],
-        decision_path_level: int = 0):
+    
+    def train(self, experiences: Iterable[Experience], decision_path_level: int = 0, train: bool = True):
         """
-        Experiences are shared among all the consultants in the tree.
-        """
+        Trains the agent using the given experiences.
 
+        Args:
+            experiences (Iterable[Experience]): The experiences to train the agent on.
+            decision_path_level (int, optional): The level of the decision path to consider. Defaults to 0.
+            train (bool, optional): Whether to perform training or not. Defaults to True.
+        """
+        
         for e in experiences:
         
             e = self._deduce_consultant_experience(e)
             decision = e.decision_path[decision_path_level]
+            action = tf.constant(value=int(decision.value.action), shape=(), dtype=tf.int32)
             
             # trains embedded agent
             trajectory = Trajectory(
-                step_type = StepType.MID,
-                observation = self._deduce_consultant_state(e.state),
-                action = decision.value.action,
-                policy_info = (),
-                next_step_type = StepType.MID,
-                reward = e.reward,
-                discount = 1.0
+                step_type=tf.constant(value=1, shape=(), dtype=tf.int32),
+                observation=self._deduce_consultant_state(e.state),
+                action=action,
+                policy_info=(),
+                next_step_type=tf.constant(value=1, shape=(), dtype=tf.int32),
+                reward=e.reward,
+                discount=tf.constant(value=1, shape=(), dtype=tf.float32)
             )
-            self._agent.train(trajectory)
+            
+            values_batched = tf.nest.map_structure(lambda t: tf.stack([t]), trajectory)
+            self._replay_buffer.add_batch(values_batched)
         
-            # train all and only consultants that
-            # are part of the decision path.
+            # train all and only consultants that are part of the decision path.
             if len(self._choices) > 0:
                 next_decision_path_level = decision_path_level + 1
                 # extracts next Decision object from decision path
                 next_decision_in_path = e.decision_path[next_decision_path_level]
                 # Finds consultant choice using the Decision name and trains it
                 next_consultant = self._choices[self._choices_name_to_index[next_decision_in_path.name]]
-                next_consultant.train([e], next_decision_path_level)
+                next_consultant.train([e], next_decision_path_level, train)
+
+        if train:
+            dataset = self._replay_buffer.as_dataset(sample_batch_size=1, num_steps=2)
+            iterator = iter(dataset)
+            for _ in range(1):
+                t, _ = next(iterator)
+                self._agent.train(experience=t)
 
 # test the DecisionTreeConsultant class
 if __name__ == "__main__":
@@ -225,7 +249,7 @@ if __name__ == "__main__":
             agent=RandomAgent(
                 time_step_spec = time_step_spec,
                 action_spec = BoundedTensorSpec(
-                    shape=(1,), dtype=tf.int32, minimum=0, maximum=NUM_OF_ROOT_CHOICES - 1),),
+                    shape=(1), dtype=tf.int32, minimum=0, maximum=NUM_OF_ROOT_CHOICES - 1),),
             decision_name="root")
         root.add_choice(DecisionTreeConsultant(
             agent=RandomAgent(
@@ -249,18 +273,15 @@ if __name__ == "__main__":
         consultant = build_simple_decision_tree()
         
         consultant.get_decisions(state, decision_path)
-        print(str(decision_path))
         
         experiences = [
             Experience(
                 state=state,
                 decision_path=decision_path,
-                message_id=1,
                 reward=1),
             Experience(
                 state=state,
                 decision_path=decision_path,
-                message_id=2,
                 reward=2)
         ]
 
