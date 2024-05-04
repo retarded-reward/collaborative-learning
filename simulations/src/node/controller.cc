@@ -312,15 +312,15 @@ void Controller::init_power_sources()
     
     power_sources.resize(num_power_sources, (PowerSource *) nullptr);
     
-    power_sources[SelectPowerSource::BATTERY]
-     = new Battery(battery_params->get("cap_mWh").doubleValueInUnit("mWh"));
+    power_sources.insert(power_sources.begin() + SelectPowerSource::BATTERY,
+     new Battery(battery_params->get("cap_mWh").doubleValueInUnit("mWh")));
     power_sources[SelectPowerSource::BATTERY]
      ->setCostPerMWh(battery_params->get("cost_per_mWh").doubleValue());
     power_sources[SelectPowerSource::BATTERY]->plug();
     EV_DEBUG << "Battery capacity: " << power_sources[SelectPowerSource::BATTERY]->getCharge() << endl;
     EV_DEBUG << "Battery cost per mWh: " << power_sources[SelectPowerSource::BATTERY]->getCostPerMWh() << endl;
 
-    power_sources[SelectPowerSource::POWER_CHORD] = new PowerChord();
+    power_sources.insert(power_sources.begin() + SelectPowerSource::POWER_CHORD, new PowerChord());
     power_sources[SelectPowerSource::POWER_CHORD]
      ->setCostPerMWh(power_chord_params->get("cost_per_mWh").doubleValue());
     power_sources[SelectPowerSource::POWER_CHORD]->plug();
@@ -473,8 +473,5 @@ Controller::~Controller()
     delete power_model;
     delete power_models;
     delete power_source_models;
-    delete battery_charger;
-    for (PowerSource *ps : power_sources){
-        delete ps;
-    }
+    delete reward_term_models;
 }

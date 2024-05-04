@@ -1,8 +1,8 @@
 import AgentClientMsg;
 
 enum SelectPowerSource{
-    BATTERY = 1;
-    POWER_CHORD = 2;
+    BATTERY = 0;
+    POWER_CHORD = 1;
 }
 
 cplusplus(ActionResponse::ActionResponse){{
