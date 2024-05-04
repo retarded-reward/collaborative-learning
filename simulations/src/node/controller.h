@@ -91,7 +91,7 @@ class Controller : public cSimpleModule
   protected:
     reward_t last_reward; //Last reward computed
 
-    SelectPowerSource last_select_power_source = 0; //Last power source selected, needed cause data retrieving for queue is asynchroneous and so the "forward" action is splitted in 2 parts
+    SelectPowerSource last_select_power_source = (SelectPowerSource)0; //Last power source selected, needed cause data retrieving for queue is asynchroneous and so the "forward" action is splitted in 2 parts
     mWh_t last_energy_consumed = 0; //Last energy consumed
     percentage_t last_charge_rate = 0;
 
