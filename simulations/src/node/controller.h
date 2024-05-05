@@ -165,7 +165,6 @@ class Controller : public cSimpleModule
     void init_timers();
     void init_reward_params();
     void init_module_params();
-    void init_power_model();
     void init_power_sources();
     void init_queue_states();    
     /** Init methods (END)*/
