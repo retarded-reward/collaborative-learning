@@ -142,8 +142,9 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
             // *8 for bits,
             // TODO: Normalize [0,1] dividing by the energy consumed for the packet of
             // maximum size
+            std::cout << "Data size: " << (int) data[i]->getData() << std::endl;
             last_energy_consumed
-             += power_model->calc_tx_consumption_mWs(sizeof(*data[i])*8, link_cap);
+             += power_model->calc_tx_consumption_mWs((int) data[i]->getData()*8, link_cap);
         }      
         
         //Consume energy
