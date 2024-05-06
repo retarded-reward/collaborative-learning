@@ -22,6 +22,8 @@ Define_Module(SrcController);
 //Node behaviour when started
 void SrcController::initialize()
 {
+    min_pkt_size = par("min_pkt_size");
+    max_pkt_size = par("max_pkt_size");
     srand(0);	
     message_count = 0;
     //Send message to node itself cause can't enter loop in initialize
@@ -44,10 +46,10 @@ float SrcController::randomDataGenerator(float max)
     return data;
 }
 
-int SrcController::randomIntGenerator(int max)
+int SrcController::randomIntGenerator(int min, int max)
 {
-    int neigh = rand() % (max+1);
-    return neigh;
+    int res = min + rand() % (max - min + 1);
+    return res;
 }
 
 
@@ -55,9 +57,10 @@ int SrcController::randomIntGenerator(int max)
 void SrcController::sendData()
 {   
     int n = gateSize("network_port");
-    int neigh = randomIntGenerator(n-1);
+    int neigh = randomIntGenerator(0, n-1);
     DataMsg *data = new DataMsg();
-    data->setData(randomDataGenerator(200.0));
+    float data_size = randomIntGenerator(min_pkt_size, max_pkt_size);
+    data->setData(data_size);
     message_count++;
     send(data, "network_port", neigh);
     simtime_t delay = par("send_interval").doubleValue();
