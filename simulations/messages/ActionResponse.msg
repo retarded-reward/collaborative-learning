@@ -11,6 +11,7 @@ cplusplus(ActionResponse::ActionResponse){{
 
 message ActionResponse extends AgentClientMsg{
     bool send_message;
+    // a value < 0 means no legal power source selected
     SelectPowerSource select_power_source;
     
     // selects the queue to pick the msg to send

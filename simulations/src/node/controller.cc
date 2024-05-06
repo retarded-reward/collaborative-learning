@@ -178,7 +178,8 @@ reward_t Controller::compute_reward(){
     include_reward_term("energy_penalty",
      {
         {"energy_consumed", cValue(last_energy_consumed)},
-        {"cost_per_mWh", cValue(power_sources[last_select_power_source]->getCostPerMWh())}
+        {"cost_per_mWh", last_select_power_source < 0 ? 0 : 
+         (power_sources[last_select_power_source]->getCostPerMWh())}
      },reward_terms);
     EV_DEBUG << "Energy term: " << reward_terms.back()->compute() << endl;
     
