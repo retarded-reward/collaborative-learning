@@ -23,8 +23,13 @@ public:
         sysm.attr("stderr") = _out_buffer;
     }
     std::string outString() {
+        py::str out_string;
+        
         _out_buffer.attr("seek")(0);
-        return py::str(_out_buffer.attr("read")());
+        out_string = py::str(_out_buffer.attr("read")());
+        _out_buffer.attr("truncate")(0);
+        _out_buffer.attr("seek")(0);
+        return out_string;
     }
     ~PyStdStreamsRedirect() {
         auto sysm = py::module::import("sys");

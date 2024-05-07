@@ -76,7 +76,7 @@ class AgentFacade():
     
 
     def get_action(self, state_bean, rewards_bean):
-        logging.info("Getting action for state: " + str(state_bean))
+        logging.debug("Getting action for state: " + str(state_bean))
         return self._get_action(state_bean, rewards_bean)
     
     def _get_action(self, state, reward):
