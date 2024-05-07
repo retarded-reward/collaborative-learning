@@ -120,7 +120,8 @@ void Controller::do_nothing()
 {   
     EV_DEBUG << "Performing action do nothing" << endl;
 
-    last_energy_consumed=0;
+    last_energy_consumed[SelectPowerSource::POWER_CHORD]=0;
+    last_energy_consumed[SelectPowerSource::BATTERY]=0;
 
     last_reward=compute_reward();
      EV_DEBUG << "Doing nothing has generated reward: " << last_reward << endl;
@@ -136,32 +137,51 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
     }
     else{
         //TODO Implement the effective send, for now it's only simulated by causing the effects of send like discharge
-        // FIXME: what if the charge in the selected power source is not enough???      
+   
         //Compute consumed energy
+        last_energy_consumed[SelectPowerSource::POWER_CHORD]=0;
+        last_energy_consumed[SelectPowerSource::BATTERY]=0;
+        mWh_t tot_consumed=0;
+        mWh_t battery_level;
+
         for(int i=0; i<num_data; i++){
-            // *8 for bits,
             // TODO: Normalize [0,1] dividing by the energy consumed for the packet of
-            // maximum size
-            std::cout << "Data size: " << (int) data[i]->getData() << std::endl;
-            last_energy_consumed
-             += power_model->calc_tx_consumption_mWs((int) data[i]->getData()*8, link_cap);
+            EV_DEBUG << "Data " << i << " size: " << (int) data[i]->getData() << std::endl;
+            tot_consumed
+             += power_model->calc_tx_consumption_mWs((int) data[i]->getData()*8, link_cap); // *8 for bits,
         }      
         
         //Consume energy
         switch(last_select_power_source){
+
             case SelectPowerSource::BATTERY:
-                power_sources[SelectPowerSource::BATTERY]
-                 ->discharge(num_data*last_energy_consumed); 
+                battery_level = power_sources[SelectPowerSource::BATTERY]->getCharge();
+                //If battery is not enough fallback on power chord
+                if(battery_level<tot_consumed){
+                    last_energy_consumed[SelectPowerSource::BATTERY]=battery_level;
+                    last_energy_consumed[SelectPowerSource::POWER_CHORD]=tot_consumed-battery_level;
+                }
+                else{
+                    last_energy_consumed[SelectPowerSource::BATTERY]=tot_consumed;  
+                }         
                 break;
+
             case SelectPowerSource::POWER_CHORD:
-                power_sources[SelectPowerSource::POWER_CHORD]
-                 ->discharge(num_data*last_energy_consumed);
+                last_energy_consumed[SelectPowerSource::POWER_CHORD]=tot_consumed;
                 break;
+
             default:
                 EV << "Error: do_action power source not recognized" << endl;
                 break;
         }
-        EV_DEBUG << "Consumed energy: " << last_energy_consumed << "mWs from power source: " << last_select_power_source << endl;
+
+        //Discharge energy
+        power_sources[SelectPowerSource::POWER_CHORD]->discharge(last_energy_consumed[SelectPowerSource::POWER_CHORD]); 
+        power_sources[SelectPowerSource::BATTERY]->discharge(last_energy_consumed[SelectPowerSource::BATTERY]);
+        
+        for(int i=0; i<power_sources.size(); i++){
+            EV_DEBUG << "Consumed energy: " << last_energy_consumed[i] << " mWs from power source: " << i << endl;
+        }
         last_reward=compute_reward();
     }
     
@@ -176,13 +196,14 @@ reward_t Controller::compute_reward(){
     vector<RewardTerm *> reward_terms;
 
     // includes energy term
-    include_reward_term("energy_penalty",
-     {
-        {"energy_consumed", cValue(last_energy_consumed)},
-        {"cost_per_mWh", last_select_power_source < 0 ? 0 : 
-         (power_sources[last_select_power_source]->getCostPerMWh())}
-     },reward_terms);
-    EV_DEBUG << "Energy term: " << reward_terms.back()->compute() << endl;
+    for(int i=0; i<power_sources.size(); i++){
+        include_reward_term("energy_penalty",
+         {
+            {"energy_consumed", cValue(last_energy_consumed[i])},
+            {"cost_per_mWh", (power_sources[i]->getCostPerMWh())}
+         }, reward_terms);
+    EV_DEBUG << "Energy term for power source " << i << ": " << reward_terms.back()->compute() << endl;
+    }
     
     // includes queue occ penalties, one term for each priority
     for (int priority = 0; priority < num_queues; priority ++){
@@ -336,6 +357,11 @@ void Controller::init_power_sources()
      ->setCostPerMWh(power_chord_params->get("cost_per_mWh").doubleValue());
     power_sources[SelectPowerSource::POWER_CHORD]->plug();
     EV_DEBUG << "Power chord cost per mWh: " << power_sources[SelectPowerSource::POWER_CHORD]->getCostPerMWh() << endl;
+
+    // init last energy consumed
+    for(int i=0; i<power_sources.size(); i++){
+        last_energy_consumed.push_back(0);
+    }
 
     // init battery charger
     cPar &charge_rate_distribution = par("battery_charge_rate_distribution");
