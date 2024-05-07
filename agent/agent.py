@@ -78,10 +78,9 @@ class AgentFacade():
         return self._get_action(state_bean, rewards_bean)
     
     def _get_action(self, state, reward):
-
         # updates agent policy using reward from previous action
         if(self._last_experience is not None):
-            print("Reward: " + str(reward.reward))
+            #print("Reward: " + str(reward.reward))
             r = tf.constant(value=reward.reward, shape = (), dtype=tf.float32)
             exp = Experience(self._last_experience[0], self._last_experience[1], r)
             train_choose = False
@@ -104,7 +103,7 @@ class AgentFacade():
         self._last_experience = (time_step, action)
 
         action_bean = self._decision_path_to_action_bean(action)
-
+        #print("Action: " + str(action_bean))
         return action_bean
     
     def _decision_path_to_action_bean(self, decision_path):
@@ -126,17 +125,57 @@ class AgentFacade():
 # Test main
 if __name__ == '__main__':
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     agent_desc = ConfParser.parse_agent_from_json(json.load(open("agent/agent_conf.json")))
     agent = AgentFacade(
         agent_description=agent_desc)
     state = StateBean(energy_level=1, queue_state=[1], charge_rate=0)
+    file = open("log.csv", "a")
+    #elimino il contenuto del file
+    file.truncate(0)
+    #metto le colonne
+    file.write("energy_level,queue_state,charge_rate,send_message,power_source,reward\n")
+    reward = RewardBean(0)
     action = agent.get_action(state, None)
-    print("Azione scelta: " + str(action))
-    reward = RewardBean(10)
-    action = agent.get_action(state, reward)
-    print("Azione scelta: " + str(action))
-    reward = RewardBean(10)
-    action = agent.get_action(state, reward)
-    print("Azione scelta: " + str(action))
-    
+    #print("Azione scelta: " + str(action))
+    for i in range(2000):
+        
+        random_energy = np.random.randint(0, 2)
+        random_queue = 0
+        random_charge = 0
+        state = StateBean(energy_level=random_energy, queue_state=[random_queue], charge_rate=random_charge)
+        action = agent.get_action(state, reward)
+        #print("Azione scelta: " + str(action))
+        if(state.energy_level >= 0.5 and action.send_message == ActionBean.SendEnum.SEND_MESSAGE):
+            reward = RewardBean(1)
+        elif(state.energy_level < 0.5 and action.send_message == ActionBean.SendEnum.DO_NOTHING):
+            reward = RewardBean(1)
+        else:
+            reward = RewardBean(-1)
+        #creo un log in un file csv in cui segno lo stato e l'azione scelta e la reward ricevuta
+        file.write(str(state.energy_level) + "," + str(state.queue_state) + "," + str(state.charge_rate) + "," + str(action.send_message) + "," + str(action.power_source) + "," + str(reward.reward) + "\n")
+    '''
+    import pandas as pd
+
+    df = pd.read_csv('log.csv')
+    print(df)
+    #prendo solo la colonna della reward
+    reward = df['reward']
+
+    #trasformo tutti i -1000 in -1
+    #reward = reward.replace(-10000, -1)
+
+    #faccio un dataframe con la reward comulativa per ogni istante
+    cumulative_reward_df = pd.DataFrame()
+    for i in range(0, len(reward)):
+        cumulative_reward_df.at[i, 'cumulative_reward'] = reward[0:i].sum()
+
+    #faccio un grafico
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=(10, 5))
+    plt.plot(cumulative_reward_df)
+    plt.xlabel('Time step')
+    plt.ylabel('Cumulative reward')
+    plt.show()
+    '''
     

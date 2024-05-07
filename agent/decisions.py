@@ -145,7 +145,7 @@ class DecisionTreeConsultant():
         """
         self._replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
             data_spec=self._agent.collect_data_spec,
-            batch_size=1,
+            batch_size=32,
             max_length=1000)
 
     def _deduce_consultant_state(self, parent_state : Tensor) -> Tensor:
@@ -215,7 +215,7 @@ class DecisionTreeConsultant():
                 discount=tf.constant(value=1, shape=(), dtype=tf.float32)
             )
             
-            values_batched = tf.nest.map_structure(lambda t: tf.stack([t]), trajectory)
+            values_batched = tf.nest.map_structure(lambda t: tf.stack([t] * 32), trajectory)
             self._replay_buffer.add_batch(values_batched)
         
             # train all and only consultants that are part of the decision path.
@@ -228,9 +228,9 @@ class DecisionTreeConsultant():
                 next_consultant.train([e], next_decision_path_level, train)
 
         if train:
-            dataset = self._replay_buffer.as_dataset(sample_batch_size=1, num_steps=2)
+            dataset = self._replay_buffer.as_dataset(sample_batch_size=4, num_steps=2)
             iterator = iter(dataset)
-            for _ in range(1):
+            for _ in range(4):
                 t, _ = next(iterator)
                 self._agent.train(experience=t)
 

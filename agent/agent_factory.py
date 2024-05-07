@@ -23,13 +23,15 @@ class AgentFactory():
                 return random_agent.RandomAgent(time_step_spec, action_spec)
             case AgentEnum.DQN_AGENT:
                 fc_layer_params = (100, 50)
-                learning_rate = 0.001
+                learning_rate = 1e-3
                 train_step_counter = tf.Variable(0)
 
                 #dense_layers = [AgentFactory._dense_layer(num_units) for num_units in fc_layer_params]
                 dense_layers = [
                     tf.keras.layers.Flatten(input_shape=[3, 1]),
-                    tf.keras.layers.Dense(3, activation=tf.keras.activations.relu)
+                    AgentFactory._dense_layer(100),
+                    AgentFactory._dense_layer(50),
+                    AgentFactory._dense_layer(20)
                 ]
                 print("FIRST DENSE LAYER: " + str(dense_layers[0].get_config()))
                 q_values_layer = tf.keras.layers.Dense(
@@ -86,7 +88,8 @@ class AgentFactory():
                     q_network=q_net,
                     optimizer=optimizer,
                     td_errors_loss_fn=common.element_wise_squared_loss,
-                    train_step_counter=train_step_counter)
+                    train_step_counter=train_step_counter,
+                    epsilon_greedy=0.01)
 
             case _:
                 raise Exception("Agent type not supported")
