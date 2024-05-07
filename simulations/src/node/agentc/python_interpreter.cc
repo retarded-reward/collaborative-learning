@@ -1,8 +1,5 @@
 #include "python_interpreter.h"
-#include <pybind11/embed.h>
 #include <stdlib.h>
-
-namespace py = pybind11;
 
 PythonInterpreter* PythonInterpreter::instance = nullptr;
 
@@ -29,6 +26,9 @@ void PythonInterpreter::setup()
     py::object path = sys.attr("path");
     path.attr("append")(agent_path);
 
+    // Redirects python stdout and stderr to C++ stream
+    pyStdStreamsRedirect = new PyStdStreamsRedirect();
+
 }
 
 void PythonInterpreter::use()
@@ -41,6 +41,8 @@ void PythonInterpreter::use()
 
 void PythonInterpreter::teardown()
 {
+    delete pyStdStreamsRedirect;
+    
     py::finalize_interpreter();
 }
 
