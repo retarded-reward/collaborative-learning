@@ -54,6 +54,10 @@ void AgentClientPybind::handleActionRequest(ActionRequest *msg)
     // interrogates agent for the next action
     action_bean = this->agent.attr("get_action")(state_bean, reward_bean);
 
+    // prints output of the agent to console
+    EV_DEBUG << "Agent output:" << endl;
+    EV_DEBUG << PythonInterpreter::getInstance()->pyStdStreamsRedirect->outString();
+    EV_DEBUG << "end of agent output" << endl;
     // converts the action bean in a ActionResponse message and send it
     // back to the controller
     response = new ActionResponse();

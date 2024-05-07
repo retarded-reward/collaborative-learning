@@ -1,6 +1,38 @@
 #ifndef PYTHON_INTERPRETER_H
 #define PYTHON_INTERPRETER_H
 
+#include <pybind11/embed.h>
+#include "cpp_visibility_tools.h"
+
+namespace py = pybind11;
+
+// https://github.com/pybind/pybind11/issues/1622#issuecomment-452718093
+class DLL_LOCAL PyStdStreamsRedirect {
+    py::object _stdout;
+    py::object _stderr;
+    py::object _out_buffer;
+public:
+    PyStdStreamsRedirect() {
+        auto sysm = py::module::import("sys");
+        _stdout = sysm.attr("stdout");
+        _stderr = sysm.attr("stderr");
+        auto stringio = py::module::import("io").attr("StringIO");
+        _out_buffer = stringio();  // Other filelike object can be used here as well, such as objects created by pybind11
+        // stderr and stdout buffers are merged
+        sysm.attr("stdout") = _out_buffer;
+        sysm.attr("stderr") = _out_buffer;
+    }
+    std::string outString() {
+        _out_buffer.attr("seek")(0);
+        return py::str(_out_buffer.attr("read")());
+    }
+    ~PyStdStreamsRedirect() {
+        auto sysm = py::module::import("sys");
+        sysm.attr("stdout") = _stdout;
+        sysm.attr("stderr") = _stderr;
+    }
+};
+
 /*
     Singleton holder for references to the python interpreter used to 
     run the agent.
@@ -9,7 +41,7 @@
     When the object knows that it will no longer use the python interpreter, it must
     call the put() method.
 */
-class PythonInterpreter{
+class DLL_LOCAL PythonInterpreter{
 
     private:
         static PythonInterpreter* instance; // do not destroy before all users called the put() method
@@ -23,6 +55,9 @@ class PythonInterpreter{
         void teardown();
 
     public:
+        
+        PyStdStreamsRedirect *pyStdStreamsRedirect;
+
         static PythonInterpreter* getInstance();
         /**
          * Increments by one the number of users of the python interpreter.

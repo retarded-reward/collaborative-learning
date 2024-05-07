@@ -23,6 +23,8 @@ import json
 import os
 import logging
 
+logging.root.setLevel(logging.DEBUG)
+
 class AgentFacade():
     
     
