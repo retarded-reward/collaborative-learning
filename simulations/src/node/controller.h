@@ -115,7 +115,7 @@ class Controller : public cSimpleModule
     s_t ask_action_timeout_delta;
     int data_buffer_capacity;
     int max_neighbours;
-    float link_cap;
+    Mbps_t link_cap;
     s_t charge_battery_timeout_delta;
     cValueMap *power_models;
     cValueMap *power_source_models;
@@ -141,6 +141,7 @@ class Controller : public cSimpleModule
     */
     void do_action(ActionResponse *action);    
     void forward_data(const DataMsg *data[], size_t num_data);
+    void _forward_data(const DataMsg *data[], size_t num_data);
     void do_nothing();
     /**Action Event Flow (END)*/
     

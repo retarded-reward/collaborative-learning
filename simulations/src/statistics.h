@@ -11,6 +11,8 @@ using namespace std;
 // Choose negative powers of 2 to improve perfomance
 #define EWMA_ALPHA_DEFAULT 0.25
 
+#define swallow_if_nan(_value) if (isnan(_value)) return false
+
 /**
  * The Exponential Weighted Moving Average is a special kind of
  * average that gives more weight to recent values
@@ -23,7 +25,15 @@ class EWMAFilter : public cNumericResultFilter
     double alpha;
     double average;
 
-    virtual bool process(simtime_t& t, double& value, cObject *details);
+    virtual bool process(simtime_t& t, double& value, cObject *details)
+    {
+      swallow_if_nan(value);
+
+      average = (1 - alpha) * average + (alpha * value);
+      value = average;
+
+      return true;
+    }
 
   public:
     EWMAFilter()
@@ -31,20 +41,63 @@ class EWMAFilter : public cNumericResultFilter
         alpha = EWMA_ALPHA_DEFAULT;
         average = 0;
     }
-  
 };
 
-bool EWMAFilter::process(simtime_t& t, double& value, cObject *details)
+/**
+ * Computes the time elapsed between the given time value and the last time value
+ * used with this filter.
+*/
+class sinceLastFilter : public cNumericResultFilter
 {
-    if (isnan(value)) return false;
+  protected:
+    simtime_t last_time;
 
-    average = (1 - alpha) * average + (alpha * value);
-    value = average;
+    
+    virtual bool process(simtime_t& t, double& value, cObject *details)
+    {
+      simtime_t inter_time;
 
-    return true;
-}
+      inter_time = t - last_time;
+      last_time = t;
+      value = inter_time.dbl();
+
+      EV_DEBUG << "value: " << value << "\n";
+
+      return true;
+    }
+
+  public:
+    sinceLastFilter()
+    {
+        last_time = 0;
+    }
+};
+
+/**
+ * Filter that outputs the sum of signal values divided by the measurement
+ * interval (simtime).
+ */
+class SumPerSimtimeFilter : public cNumericResultFilter
+{
+    protected:
+        double sum;
+    protected:
+        virtual bool process(simtime_t& t, double& value, cObject *details)
+        {
+          sum += value;
+          value = sum / simTime().dbl();
+          return true;
+        }
+    public:
+        SumPerSimtimeFilter() {sum = 0;}
+};
+
+Register_ResultFilter("sumPerDuration", SumPerSimtimeFilter);
+
 
 Register_ResultFilter("ewma", EWMAFilter);
+Register_ResultFilter("sinceLast", sinceLastFilter);
+Register_ResultFilter("sumPerSimtime", SumPerSimtimeFilter);
 
 /**
  * Measures a named quantity needed for a statistic computation.
@@ -52,21 +105,5 @@ Register_ResultFilter("ewma", EWMAFilter);
  * Must be called from a cComponent object.
 */
 #define measure_quantity(_name, _value) emit(registerSignal(_name), _value)
-
-/**
- * Measures a named time span needed for a statistic computation.
- * 
- * Must be called from a cComponent object.
-*/
-#define measure_time(_name, _code)\
-do {\
-    simtime_t _start;\
-    simtime_t _elapsed;\
-    \
-    _start = simTime();\
-    _code;\
-    _elapsed = simTime() - _start;\
-    measure_quantity(_name, _elapsed);\
-} while (0)
 
 #endif // STATISTICS_H

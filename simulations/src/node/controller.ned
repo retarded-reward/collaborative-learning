@@ -28,16 +28,6 @@ simple Controller
         volatile double battery_charge_rate_distribution;
         double charge_battery_timeout_delta @unit(s);
 
-        // statistics
-        @statistic[avg_cost_per_mWh](source=sum(energy_expense)/sum(energy_consumption); record=mean; checkSignals=false);
-
-        @statistic[ewma_energy_expense_per_mWh_over_time](source=ewma(sum(energy_expense)/(sum(energy_consumption))); record=vector; checkSignals=false);
-        @statistic[ewma_energy_expense_per_second_over_time](source=ewma(sumPerDuration(energy_expense)); record=vector; checkSignals=false);
-        @statistic[energy_consumption_per_second_over_time](source=sumPerDuration(energy_consumption); record=vector; checkSignals=false);
-        //@statistic[avg_utilization_over_time](source=timeavg(avg_arrival_rate/avg(service_interval)) * 100; record=vector; checkSignals=false);
-        @statistic[battery_charge_level_over_time](source=battery_charge_level; record=vector; checkSignals=false);
-        @statistic[cumulative_reward_over_time](source=sum(reward); record=vector; checkSignals=false);
-        @statistic[reward_over_time](source=reward; record=vector; checkSignals=false);
 
     gates:
         output network_port[number_of_ports];

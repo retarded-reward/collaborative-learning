@@ -136,61 +136,76 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
     
     EV_DEBUG << "Performing action send data" << endl;
 
+    s_t service_interval = 0;
+    b_t data_bits;
+
     //No data to send
     if(num_data==0){
         last_reward=-1000;
     }
     else{
         //TODO Implement the effective send, for now it's only simulated by causing the effects of send like discharge
-   
-        //Compute consumed energy
-        last_energy_consumed[SelectPowerSource::POWER_CHORD]=0;
-        last_energy_consumed[SelectPowerSource::BATTERY]=0;
-        mWh_t tot_consumed=0;
-        mWh_t battery_level;
+        _forward_data(data, num_data);
 
-        for(int i=0; i<num_data; i++){
-            // TODO: Normalize [0,1] dividing by the energy consumed for the packet of
-            EV_DEBUG << "Data " << i << " size: " << (int) data[i]->getData() << std::endl;
-            tot_consumed
-             += power_model->calc_tx_consumption_mWs((int) data[i]->getData()*8, link_cap); // *8 for bits,
-        }      
-        
-        //Consume energy
-        switch(last_select_power_source){
-
-            case SelectPowerSource::BATTERY:
-                battery_level = power_sources[SelectPowerSource::BATTERY]->getCharge();
-                //If battery is not enough fallback on power chord
-                if(battery_level<tot_consumed){
-                    last_energy_consumed[SelectPowerSource::BATTERY]=battery_level;
-                    last_energy_consumed[SelectPowerSource::POWER_CHORD]=tot_consumed-battery_level;
-                }
-                else{
-                    last_energy_consumed[SelectPowerSource::BATTERY]=tot_consumed;  
-                }         
-                break;
-
-            case SelectPowerSource::POWER_CHORD:
-                last_energy_consumed[SelectPowerSource::POWER_CHORD]=tot_consumed;
-                break;
-
-            default:
-                EV << "Error: do_action power source not recognized" << endl;
-                break;
+        for (int i = 0; i < num_data; i++){
+            data_bits = data[i]->getData() * 8;
+            service_interval += data_bits * 1e-6 / link_cap;
         }
-
-        //Discharge energy
-        power_sources[SelectPowerSource::POWER_CHORD]->discharge(last_energy_consumed[SelectPowerSource::POWER_CHORD]); 
-        power_sources[SelectPowerSource::BATTERY]->discharge(last_energy_consumed[SelectPowerSource::BATTERY]);
+        if (service_interval > 0)
+            measure_quantity("service_interval", service_interval);
         
-        for(int i=0; i<power_sources.size(); i++){
-            EV_DEBUG << "Consumed energy: " << last_energy_consumed[i] << " mWs from power source: " << i << endl;
-        }
         last_reward=compute_reward();
     }
     
     EV_DEBUG << "Sending message has generated reward: " << last_reward << endl;
+}
+
+void Controller::_forward_data(const DataMsg *data[], size_t num_data)
+{
+    //Compute consumed energy
+    last_energy_consumed[SelectPowerSource::POWER_CHORD]=0;
+    last_energy_consumed[SelectPowerSource::BATTERY]=0;
+    mWh_t tot_consumed=0;
+    mWh_t battery_level;
+
+    for(int i=0; i<num_data; i++){
+        // TODO: Normalize [0,1] dividing by the energy consumed for the packet of
+        EV_DEBUG << "Data " << i << " size: " << (int) data[i]->getData() << std::endl;
+        tot_consumed
+            += power_model->calc_tx_consumption_mWs((int) data[i]->getData()*8, link_cap); // *8 for bits,
+    }      
+    
+    //Consume energy
+    switch(last_select_power_source){
+
+        case SelectPowerSource::BATTERY:
+            battery_level = power_sources[SelectPowerSource::BATTERY]->getCharge();
+            //If battery is not enough fallback on power chord
+            if(battery_level<tot_consumed){
+                last_energy_consumed[SelectPowerSource::BATTERY]=battery_level;
+                last_energy_consumed[SelectPowerSource::POWER_CHORD]=tot_consumed-battery_level;
+            }
+            else{
+                last_energy_consumed[SelectPowerSource::BATTERY]=tot_consumed;  
+            }         
+            break;
+
+        case SelectPowerSource::POWER_CHORD:
+            last_energy_consumed[SelectPowerSource::POWER_CHORD]=tot_consumed;
+            break;
+
+        default:
+            EV << "Error: do_action power source not recognized" << endl;
+            break;
+    }
+
+    //Discharge energy
+    power_sources[SelectPowerSource::POWER_CHORD]->discharge(last_energy_consumed[SelectPowerSource::POWER_CHORD]); 
+    power_sources[SelectPowerSource::BATTERY]->discharge(last_energy_consumed[SelectPowerSource::BATTERY]);
+    
+    for(int i=0; i<power_sources.size(); i++){
+        EV_DEBUG << "Consumed energy: " << last_energy_consumed[i] << " mWs from power source: " << i << endl;
+    }
 }
 
 reward_t Controller::compute_reward(){
@@ -301,13 +316,24 @@ void Controller::measure_quantities()
 {
     mWh_t energy_consumption = 0;
     reward_t energy_expense = 0;
+    percentage_t energy_potential_expense = 0;
+    PowerSource *most_expensive_power_source = power_sources[0];
+
+    // find most expensive power source
+    for (PowerSource *power_source : power_sources){
+        if (power_source->getCostPerMWh() > most_expensive_power_source->getCostPerMWh()){
+            most_expensive_power_source = power_source;
+        }
+    }
 
     for (int i = 0; i < power_sources.size(); i++){
         energy_consumption += last_energy_consumed[i];
         energy_expense += last_energy_consumed[i] * power_sources[i]->getCostPerMWh();
+        energy_potential_expense += last_energy_consumed[i] * most_expensive_power_source->getCostPerMWh();
     }
     measure_quantity("energy_expense", energy_expense);
-    measure_quantity("energy_consumption", (energy_consumption)? energy_consumption : 1);
+    measure_quantity("energy_consumption", energy_consumption);
+    measure_quantity("energy_potential_expense", energy_potential_expense);
     
     measure_quantity("battery_charge_level",
      power_sources[SelectPowerSource::BATTERY]->getCharge());
