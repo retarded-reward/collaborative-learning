@@ -13,8 +13,8 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef __DEMO_NODE_H_
-#define __DEMO_NODE_H_
+#ifndef SRC_CONTROLLER_H
+#define SRC_CONTROLLER_H
 
 #include <omnetpp.h>
 #include "DataMsg_m.h"
