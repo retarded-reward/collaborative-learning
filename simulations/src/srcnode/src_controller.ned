@@ -5,6 +5,7 @@ simple SrcController
 {
     parameters:
         volatile double send_interval;
+        double avg_arrival_rate;
         int min_pkt_size;
         int max_pkt_size;
     gates:

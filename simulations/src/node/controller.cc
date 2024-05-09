@@ -22,6 +22,7 @@
 #include "power/random_charger.h"
 #include "QueueDataRequest_m.h"
 #include <cstddef>
+#include "statistics.h"
 
 Define_Module(Controller);
 
@@ -46,6 +47,10 @@ void Controller::ask_action(){
     
     EV_DEBUG << "Asking for action" << endl;
 
+    // We consider a timestep the elapsed time between two sending of action requests
+    // so we measure quantities at the beginning of the timestep
+    measure_quantities();
+    
     // sample state in a action request object and send it to the agent client
     ar = new ActionRequest();
     sample_state(ar->getStateForUpdate());
@@ -290,6 +295,24 @@ void Controller::sample_queue_states(NodeStateMsg &state_msg)
 void Controller::sample_reward(RewardMsg &reward_msg)
 {
     reward_msg.setValue(last_reward);
+}
+
+void Controller::measure_quantities()
+{
+    mWh_t energy_consumption = 0;
+    reward_t energy_expense = 0;
+
+    for (int i = 0; i < power_sources.size(); i++){
+        energy_consumption += last_energy_consumed[i];
+        energy_expense += last_energy_consumed[i] * power_sources[i]->getCostPerMWh();
+    }
+    measure_quantity("energy_expense", energy_expense);
+    measure_quantity("energy_consumption", (energy_consumption)? energy_consumption : 1);
+    
+    measure_quantity("battery_charge_level",
+     power_sources[SelectPowerSource::BATTERY]->getCharge());
+    measure_quantity("reward", last_reward);
+
 }
 
 void Controller::init_timers()

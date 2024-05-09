@@ -30,3 +30,9 @@ source $OMNETPP_PATH/setenv
 ```
 /usr/bin/cmake --build $PROJECT_PATH/bin --config Debug --target run_collaborative-learning-sim -j 14
 ```
+
+## Analyzing results
+
+Statistics are recorderd in the `results` folder.
+
+To analyze statistics, open the `results/General.anf` in the Omnet++ IDE and use its Analysys Tool.
