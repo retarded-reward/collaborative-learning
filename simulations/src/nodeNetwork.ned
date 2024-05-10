@@ -23,11 +23,13 @@ network NodeNetwork
 {	
     parameters:
         int number_of_nodes @value(number_of_nodes);//= default(1);
+        int number_of_queues @value(number_of_queues);
     submodules:
         node[number_of_nodes]: Node;
-        srcNode[2]: SrcNode;
+        srcNode[number_of_queues]: SrcNode;
     connections allowunconnected:
-        srcNode[0].data_out[0] --> node[0].queue_ports[0];
-        srcNode[1].data_out[0] --> node[0].queue_ports[1];
+        for i=0..number_of_queues-1 {
+            srcNode[i].data_out[0] --> node[0].queue_ports[i];
+        }
               
 }

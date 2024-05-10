@@ -25,14 +25,10 @@ class SrcController : public cSimpleModule
 {
   protected:
     int message_count;
-    int min_pkt_size;
-    int max_pkt_size;
   protected:
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
     void sendData();
-  private:
-    float randomDataGenerator(float max);
     int randomIntGenerator(int min, int max);
 };
 

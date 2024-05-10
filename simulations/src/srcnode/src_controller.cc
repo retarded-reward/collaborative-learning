@@ -16,15 +16,13 @@
 #include "src_controller.h"
 #include "SimulationMsg_m.h"
 #include "DataMsg_m.h"
+#include <cmath>
 
 Define_Module(SrcController);
 
 //Node behaviour when started
 void SrcController::initialize()
 {
-    min_pkt_size = par("min_pkt_size");
-    max_pkt_size = par("max_pkt_size");
-    srand(0);	
     message_count = 0;
     //Send message to node itself cause can't enter loop in initialize
     scheduleAt(simTime(), new cMessage());
@@ -40,11 +38,6 @@ void SrcController::handleMessage(cMessage *msg)
     
 }
 
-float SrcController::randomDataGenerator(float max)
-{
-    float data = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/max));
-    return data;
-}
 
 int SrcController::randomIntGenerator(int min, int max)
 {
@@ -59,7 +52,8 @@ void SrcController::sendData()
     int n = gateSize("network_port");
     int neigh = randomIntGenerator(0, n-1);
     DataMsg *data = new DataMsg();
-    float data_size = randomIntGenerator(min_pkt_size, max_pkt_size);
+    float data_size = ceil(par("pkt_size").doubleValue());
+    EV_DEBUG << "Sending data of size " << data_size << " to node " << neigh << "\n";
     data->setData(data_size);
     message_count++;
     send(data, "network_port", neigh);
