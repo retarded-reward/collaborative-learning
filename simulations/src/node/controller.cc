@@ -149,6 +149,7 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
         //TODO Implement the effective send, for now it's only simulated by causing the effects of send like discharge
         _forward_data(data, num_data);
 
+        // calcs service interval
         for (int i = 0; i < num_data; i++){
             data_bits = data[i]->getData() * 8;
             service_interval += data_bits * 1e-6 / link_cap;
@@ -171,7 +172,6 @@ void Controller::_forward_data(const DataMsg *data[], size_t num_data)
     mWh_t battery_level;
 
     for(int i=0; i<num_data; i++){
-        // TODO: Normalize [0,1] dividing by the energy consumed for the packet of
         EV_DEBUG << "Data " << i << " size: " << (int) data[i]->getData() << std::endl;
         tot_consumed
             += power_model->calc_tx_consumption_mWs((int) data[i]->getData()*8, link_cap); // *8 for bits,
@@ -217,6 +217,10 @@ reward_t Controller::compute_reward(){
     reward_t reward = 0;
     vector<RewardTerm *> reward_terms;
 
+    double max_energy_penalty; 
+    double max_pkt_drop_penalty;
+    double max_queue_occ_penalty;
+
     /**
      * To normalize the reward terms, we need to know the maximum value
      * for each term. To compute it, we must leverage the same signal used by the
@@ -225,12 +229,10 @@ reward_t Controller::compute_reward(){
      * The weight must be 1 since the normalization happens before applying the weight
      * to the signal value.
     */
-    double max_energy_penalty; 
-    double max_pkt_drop_penalty;
-    double max_queue_occ_penalty;
 
     // includes energy term
-    for(int i=0; i<power_sources.size(); i++){
+    for(int i=0; i<power_sources.size(); i++)
+    {
         set_if_greater(max_energy_consumed, last_energy_consumed[i]);
         max_energy_penalty
             = RewardTerm(reward_term_models, "energy_penalty").bind_symbols(
@@ -250,7 +252,8 @@ reward_t Controller::compute_reward(){
     }
     
     // includes queue occ penalties, one term for each priority
-    for (int priority = 0; priority < num_queues; priority ++){
+    for (int priority = 0; priority < num_queues; priority ++)
+    {
         max_queue_occ_penalty
          = RewardTerm(reward_term_models, "queue_occ_penalty").bind_symbols(
          {
@@ -270,7 +273,8 @@ reward_t Controller::compute_reward(){
     }
 
     // includes pkt drop penalties, one term for each priority
-    for (int priority = 0; priority < num_queues; priority ++){
+    for (int priority = 0; priority < num_queues; priority ++)
+    {
         max_pkt_drop_penalty
          = RewardTerm(reward_term_models, "pkt_drop_penalty").bind_symbols(
          {
@@ -292,7 +296,8 @@ reward_t Controller::compute_reward(){
     }
 
     // computes reward by consuming and reducing all included reward terms
-    for (RewardTerm *reward_term : reward_terms){
+    for (RewardTerm *reward_term : reward_terms)
+    {
         EV_DEBUG << "reward term: " << reward_term->compute() << endl;
         reward = reward + reward_term->compute();
         EV_DEBUG << "partial reward: " << reward << endl;
