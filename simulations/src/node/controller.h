@@ -31,9 +31,58 @@
 using namespace omnetpp;
 using namespace std;
 
+#define set_if_greater(_actual, _candidate) if (_candidate > _actual) _actual = _candidate  
+
 struct QueueState {
   percentage_t occupancy;
   int pkt_drop_cnt;
+  int max_pkt_drop_cnt;
+};
+
+/**
+ * Normalizer is an abstract class that defines a method to normalize a value.
+ * 
+ * Normalization is the process of scaling and centering variables.
+ * This can be useful when the variables have different units or scales.
+ * 
+ * For example, if we have two variables, one in the range [0, 100] and the other
+ * in the range [0, 1000], the second variable will have a greater impact on the
+ * computation of the reward.
+ * 
+ * Normalization can be used to scale the variables to the same range, so that
+ * they have the same impact on the computation of the reward.
+*/
+class Normalizer {
+
+  public:
+    virtual double normalize(double value) { return value; };
+};
+
+/**
+ * Restricts values from range [min, max] to [a, b]
+ * https://en.m.wikipedia.org/wiki/Feature_scaling#Rescaling_(min-max_normalization)
+ * 
+ * For example, if we want to transform values in percentages:
+ * 
+ * Normalizer *normalizer = new MinMaxNormalizer(0, max, 0, 1);
+ * double percentage = normalizer->normalize(value) * 100;
+*/
+class MinMaxNormalizer : public Normalizer {
+
+  private:
+    double min;
+    double max;
+    double a;
+    double b;
+
+  public:
+    MinMaxNormalizer(double min, double max) : MinMaxNormalizer(min, max, 0, 1) {}
+    MinMaxNormalizer(double min, double max, double a, double b)
+     : min(min), max(max), a(a), b(b) {}
+
+    double normalize(double value) override {
+      return ((value - min) * (b - a)) / ((max - min)? absolute(max - min) : 1);
+    }
 };
 
 /**
@@ -54,27 +103,37 @@ class RewardTerm {
 protected:
   reward_t weight;
   cOwnedDynamicExpression *signal;
+  Normalizer *normalizer;
 
 public:
   RewardTerm(reward_t weight, cOwnedDynamicExpression *signal)
-   : weight(weight), signal(signal) {}
+   : weight(weight), signal(signal) {
+    normalizer = new Normalizer();
+   }
   RewardTerm(cValueMap *reward_term_map)
    : RewardTerm(reward_term_map->get("weight").doubleValue(),
     (cOwnedDynamicExpression *)reward_term_map->get("signal").objectValue()) {}
   RewardTerm(cValueMap *reward_term_models, const char *reward_term_model_name)
    : RewardTerm((cValueMap *) reward_term_models->get(reward_term_model_name)
     .objectValue()) {}
-
-  void bind_symbols(map<string, cValue> symbols){
+  
+  RewardTerm *bind_symbols(map<string, cValue> symbols){
     // resolver is owned by the dynamic expression, no need to delete it
     // before setting a new one
     signal->setResolver(new cDynamicExpression::SymbolTable(symbols));
+    return this;
   }
 
   reward_t compute() {
+    
+    reward_t normalized;
+    
     if (signal->getResolver() == nullptr)
       throw cRuntimeError("Signal resolver is not set. Call bind_symbols() first.");
-    return weight * signal->doubleValue();
+    
+    normalized = normalizer->normalize(signal->doubleValue());
+    return weight * normalized;
+    //return isnan(normalized)? 0 : weight * normalized;
   }
 
   reward_t getWeight() const {
@@ -83,6 +142,17 @@ public:
 
   cOwnedDynamicExpression* getSignal() const {
     return signal;
+  }
+
+  RewardTerm *setWeight(reward_t weight) {
+    this->weight = weight;
+    return this;
+  }
+
+  RewardTerm *setNormalizer(Normalizer *normalizer) {
+    delete this->normalizer;
+    this->normalizer = normalizer;
+    return this;
   }
 
 };
@@ -102,6 +172,10 @@ class Controller : public cSimpleModule
     Timeout *ask_action_timeout;
     Timeout *charge_battery_timeout;
 
+    B_t max_packet_size = 0;
+    mWh_t max_energy_consumed = 0;
+    reward_t max_reward = 0;
+
     /**
      * The i-th element of this vector represents the up-to-date state
      * of the i-th queue.
@@ -120,6 +194,7 @@ class Controller : public cSimpleModule
     cValueMap *power_models;
     cValueMap *power_source_models;
     cValueMap *reward_term_models;
+    reward_t illegal_action_penalty_factor;
 
     /* Module parameters (END)*/
     
@@ -205,9 +280,22 @@ class Controller : public cSimpleModule
      * user provided vector of reward terms.
      * The symbols used in the RewardTerm signal are bound to the values provided
      * in the symbols map.
+     * Values computed by the signal are normalized using the provided normalizer.
     */
     void include_reward_term(const char* reward_term_model_name,
-    map<string, cValue> symbols, vector<RewardTerm *> &reward_terms);
+    map<string, cValue> symbols, vector<RewardTerm *> &reward_terms, 
+     Normalizer *normalizer);
+    /**
+     * Includes a term in the reward computation without normalization.
+    */
+    void include_reward_term(const char* reward_term_model_name,
+     map<string, cValue> symbols, vector<RewardTerm *> &reward_terms);
+    
+    inline reward_t illegal_action_penalty()
+    {
+      return max_reward * illegal_action_penalty_factor;
+    }
+
     /**
      * Updates tracked state of corresponing queue
     */

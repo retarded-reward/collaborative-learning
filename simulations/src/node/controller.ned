@@ -27,7 +27,10 @@ simple Controller
         object power_source_models;
         volatile double battery_charge_rate_distribution;
         double charge_battery_timeout_delta @unit(s);
-
+        
+        // the illegal action penalty is the max measured reward times
+        // this factor.
+        double illegal_action_penalty_factor;
 
     gates:
         output network_port[number_of_ports];
