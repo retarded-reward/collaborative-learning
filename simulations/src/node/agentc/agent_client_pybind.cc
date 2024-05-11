@@ -34,7 +34,7 @@ void AgentClientPybind::reward_msg_to_bean(const RewardMsg &msg, py::object rewa
 void AgentClientPybind::action_bean_to_msg(py::object bean, ActionResponse *msg){
 
     msg->setSend_message(bean.attr("send_message").cast<bool>());
-    msg->setSelect_power_source((SelectPowerSource)(bean.attr("power_source").cast<int>() - 1));
+    msg->setSelect_power_source((SelectPowerSource)(bean.attr("power_source").cast<int>()));
     msg->setQueue(bean.attr("queue").cast<int>());
 }
 

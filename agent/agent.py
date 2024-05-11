@@ -14,7 +14,7 @@ from tf_agents.utils import common
 from decisions import DecisionTreeConsultant
 from decisions import Experience
 from typing import Callable, Union
-
+from tf_agents.trajectories.policy_step import PolicyStep
 from beans import ActionBean, RewardBean, StateBean
 
 from agent_factory import AgentEnum, AgentFactory
@@ -25,13 +25,93 @@ import logging
 
 logging.root.setLevel(logging.DEBUG)
 
+class StubbornAgent():
+    """
+    A constant agent that always returns the same action.
+    """
+
+    def __init__(self, action: int):
+        self._action = PolicyStep(action)
+        self.policy = self
+
+    def action(self, time_step: TimeStep):
+        return self._action
+    
+    def train(self, experience: types.TimeStep):
+        # too stubborn to learn
+        pass
+    
 class AgentFacade():
 
+    def _init_agent_config(self, agent_description_path: str, agent_description):
+        if(agent_description_path == None):
+            agent_description_path = os.environ.get('AGENT_PATH') + "/agent_conf.json"
+        if(agent_description == None):
+            self._agent_description = ConfParser.parse_agent_from_json(json.load(open(agent_description_path)))
+
+    def _init_specs(self):
+
+        self._observation_spec = StateBean.observation_spec(self._n_queues)
+
+        self._action_spec_root = tensor_spec.BoundedTensorSpec(
+            shape=(),
+            dtype=tf.int32, 
+            minimum=0,
+            maximum=1, 
+            name = "choose_action")
+        
+        self._action_spec_choose_queue = tensor_spec.BoundedTensorSpec(
+            shape = (),
+            dtype=tf.int32,
+            minimum=0,
+            maximum=self._n_queues - 1,
+            name="choose_queue"
+        )
+
+        self._action_spec_choose_power_source = tensor_spec.BoundedTensorSpec(
+            shape=(),
+            dtype=tf.int32, 
+            minimum=0, 
+            maximum=1, 
+            name = "choose_power_source"
+        )
+
+        self._time_step_spec = ts.time_step_spec(self._observation_spec)
+    
+    def _init_decision_tree(self) -> DecisionTreeConsultant:
+        
+        agent_root = AgentFactory.create_agent(
+            agent_description = self._agent_description, 
+            time_step_spec = self._time_step_spec,
+            action_spec = self._action_spec_root)
+        agent_queue = AgentFactory.create_agent(
+            agent_description = self._agent_description, 
+            time_step_spec = self._time_step_spec,
+            action_spec = self._action_spec_choose_queue)
+        agent_power_source = AgentFactory.create_agent(
+            agent_description = self._agent_description, 
+            time_step_spec = self._time_step_spec,
+            action_spec = self._action_spec_choose_power_source)
+        
+        # root: {do_nothing, send_message}
+        # send_message: {queue_0, queue_1, ...}
+        # queue_i: {power_source_0, power_source_1}
+        self._root = DecisionTreeConsultant(agent_root, "root")
+        # since action values can be provided only by leaves of the tree, the root
+        # must have a leaf for the do_nothing action. This is implemented as a
+        # consultant wrapping a StubbornAgent that always returns 0 (can be ignored).        
+        self._root.add_choice(DecisionTreeConsultant(StubbornAgent(0), "do_nothing"))
+        queue_consultant = DecisionTreeConsultant(agent_queue, "choose_queue")
+        self._root.add_choice(queue_consultant)
+        for i in range(self._n_queues):
+            queue_consultant.add_choice(DecisionTreeConsultant(
+                agent_power_source, f"power_source_for_queue_{i}"))
+    
     def __init__(self, 
             n_queues = 1,
             agent_description_path = None,
             agent_description = None, 
-            train_frequency = 2):
+            ):
         """
         Initializes the Agent object.
 
@@ -39,39 +119,19 @@ class AgentFacade():
             n_queues (int): Number of queues.
             agent_description_path (str): Path to the agent description JSON file.
             agent_description (dict): Agent description dictionary. If None, it will be parsed from the JSON file.
-            train_frequency (int): Frequency of training.
 
         Returns:
             None
         """
         #printo il path assoluto
-        if(agent_description_path == None):
-            agent_description_path = os.environ.get('AGENT_PATH') + "/agent_conf.json"
+        self._init_agent_config(agent_description_path, agent_description)
+
         self._last_experience = None
         self._n_queues = n_queues
-        self._train_frequency = train_frequency
-        self._train_counter = 0
-        if(agent_description == None):
-            self._agent_description = ConfParser.parse_agent_from_json(json.load(open(agent_description_path)))
         
-        node_spec_multi_queue = (
-            tensor_spec.BoundedTensorSpec(shape=[], dtype=np.float32, minimum=0, maximum=1, name = "energy_level"),
-            tensor_spec.BoundedTensorSpec(shape=[n_queues], dtype=np.float32, minimum=[0] * n_queues, maximum=[1] * n_queues, name = "queue_state"),
-            tensor_spec.BoundedTensorSpec(shape=[], dtype=np.float32, minimum=0, maximum=1, name = "charge_rate") 
-        )
-        observation_spec = node_spec_multi_queue
-
-        action_spec_root = tensor_spec.BoundedTensorSpec(shape=(), dtype=tf.int32, minimum=0, maximum=n_queues * 2, name = "choose_action")
-
-        time_step_spec = ts.time_step_spec(observation_spec)
-        agent_root = AgentFactory.create_agent(
-            agent_description = self._agent_description, 
-            time_step_spec = time_step_spec,
-            action_spec = action_spec_root)
+        self._init_specs()        
         
-        agent_root.initialize()
-        
-        self._root = DecisionTreeConsultant(agent_root, "root")
+        self._init_decision_tree()
     
 
     def get_action(self, state_bean, rewards_bean):
@@ -84,13 +144,8 @@ class AgentFacade():
             #print("Reward: " + str(reward.reward))
             r = tf.constant(value=reward.reward, shape = (), dtype=tf.float32)
             exp = Experience(self._last_experience[0], self._last_experience[1], r)
-            train_choose = False
-            self._train_counter += 1
-            if(self._train_counter == self._train_frequency):
-                train_choose = True
-                self._train_counter = 0
             
-            self._root.train([exp], train = train_choose)
+            self._root.train([exp])
 
         
         
@@ -104,26 +159,27 @@ class AgentFacade():
         self._last_experience = (time_step, action)
 
         action_bean = self._decision_path_to_action_bean(action)
-        #print("Action: " + str(action_bean))
+        logging.debug("Action: " + str(action_bean))
         return action_bean
     
     def _decision_path_to_action_bean(self, decision_path):
         action = int(decision_path[0].value.action)
-        if action == 0:
-            return ActionBean(send_message=ActionBean.SendEnum.DO_NOTHING)
+        if action == int(ActionBean.SendEnum.DO_NOTHING):
+            action_bean = ActionBean(send_message=ActionBean.SendEnum.DO_NOTHING)
+            action_bean.power_source = ActionBean.PowerSourceEnum.NO_SOURCE
+            action_bean.queue = -1
         else:
-            queue = int((action - 1) / 2)
-            if((action - 1) % 2 == 0):
-                power_source = ActionBean.PowerSourceEnum.BATTERY
-            else:
-                power_source = ActionBean.PowerSourceEnum.POWER_CHORD
-            
-            return ActionBean(send_message=ActionBean.SendEnum.SEND_MESSAGE, power_source=power_source, queue=queue)
+            action_bean = ActionBean(send_message=ActionBean.SendEnum.SEND_MESSAGE)
+            selected_queue = int(decision_path[1].value.action)
+            selected_power_source = int(decision_path[2].value.action)
+            action_bean.power_source = ActionBean.PowerSourceEnum(selected_power_source)
+            action_bean.queue = selected_queue
+        return action_bean              
             
                   
             
 # Test main
-if __name__ == '__main__':
+def test_plotting():
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     n_queues = 10
@@ -138,7 +194,7 @@ if __name__ == '__main__':
     reward = RewardBean(0)
     action = agent.get_action(state, None)
     #print("Azione scelta: " + str(action))
-    for i in range(1000):
+    for i in range(10):
         
         random_energy = np.random.randint(0, 100) / float(100)
         random_queue = 0
@@ -182,6 +238,15 @@ if __name__ == '__main__':
     plt.savefig('cumulative_reward.png')
     plt.show()
 
-    
-    
-    
+def test_get_action():
+    n_queues = 10
+    agent = AgentFacade(n_queues=n_queues)
+    state = StateBean(energy_level=1, queue_state=[1] * n_queues, charge_rate=0)
+    reward = RewardBean(-1)
+    for i in range(10):
+        action = agent.get_action(state, reward)
+        print("decision path: " + str(action))
+
+if __name__ == '__main__':
+    #test_plotting()
+    test_get_action()

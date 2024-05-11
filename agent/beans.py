@@ -2,12 +2,9 @@ from enum import IntEnum
 
 import tensorflow as tf
 from typing import Iterable
-from tf_agents.specs.tensor_spec import TensorSpec
+from tf_agents.specs.tensor_spec import TensorSpec, BoundedTensorSpec
 import warnings
-
-class NodePowerState(IntEnum):
-    OFF = 0
-    ON = 1
+import numpy as np
 
 class StateBean():
 
@@ -62,14 +59,21 @@ class StateBean():
     def add_queue_state(self, queue_state):
         self._queue_state.append(queue_state)
 
-    
+    @staticmethod
+    def observation_spec(n_queues: int) -> TensorSpec:
+        return (
+            BoundedTensorSpec(shape=[], dtype=np.float32, minimum=0, maximum=1, name = "energy_level"),
+            BoundedTensorSpec(shape=[n_queues], dtype=np.float32, minimum=[0] * n_queues, maximum=[1] * n_queues, name = "queue_state"),
+            BoundedTensorSpec(shape=[], dtype=np.float32, minimum=0, maximum=1, name = "charge_rate") 
+        )
+
     """
     Returns a list of tensors representing the state of the agent.
     Each tensor is a state variable.
     """
     def to_tensor(self, n_queues : int):
         
-        # NOTE: keep in sync with observation_spec in AgentFacade constructor
+        # NOTE: keep in sync with observation_spec
         #      and with the state variables in the constructor
 
         if len(self.queue_state) != n_queues:
@@ -80,10 +84,7 @@ class StateBean():
             tf.constant(shape=(), dtype=tf.float32, name = "energy_level", value=self.energy_level),
             tf.constant(shape=(n_queues), dtype=tf.float32, name = "queue_state", value=queue_state),
             tf.constant(shape=(), dtype=tf.float32, name = "charge_rate", value=self.charge_rate)
-        )
-
-        #node_spec = tf.constant(shape=(1, 3), dtype=tf.float32, name = "state", value=[self.energy_level, self.queue_state[0], self.charge_rate])
-            
+        )            
         return node_spec
     
     def __str__(self):
@@ -108,18 +109,17 @@ class RewardBean():
         return "RewardBean(reward={})".format(self.reward)
     
 
-# TODO: implement the other actions according to the model
 class ActionBean():
 
     class SendEnum(IntEnum):
         DO_NOTHING = 0
         SEND_MESSAGE = 1
-        
+    
 
     class PowerSourceEnum(IntEnum):
-        NO_SOURCE = 0
-        BATTERY = 1
-        POWER_CHORD = 2
+        NO_SOURCE = -1
+        BATTERY = 0
+        POWER_CHORD = 1
 
     def __init__(self, send_message : SendEnum, power_source : PowerSourceEnum = PowerSourceEnum.NO_SOURCE, queue : int = 0):
         self._send_message = send_message
