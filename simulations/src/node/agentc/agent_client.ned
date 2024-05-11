@@ -7,6 +7,7 @@ simple AgentClient{
         @class(AgentClientPybind);
         @display("i=device/cpu");
     
+        int num_of_queues;
     gates:
         inout port;
 

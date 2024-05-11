@@ -54,7 +54,9 @@ module Node
         controller: Controller{
             num_queues = parent.num_queues;
         };
-        agent: AgentClient;
+        agent: AgentClient{
+            num_of_queues = parent.num_queues;
+        };
         queues[num_queues]: Queue;
     connections allowunconnected:
         agent.port <--> IdealChannel <--> controller.agent_port; 

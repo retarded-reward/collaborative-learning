@@ -40,7 +40,15 @@ class StubbornAgent():
     def train(self, experience: types.TimeStep):
         # too stubborn to learn
         pass
-    
+
+class AgentFacadeBean():
+
+    def __init__(self, n_queues = 1, agent_description_path = None,
+     agent_description = None):
+        self.n_queues = n_queues
+        self.agent_description_path = agent_description_path
+        self.agent_description = agent_description
+
 class AgentFacade():
 
     def _init_agent_config(self, agent_description_path: str, agent_description):
@@ -107,11 +115,7 @@ class AgentFacade():
             queue_consultant.add_choice(DecisionTreeConsultant(
                 agent_power_source, f"power_source_for_queue_{i}"))
     
-    def __init__(self, 
-            n_queues = 1,
-            agent_description_path = None,
-            agent_description = None, 
-            ):
+    def __init__(self, bean: AgentFacadeBean):
         """
         Initializes the Agent object.
 
@@ -124,10 +128,10 @@ class AgentFacade():
             None
         """
         #printo il path assoluto
-        self._init_agent_config(agent_description_path, agent_description)
+        self._init_agent_config(bean.agent_description_path, bean.agent_description)
 
         self._last_experience = None
-        self._n_queues = n_queues
+        self._n_queues = bean.n_queues
         
         self._init_specs()        
         

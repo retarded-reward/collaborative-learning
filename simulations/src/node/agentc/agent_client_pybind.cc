@@ -8,12 +8,6 @@ Define_Module(AgentClientPybind);
 
 AgentClientPybind::AgentClientPybind()
 {
-    PythonInterpreter::getInstance()->use();
-
-    // preloads the agent module to speed up simulation execution
-    // (simulation startup will be slower)
-    this->agent_module = py::module_::import("agent");
-    this->agent = this->agent_module.attr("AgentFacade")();
 }
 
 void AgentClientPybind::state_msg_to_bean(const NodeStateMsg &state, py::object bean){
@@ -63,6 +57,34 @@ void AgentClientPybind::handleActionRequest(ActionRequest *msg)
     response = new ActionResponse();
     action_bean_to_msg(action_bean, response);
     this->send(response, "port$o");
+}
+
+void AgentClientPybind::initialize()
+{
+    AgentClient::initialize();
+    
+    init_module_params();
+    init_python_interface();
+
+}
+
+void AgentClientPybind::init_module_params()
+{
+    num_of_queues = par("num_of_queues").intValue();
+}
+
+void AgentClientPybind::init_python_interface()
+{
+    PythonInterpreter::getInstance()->use();
+    py::object agent_facade_bean;
+
+    // preloads the agent module to speed up simulation execution
+    // (simulation startup will be slower)
+    this->agent_module = py::module_::import("agent");
+    agent_facade_bean = this->agent_module.attr("AgentFacadeBean")();
+    agent_facade_bean.attr("n_queues") = num_of_queues;
+    this->agent = this->agent_module.attr("AgentFacade")(agent_facade_bean);
+
 }
 
 AgentClientPybind::~AgentClientPybind()
