@@ -33,6 +33,6 @@ source $OMNETPP_PATH/setenv
 
 ## Analyzing results
 
-Statistics are recorderd in the `results` folder.
+Statistics are recorderd in the `simulations/results` folder.
 
-To analyze statistics, open the `results/General.anf` in the Omnet++ IDE and use its Analysys Tool.
+To analyze statistics, open the `simulations/results/General.anf` in the Omnet++ IDE and use its Analysys Tool.
