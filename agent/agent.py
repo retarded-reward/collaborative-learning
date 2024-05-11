@@ -127,7 +127,7 @@ if __name__ == '__main__':
     n_queues = 10
     agent = AgentFacade(
         n_queues=n_queues)
-    state = StateBean(energy_level=1, queue_state=[1] * 20, charge_rate=0)
+    state = StateBean(energy_level=1, queue_state=[1] * n_queues, charge_rate=0)
     file = open("log.csv", "a")
     #elimino il contenuto del file
     file.truncate(0)
