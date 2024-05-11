@@ -29,7 +29,7 @@ class AgentFacade():
 
     def __init__(self, 
             n_queues = 1,
-            agent_description_path = "agent/agent_conf.json",
+            agent_description_path = None,
             agent_description = None, 
             train_frequency = 2):
         """
@@ -44,6 +44,9 @@ class AgentFacade():
         Returns:
             None
         """
+        #printo il path assoluto
+        if(agent_description_path == None):
+            agent_description_path = os.environ.get('AGENT_PATH') + "/agent_conf.json"
         self._last_experience = None
         self._n_queues = n_queues
         self._train_frequency = train_frequency
@@ -135,7 +138,7 @@ if __name__ == '__main__':
     reward = RewardBean(0)
     action = agent.get_action(state, None)
     #print("Azione scelta: " + str(action))
-    for i in range(10):
+    for i in range(1000):
         
         random_energy = np.random.randint(0, 100) / float(100)
         random_queue = 0
