@@ -1,6 +1,7 @@
 bin/
 results/*
 !results/General.anf
+res/results/*
 .qtenvrc
 .cmdenv-log
 vgcore.*
