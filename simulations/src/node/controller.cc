@@ -304,7 +304,7 @@ reward_t Controller::compute_reward(){
         delete reward_term;
     }
 
-    set_if_greater(max_reward, reward);
+    set_if_greater(max_penalty_unsigned, absolute(reward));
 
     return reward;
 }

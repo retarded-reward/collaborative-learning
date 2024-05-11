@@ -174,7 +174,7 @@ class Controller : public cSimpleModule
 
     B_t max_packet_size = 0;
     mWh_t max_energy_consumed = 0;
-    reward_t max_reward = 0;
+    reward_t max_penalty_unsigned = 0;
 
     /**
      * The i-th element of this vector represents the up-to-date state
@@ -293,7 +293,7 @@ class Controller : public cSimpleModule
     
     inline reward_t illegal_action_penalty()
     {
-      return max_reward * illegal_action_penalty_factor;
+      return - max_penalty_unsigned * illegal_action_penalty_factor;
     }
 
     /**
