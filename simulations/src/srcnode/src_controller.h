@@ -13,8 +13,8 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef __DEMO_NODE_H_
-#define __DEMO_NODE_H_
+#ifndef SRC_CONTROLLER_H
+#define SRC_CONTROLLER_H
 
 #include <omnetpp.h>
 #include "DataMsg_m.h"
@@ -25,14 +25,10 @@ class SrcController : public cSimpleModule
 {
   protected:
     int message_count;
-    int min_pkt_size;
-    int max_pkt_size;
   protected:
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
     void sendData();
-  private:
-    float randomDataGenerator(float max);
     int randomIntGenerator(int min, int max);
 };
 

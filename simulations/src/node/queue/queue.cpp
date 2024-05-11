@@ -1,6 +1,7 @@
 #include "queue.h"
 #include <omnetpp/cqueue.h>
 #include "units.h"
+#include "statistics.h"
 
 Define_Module(Queue);
 
@@ -87,6 +88,8 @@ void Queue::handleDataMsg(DataMsg *msg)
     {
         drop_data(msg);
     }
+
+    measure_quantity("pkt_arrival_time", simTime().dbl());
 
     // state might have changed, so we sample it and send it to servers
     sample_and_send_queue_state(queue_state_update);

@@ -26,6 +26,27 @@ module Node
     parameters:
         int number_of_ports  @value(number-of-ports);//=default(1);
         int num_queues @value(num_queues);
+        
+        // statistics
+        @statistic[avg_cost_per_mWh](source=warmup(sum(energy_expense)/sum(energy_consumption)); record=mean; checkSignals=false; autoWarmupFilter=false);
+
+        @statistic[cumulative_energy_expense](source=warmup(sum(energy_expense)); record=vector,last; checkSignals=false; autoWarmupFilter=false);
+        @statistic[cumulative_energy_potential_expense](source=warmup(sum(energy_potential_expense)); record=vector,last; checkSignals=false; autoWarmupFilter=false);
+        @statistic[cumulative_energy_consumption](source=warmup(sum(energy_consumption)); record=vector,last; checkSignals=false; autoWarmupFilter=false);
+        
+        @statistic[ewma_energy_expense_per_mWh_over_time](source=ewma(warmup(sum(energy_expense)/(sum(energy_consumption)))); record=vector,last; checkSignals=false; autoWarmupFilter=false);
+        @statistic[ewma_energy_expense_per_second_over_time](source=ewma(warmup(sumPerSimtime(energy_expense))); record=vector,last; checkSignals=false; autoWarmupFilter=false);
+        @statistic[ewma_energy_consumption_per_second_over_time](source=ewma(warmup(sumPerSimtime(energy_consumption))); record=vector,last; checkSignals=false; autoWarmupFilter=false);
+        @statistic[battery_charge_level_over_time](source=battery_charge_level; record=vector; checkSignals=false);
+        @statistic[ewma_energy_saving_over_time](source=ewma(100 - (warmup(sum(energy_expense)/(sum(energy_potential_expense))) * 100)); record=vector,last; checkSignals=false; autoWarmupFilter=false);
+        
+        @statistic[cumulative_reward_over_time](source=sum(reward); record=vector,last; checkSignals=false);
+        //@statistic[reward_over_time](source=reward; record=vector; checkSignals=false);
+        
+        //@statistic[service_interval](record=vector; checkSignals=false);
+        //@statistic[pkt_arrival_time](record=vector; checkSignals=false);
+        @statistic[ewma_utilization_over_time](source=ewma(avg(service_interval)/avg(sinceLast(pkt_arrival_time)) * 100); record=vector,last; checkSignals=false;);
+
     gates:
         output network_out[number_of_ports] @loose;
         input queue_ports[num_queues] @loose;

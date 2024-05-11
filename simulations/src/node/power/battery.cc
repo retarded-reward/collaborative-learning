@@ -17,10 +17,9 @@ mWh_t Battery::discharge(mWh_t amount){
     mWh_t actual_amount;
     
     abort_if_unplugged(0);
-
+    amount = absolute(amount);
     actual_amount = amount;
     
-    sanitize_amount(amount);
     charge -= amount;
     if(charge < 0){
         actual_amount += charge;
@@ -34,7 +33,7 @@ void Battery::recharge(mWh_t amount){
     
     abort_if_unplugged();
 
-    sanitize_amount(amount);
+    amount = absolute(amount);
     charge += amount;
     if(charge > capacity){
         charge = capacity;

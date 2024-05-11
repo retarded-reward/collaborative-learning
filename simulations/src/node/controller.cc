@@ -22,6 +22,7 @@
 #include "power/random_charger.h"
 #include "QueueDataRequest_m.h"
 #include <cstddef>
+#include "statistics.h"
 
 Define_Module(Controller);
 
@@ -46,6 +47,10 @@ void Controller::ask_action(){
     
     EV_DEBUG << "Asking for action" << endl;
 
+    // We consider a timestep the elapsed time between two sending of action requests
+    // so we measure quantities at the beginning of the timestep
+    measure_quantities();
+    
     // sample state in a action request object and send it to the agent client
     ar = new ActionRequest();
     sample_state(ar->getStateForUpdate());
@@ -69,6 +74,7 @@ void Controller::update_queue_state(QueueStateUpdate *msg, size_t queue_idx)
 {
     queue_states[queue_idx].occupancy = msg->getBuffer_pop_percentage();
     queue_states[queue_idx].pkt_drop_cnt += msg->getNum_of_dropped();
+    set_if_greater(queue_states[queue_idx].max_pkt_drop_cnt, queue_states[queue_idx].pkt_drop_cnt);
     EV_DEBUG << "Queue " << queue_idx << " state updated with occupancy: " 
     << queue_states[queue_idx].occupancy << "%" << " and pkt dropped: " 
     << queue_states[queue_idx].pkt_drop_cnt << endl;
@@ -120,7 +126,8 @@ void Controller::do_nothing()
 {   
     EV_DEBUG << "Performing action do nothing" << endl;
 
-    last_energy_consumed=0;
+    last_energy_consumed[SelectPowerSource::POWER_CHORD]=0;
+    last_energy_consumed[SelectPowerSource::BATTERY]=0;
 
     last_reward=compute_reward();
      EV_DEBUG << "Doing nothing has generated reward: " << last_reward << endl;
@@ -130,42 +137,77 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
     
     EV_DEBUG << "Performing action send data" << endl;
 
+    s_t service_interval = 0;
+    b_t data_bits;
+
     //No data to send
     if(num_data==0){
-        last_reward=-1000;
+        // wait, that's illegal
+        last_reward=illegal_action_penalty();
     }
     else{
         //TODO Implement the effective send, for now it's only simulated by causing the effects of send like discharge
-        // FIXME: what if the charge in the selected power source is not enough???      
-        //Compute consumed energy
-        for(int i=0; i<num_data; i++){
-            // *8 for bits,
-            // TODO: Normalize [0,1] dividing by the energy consumed for the packet of
-            // maximum size
-            std::cout << "Data size: " << (int) data[i]->getData() << std::endl;
-            last_energy_consumed
-             += power_model->calc_tx_consumption_mWs((int) data[i]->getData()*8, link_cap);
-        }      
-        
-        //Consume energy
-        switch(last_select_power_source){
-            case SelectPowerSource::BATTERY:
-                power_sources[SelectPowerSource::BATTERY]
-                 ->discharge(num_data*last_energy_consumed); 
-                break;
-            case SelectPowerSource::POWER_CHORD:
-                power_sources[SelectPowerSource::POWER_CHORD]
-                 ->discharge(num_data*last_energy_consumed);
-                break;
-            default:
-                EV << "Error: do_action power source not recognized" << endl;
-                break;
+        _forward_data(data, num_data);
+
+        for (int i = 0; i < num_data; i++){
+            data_bits = data[i]->getData() * 8;
+            service_interval += data_bits * 1e-6 / link_cap;
         }
-        EV_DEBUG << "Consumed energy: " << last_energy_consumed << "mWs from power source: " << last_select_power_source << endl;
+        if (service_interval > 0)
+            measure_quantity("service_interval", service_interval);
+        
         last_reward=compute_reward();
     }
     
     EV_DEBUG << "Sending message has generated reward: " << last_reward << endl;
+}
+
+void Controller::_forward_data(const DataMsg *data[], size_t num_data)
+{
+    //Compute consumed energy
+    last_energy_consumed[SelectPowerSource::POWER_CHORD]=0;
+    last_energy_consumed[SelectPowerSource::BATTERY]=0;
+    mWh_t tot_consumed=0;
+    mWh_t battery_level;
+
+    for(int i=0; i<num_data; i++){
+        // TODO: Normalize [0,1] dividing by the energy consumed for the packet of
+        EV_DEBUG << "Data " << i << " size: " << (int) data[i]->getData() << std::endl;
+        tot_consumed
+            += power_model->calc_tx_consumption_mWs((int) data[i]->getData()*8, link_cap); // *8 for bits,
+    }      
+    
+    //Consume energy
+    switch(last_select_power_source){
+
+        case SelectPowerSource::BATTERY:
+            battery_level = power_sources[SelectPowerSource::BATTERY]->getCharge();
+            //If battery is not enough fallback on power chord
+            if(battery_level<tot_consumed){
+                last_energy_consumed[SelectPowerSource::BATTERY]=battery_level;
+                last_energy_consumed[SelectPowerSource::POWER_CHORD]=tot_consumed-battery_level;
+            }
+            else{
+                last_energy_consumed[SelectPowerSource::BATTERY]=tot_consumed;  
+            }         
+            break;
+
+        case SelectPowerSource::POWER_CHORD:
+            last_energy_consumed[SelectPowerSource::POWER_CHORD]=tot_consumed;
+            break;
+
+        default:
+            EV << "Error: do_action power source not recognized" << endl;
+            break;
+    }
+
+    //Discharge energy
+    power_sources[SelectPowerSource::POWER_CHORD]->discharge(last_energy_consumed[SelectPowerSource::POWER_CHORD]); 
+    power_sources[SelectPowerSource::BATTERY]->discharge(last_energy_consumed[SelectPowerSource::BATTERY]);
+    
+    for(int i=0; i<power_sources.size(); i++){
+        EV_DEBUG << "Consumed energy: " << last_energy_consumed[i] << " mWs from power source: " << i << endl;
+    }
 }
 
 reward_t Controller::compute_reward(){
@@ -175,44 +217,90 @@ reward_t Controller::compute_reward(){
     reward_t reward = 0;
     vector<RewardTerm *> reward_terms;
 
+    /**
+     * To normalize the reward terms, we need to know the maximum value
+     * for each term. To compute it, we must leverage the same signal used by the
+     * corresponding reward term. So we need to use a temporary reward term with a
+     * weight of 1 and a signal value corresponding to the maximum possible value of it.
+     * The weight must be 1 since the normalization happens before applying the weight
+     * to the signal value.
+    */
+    double max_energy_penalty; 
+    double max_pkt_drop_penalty;
+    double max_queue_occ_penalty;
+
     // includes energy term
-    include_reward_term("energy_penalty",
-     {
-        {"energy_consumed", cValue(last_energy_consumed)},
-        {"cost_per_mWh", last_select_power_source < 0 ? 0 : 
-         (power_sources[last_select_power_source]->getCostPerMWh())}
-     },reward_terms);
-    EV_DEBUG << "Energy term: " << reward_terms.back()->compute() << endl;
+    for(int i=0; i<power_sources.size(); i++){
+        set_if_greater(max_energy_consumed, last_energy_consumed[i]);
+        max_energy_penalty
+            = RewardTerm(reward_term_models, "energy_penalty").bind_symbols(
+            {
+                {"energy_consumed", cValue(max_energy_consumed)},
+                {"cost_per_mWh", cValue(power_sources[i]->getCostPerMWh())}
+            })->setWeight(1)->compute();
+        include_reward_term("energy_penalty",
+         {
+            {"energy_consumed", cValue(last_energy_consumed[i])},
+            {"cost_per_mWh", (power_sources[i]->getCostPerMWh())}
+         },
+         reward_terms,
+         new MinMaxNormalizer(0, max_energy_penalty));
+    EV_DEBUG << "Energy term for power source " << i << ": " << reward_terms.back()->compute() << endl;
+    EV_DEBUG << "max_energy_penalty for power source " << i << ": " << max_energy_penalty << endl;
+    }
     
     // includes queue occ penalties, one term for each priority
     for (int priority = 0; priority < num_queues; priority ++){
+        max_queue_occ_penalty
+         = RewardTerm(reward_term_models, "queue_occ_penalty").bind_symbols(
+         {
+            {"priority", cValue(priority)},
+            {"queue_occ", cValue(100)},
+         })->setWeight(1)->compute();
         include_reward_term("queue_occ_penalty",
          {
             {"priority", cValue(priority)},
             {"queue_occ", cValue(queue_states[priority].occupancy)}
-         }, reward_terms);
+         },
+         reward_terms,
+         new MinMaxNormalizer(0, max_queue_occ_penalty));
         EV_DEBUG << "Queue occ term for priority "
          << priority << ": " << reward_terms.back()->compute() << endl;
+        EV_DEBUG << "max queue occ penalty for priority " << priority << ": " << max_queue_occ_penalty << endl;
     }
 
     // includes pkt drop penalties, one term for each priority
     for (int priority = 0; priority < num_queues; priority ++){
+        max_pkt_drop_penalty
+         = RewardTerm(reward_term_models, "pkt_drop_penalty").bind_symbols(
+         {
+            {"priority", cValue(priority)},
+            {"pkt_drop_count", cValue(queue_states[priority].max_pkt_drop_cnt)}
+         })->setWeight(1)->compute();
         include_reward_term("pkt_drop_penalty",
          {
             {"priority", cValue(priority)},
             {"pkt_drop_count", cValue(queue_states[priority].pkt_drop_cnt)}
-         }, reward_terms);
+         },
+         reward_terms,
+         new MinMaxNormalizer(0, max_pkt_drop_penalty));
         // resets pkt drop count after reading it
         queue_states[priority].pkt_drop_cnt = 0;
         EV_DEBUG << "Pkt drop term for priority " 
          << priority << ": " << reward_terms.back()->compute() << endl;
+        EV_DEBUG << "max pkt drop penalty for priority " << priority << ": " << max_pkt_drop_penalty << endl;
     }
 
     // computes reward by consuming and reducing all included reward terms
     for (RewardTerm *reward_term : reward_terms){
+        EV_DEBUG << "reward term: " << reward_term->compute() << endl;
         reward = reward + reward_term->compute();
+        EV_DEBUG << "partial reward: " << reward << endl;
         delete reward_term;
     }
+
+    set_if_greater(max_reward, reward);
+
     return reward;
 }
 
@@ -224,6 +312,13 @@ void Controller::include_reward_term(const char* reward_term_model_name,
     reward_term = new RewardTerm(reward_term_models, reward_term_model_name);
     reward_term->bind_symbols(symbols);
     reward_terms.push_back(reward_term);
+}
+
+void Controller::include_reward_term(const char *reward_term_model_name,
+ map<string, cValue> symbols, vector<RewardTerm *> &reward_terms, Normalizer *normalizer)
+{
+    include_reward_term(reward_term_model_name, symbols, reward_terms);
+    reward_terms.back()->setNormalizer(normalizer);
 }
 
 void Controller::start_timer(Timeout *timeout)
@@ -271,6 +366,35 @@ void Controller::sample_reward(RewardMsg &reward_msg)
     reward_msg.setValue(last_reward);
 }
 
+void Controller::measure_quantities()
+{
+    mWh_t energy_consumption = 0;
+    reward_t energy_expense = 0;
+    percentage_t energy_potential_expense = 0;
+    PowerSource *most_expensive_power_source = power_sources[0];
+
+    // find most expensive power source
+    for (PowerSource *power_source : power_sources){
+        if (power_source->getCostPerMWh() > most_expensive_power_source->getCostPerMWh()){
+            most_expensive_power_source = power_source;
+        }
+    }
+
+    for (int i = 0; i < power_sources.size(); i++){
+        energy_consumption += last_energy_consumed[i];
+        energy_expense += last_energy_consumed[i] * power_sources[i]->getCostPerMWh();
+        energy_potential_expense += last_energy_consumed[i] * most_expensive_power_source->getCostPerMWh();
+    }
+    measure_quantity("energy_expense", energy_expense);
+    measure_quantity("energy_consumption", energy_consumption);
+    measure_quantity("energy_potential_expense", energy_potential_expense);
+    
+    measure_quantity("battery_charge_level",
+     power_sources[SelectPowerSource::BATTERY]->getCharge());
+    measure_quantity("reward", last_reward);
+
+}
+
 void Controller::init_timers()
 {
     charge_battery_timeout = new Timeout();
@@ -304,6 +428,7 @@ void Controller::init_module_params()
     charge_battery_timeout_delta 
      = par("charge_battery_timeout_delta").doubleValue();
     reward_term_models = (cValueMap *) par("reward_term_models").objectValue()->dup();
+    illegal_action_penalty_factor = par("illegal_action_penalty_factor").doubleValue();
     // add more module params here ...
 
     EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << "mW" <<endl;
@@ -336,6 +461,11 @@ void Controller::init_power_sources()
      ->setCostPerMWh(power_chord_params->get("cost_per_mWh").doubleValue());
     power_sources[SelectPowerSource::POWER_CHORD]->plug();
     EV_DEBUG << "Power chord cost per mWh: " << power_sources[SelectPowerSource::POWER_CHORD]->getCostPerMWh() << endl;
+
+    // init last energy consumed
+    for(int i=0; i<power_sources.size(); i++){
+        last_energy_consumed.push_back(0);
+    }
 
     // init battery charger
     cPar &charge_rate_distribution = par("battery_charge_rate_distribution");
@@ -380,6 +510,12 @@ void Controller::handleQueueDataResponse(QueueDataResponse *msg)
     size_t num_data_recv = msg->getDataArraySize();
     EV_DEBUG << "Queue data response size: " << num_data_recv << endl;
 
+    // updates max size of packets seen
+    for (int i = 0; i < msg->getDataArraySize(); i++){
+        if (msg->getData(i)->getData() > max_packet_size)
+            max_packet_size = msg->getData(i)->getData();
+    }
+    
     //Update queue state
     size_t queue_idx; 
     queue_idx = msg->getArrivalGate()->getIndex();
