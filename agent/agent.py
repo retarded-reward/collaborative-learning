@@ -58,7 +58,7 @@ class AgentFacade():
         )
         observation_spec = node_spec_multi_queue
 
-        action_spec_root = tensor_spec.BoundedTensorSpec(shape=(), dtype=tf.int32, minimum=0, maximum=2, name = "choose_action")
+        action_spec_root = tensor_spec.BoundedTensorSpec(shape=(), dtype=tf.int32, minimum=0, maximum=n_queues * 2, name = "choose_action")
 
         time_step_spec = ts.time_step_spec(observation_spec)
         agent_root = AgentFactory.create_agent(
@@ -106,17 +106,16 @@ class AgentFacade():
     
     def _decision_path_to_action_bean(self, decision_path):
         action = int(decision_path[0].value.action)
-        match action:
-            case 0:
-                return ActionBean(send_message=ActionBean.SendEnum.DO_NOTHING)
-            case 1:
-                return ActionBean(
-                    send_message=ActionBean.SendEnum.SEND_MESSAGE, 
-                    power_source=ActionBean.PowerSourceEnum.BATTERY)
-            case 2:
-                return ActionBean(
-                    send_message=ActionBean.SendEnum.SEND_MESSAGE, 
-                    power_source=ActionBean.PowerSourceEnum.POWER_CHORD)
+        if action == 0:
+            return ActionBean(send_message=ActionBean.SendEnum.DO_NOTHING)
+        else:
+            queue = int((action - 1) / 2)
+            if((action - 1) % 2 == 0):
+                power_source = ActionBean.PowerSourceEnum.BATTERY
+            else:
+                power_source = ActionBean.PowerSourceEnum.POWER_CHORD
+            
+            return ActionBean(send_message=ActionBean.SendEnum.SEND_MESSAGE, power_source=power_source, queue=queue)
             
                   
             
