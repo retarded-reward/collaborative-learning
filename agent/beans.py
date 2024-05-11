@@ -3,6 +3,7 @@ from enum import IntEnum
 import tensorflow as tf
 from typing import Iterable
 from tf_agents.specs.tensor_spec import TensorSpec
+import warnings
 
 class NodePowerState(IntEnum):
     OFF = 0
@@ -33,15 +34,6 @@ class StateBean():
         Rate at which the battery is being charged.
         charge_rate is a float value from 0 to 1.
         """
-    
-    @staticmethod
-    def observation_spec():
-        return [
-            # one list element for each tensor (state variable) 
-            TensorSpec(shape=(1), dtype=tf.float32, name = "energy_level"),
-            TensorSpec(shape=(1), dtype=tf.float32, name = "queue_state"),
-            TensorSpec(shape=(1), dtype=tf.float32, name = "charge_rate")
-        ]
     
     @property
     def energy_level(self):
@@ -75,19 +67,22 @@ class StateBean():
     Returns a list of tensors representing the state of the agent.
     Each tensor is a state variable.
     """
-    def to_tensor(self):
+    def to_tensor(self, n_queues : int):
         
         # NOTE: keep in sync with observation_spec in AgentFacade constructor
         #      and with the state variables in the constructor
 
-        '''
-        node_spec = [
-            tf.constant(shape=(1), dtype=tf.float32, name = "energy_level", value=self.energy_level),
-            tf.constant(shape=(1), dtype=tf.float32, name = "queue_state", value=self.queue_state[0] if len(self.queue_state) > 0 else 0),
-            tf.constant(shape=(1), dtype=tf.float32, name = "charge_rate", value=self.charge_rate)
-        ]
-        '''
-        node_spec = tf.constant(shape=(1, 3), dtype=tf.float32, name = "state", value=[self.energy_level, self.queue_state[0], self.charge_rate])
+        if len(self.queue_state) != n_queues:
+            warnings.warn("The number of queues in the state does not match the number of queues in the environment. The state will be padded with zeros or truncated to match the number of queues in the environment")
+        
+        queue_state = (self._queue_state[:n_queues] + (max(n_queues - len(self._queue_state), 0)) * [0])
+        node_spec = (
+            tf.constant(shape=(), dtype=tf.float32, name = "energy_level", value=self.energy_level),
+            tf.constant(shape=(n_queues), dtype=tf.float32, name = "queue_state", value=queue_state),
+            tf.constant(shape=(), dtype=tf.float32, name = "charge_rate", value=self.charge_rate)
+        )
+
+        #node_spec = tf.constant(shape=(1, 3), dtype=tf.float32, name = "state", value=[self.energy_level, self.queue_state[0], self.charge_rate])
             
         return node_spec
     

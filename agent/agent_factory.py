@@ -4,7 +4,7 @@ from typing import Callable, Union
 from tf_agents.agents.dqn import dqn_agent
 from tf_agents.utils import common
 import tensorflow as tf
-from tf_agents.networks import sequential, nest_map, q_network
+from tf_agents.networks import sequential, nest_map, q_network, mask_splitter_network, encoding_network
 import keras
 from tf_agents.specs import tensor_spec
 
@@ -43,8 +43,8 @@ class AgentFactory():
                
                 q_net = sequential.Sequential(dense_layers + [q_values_layer], input_spec= time_step_spec.observation)
                 
-                q_net.create_variables(
-                    input_tensor_spec= time_step_spec.observation)
+                #q_net.create_variables(
+                #    input_tensor_spec= time_step_spec.observation)
                
                 #q_net2 = nest_map.NestMap(dense_layers + [q_values_layer], input_spec= time_step_spec.observation, name="net2")
                 '''                t = tf.constant([1])
@@ -81,11 +81,32 @@ class AgentFactory():
                     input_tensor_spec=time_step_spec.observation, 
                     fc_layer_params=fc_layer_params)
                 '''
+                q_encoding_net = encoding_network.EncodingNetwork(
+                    input_tensor_spec=time_step_spec.observation,
+                    preprocessing_layers=(
+                        tf.keras.layers.Flatten(),
+                        tf.keras.layers.Flatten(),#input_shape=[2]),
+                        tf.keras.layers.Flatten()
+                    ),
+                    preprocessing_combiner=tf.keras.layers.Concatenate(axis=-1),
+                    fc_layer_params=(100, 50, 20, action_spec.maximum - action_spec.minimum + 1),
+                    activation_fn=tf.keras.activations.relu,
+                    kernel_initializer=tf.keras.initializers.VarianceScaling(
+                        scale=2.0, mode='fan_in', distribution='truncated_normal')
+                )
+                
+
+
+                q_net_masked = mask_splitter_network.MaskSplitterNetwork(
+                    splitter_fn=AgentFactory._splitter_fn,
+                    wrapped_network=q_net,
+                    passthrough_mask=True
+                )
                 
                 return dqn_agent.DqnAgent(
                     time_step_spec,
                     action_spec,
-                    q_network=q_net,
+                    q_network=q_encoding_net,
                     optimizer=optimizer,
                     td_errors_loss_fn=common.element_wise_squared_loss,
                     train_step_counter=train_step_counter,
@@ -101,3 +122,9 @@ class AgentFactory():
             activation=tf.keras.activations.relu,
             kernel_initializer=tf.keras.initializers.VarianceScaling(
                 scale=2.0, mode='fan_in', distribution='truncated_normal'))
+    
+    @staticmethod
+    def _splitter_fn(observation):
+        mask = [1, 1, 1]
+
+        return observation, mask
