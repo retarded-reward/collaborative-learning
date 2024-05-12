@@ -184,17 +184,18 @@ class AgentFacade():
             
 # Test main
 def test_plotting():
+    
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     n_queues = 10
-    agent = AgentFacade(
-        n_queues=n_queues)
+    agent_facade_bean = AgentFacadeBean(n_queues=n_queues)
+    agent = AgentFacade(agent_facade_bean)
     state = StateBean(energy_level=1, queue_state=[1] * n_queues, charge_rate=0)
     file = open("log.csv", "a")
     #elimino il contenuto del file
     file.truncate(0)
     #metto le colonne
-    file.write("energy_level;queue_state;charge_rate;send_message;power_source;reward\n")
+    file.write("energy_level;queue_state;charge_rate;send_message;power_source;queue;reward\n")
     reward = RewardBean(0)
     action = agent.get_action(state, None)
     #print("Azione scelta: " + str(action))
@@ -213,7 +214,7 @@ def test_plotting():
         else:
             reward = RewardBean(-1)
         #creo un log in un file csv in cui segno lo stato e l'azione scelta e la reward ricevuta
-        file.write(str(state.energy_level) + ";" + str(state.queue_state) + ";" + str(state.charge_rate) + ";" + str(action.send_message) + ";" + str(action.power_source) + ";" + str(reward.reward) + "\n")
+        file.write(str(state.energy_level) + ";" + str(state.queue_state) + ";" + str(state.charge_rate) + ";" + str(action.send_message) + ";" + str(action.power_source) + ";" + str(action.queue) +";" + str(reward.reward) + "\n")
     
     file.close()
     
@@ -244,7 +245,8 @@ def test_plotting():
 
 def test_get_action():
     n_queues = 10
-    agent = AgentFacade(n_queues=n_queues)
+    agent_facade_bean = AgentFacadeBean(n_queues=n_queues)
+    agent = AgentFacade(agent_facade_bean)
     state = StateBean(energy_level=1, queue_state=[1] * n_queues, charge_rate=0)
     reward = RewardBean(-1)
     for i in range(10):
@@ -252,5 +254,5 @@ def test_get_action():
         print("decision path: " + str(action))
 
 if __name__ == '__main__':
-    #test_plotting()
-    test_get_action()
+    test_plotting()
+    #test_get_action()

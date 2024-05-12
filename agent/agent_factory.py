@@ -33,18 +33,18 @@ def with_replay_buffer(tf_agent_class, sample_batch_size,
             self._num_steps = num_steps
             self._train_frequency = train_frequency
             self._train_counter = 0
+            self._batch_size = replay_buffer_ctor_kwargs["batch_size"]
 
         def train(self, experience: Trajectory, weights: Optional[types.NestedTensor] = None, **kwargs) -> LossInfo:
-            
             self._train_counter += 1
-            values_batched = tf.nest.map_structure(lambda t: tf.stack([t] * 32), experience)
+            values_batched = tf.nest.map_structure(lambda t: tf.stack([t] * self._batch_size), experience)
             self._replay_buffer.add_batch(values_batched)
             
             loss_info = LossInfo(loss = 0, extra = 0)
             if self._train_counter % self._train_frequency == 0:
-                dataset = self._replay_buffer.as_dataset(sample_batch_size=4, num_steps=2)
+                dataset = self._replay_buffer.as_dataset(sample_batch_size=sample_batch_size, num_steps=num_steps)
                 iterator = iter(dataset)
-                for _ in range(4):
+                for _ in range(sample_batch_size):
                     t, _ = next(iterator)
                     loss_info = super().train(experience=t)
             
