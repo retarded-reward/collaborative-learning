@@ -173,7 +173,7 @@ class DecisionTreeConsultant():
         
         # uses embedded agent to compute decision and adds it as a deeper level
         # of the decision path
-        decision = Decision(name=self.decision_name, value=self._agent.policy.action(ts))
+        decision = Decision(name=self.decision_name, value=self._agent.collect_policy.action(ts))
         decision_path.append(decision)
 
         # If this consultant has choices, it means that the decision path
