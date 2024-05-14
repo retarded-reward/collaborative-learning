@@ -33,6 +33,7 @@ class StubbornAgent():
     def __init__(self, action: int):
         self._action = PolicyStep(action)
         self.policy = self
+        self.collect_policy = self.policy
 
     def action(self, time_step: TimeStep):
         return self._action
@@ -199,7 +200,7 @@ def test_plotting():
     reward = RewardBean(0)
     action = agent.get_action(state, None)
     #print("Azione scelta: " + str(action))
-    for i in range(10):
+    for i in range(100):
         
         random_energy = np.random.randint(0, 100) / float(100)
         random_queue = 0
@@ -207,12 +208,18 @@ def test_plotting():
         state = StateBean(energy_level=random_energy, queue_state=[random_queue] * n_queues, charge_rate=random_charge)
         action = agent.get_action(state, reward)
         #print("Azione scelta: " + str(action))
+        '''
         if(state.energy_level >= 0.5 and action.send_message == ActionBean.SendEnum.SEND_MESSAGE):
-            reward = RewardBean(1)
+            reward = RewardBean(0)
         elif(state.energy_level < 0.5 and action.send_message == ActionBean.SendEnum.DO_NOTHING):
-            reward = RewardBean(1)
+            reward = RewardBean(0)
         else:
             reward = RewardBean(-1)
+        '''
+        if(ActionBean.SendEnum.DO_NOTHING == action.send_message):
+            reward = RewardBean(-1)
+        else:
+            reward = RewardBean(0)
         #creo un log in un file csv in cui segno lo stato e l'azione scelta e la reward ricevuta
         file.write(str(state.energy_level) + ";" + str(state.queue_state) + ";" + str(state.charge_rate) + ";" + str(action.send_message) + ";" + str(action.power_source) + ";" + str(action.queue) +";" + str(reward.reward) + "\n")
     
