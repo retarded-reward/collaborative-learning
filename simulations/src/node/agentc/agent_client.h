@@ -17,9 +17,15 @@ using namespace std;
 class AgentClient : public cSimpleModule {
     public:
     protected:
+
+        char *implementation;
+
+        void init_module_params();
+    
         virtual void handleActionRequest(ActionRequest *msg) = 0;
         void initialize() override;
         void handleMessage(cMessage *msg) override;
+    
 };
 
 #endif // AGENT_CLIENT_H

@@ -56,7 +56,10 @@ class AgentFacade():
         if(agent_description_path == None):
             agent_description_path = os.environ.get('AGENT_PATH') + "/agent_conf.json"
         if(agent_description == None):
-            self._agent_description = ConfParser.parse_agent_from_json(json.load(open(agent_description_path)))
+            _agent_description = ConfParser.parse_agent_from_json(json.load(open(agent_description_path)))
+        else:
+            _agent_description = ConfParser.parse_agent_from_json(json.loads(agent_description))
+        self._agent_description = _agent_description
 
     def _init_specs(self):
 
@@ -129,6 +132,7 @@ class AgentFacade():
             None
         """
         #printo il path assoluto
+        print("implementation: " +  str(bean.agent_description))
         self._init_agent_config(bean.agent_description_path, bean.agent_description)
 
         self._last_experience = None
@@ -137,6 +141,7 @@ class AgentFacade():
         self._init_specs()        
         
         self._init_decision_tree()
+        print("decision tree: " + str(self._root))
     
 
     def get_action(self, state_bean, rewards_bean):

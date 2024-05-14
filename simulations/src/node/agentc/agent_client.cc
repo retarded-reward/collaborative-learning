@@ -1,10 +1,19 @@
 #include "agent_client.h"
 #include "AgentClientMsg_m.h"
 
+void AgentClient::init_module_params()
+{
+    implementation = (char *)par("implementation").stringValue();
+    
+    
+}
+
 void AgentClient::initialize()
 {
-
+    init_module_params();
 }
+
+
 
 void AgentClient::handleMessage(cMessage *msg)
 {
