@@ -106,6 +106,13 @@ void Controller::do_action(ActionResponse *action)
     int queue = action->getQueue();
     int num_msg_to_send = action->getMsg_to_send();
     last_select_power_source = action->getSelect_power_source();
+
+    if(!action->getSend_message()) 
+        measure_quantity("do_nothing", 1);
+    else if (action->getSelect_power_source() == SelectPowerSource::BATTERY)
+        measure_quantity("send_battery", 1);
+    else if (action->getSelect_power_source() == SelectPowerSource::POWER_CHORD)
+        measure_quantity("send_powerchord", 1);
     
     //If action is "do nothing"
     if(!action_type){
