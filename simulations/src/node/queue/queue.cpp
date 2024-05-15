@@ -2,6 +2,10 @@
 #include <omnetpp/cqueue.h>
 #include "units.h"
 #include "statistics.h"
+#include <string>
+
+using namespace std;
+using namespace std::string_literals;
 
 Define_Module(Queue);
 
@@ -13,13 +17,24 @@ Define_Module(Queue);
 }
 
 void Queue::initialize()
-{
+{    
     init_module_params();
     init_data_buffer();
+    init_statistic_templates();
 
     EV_DEBUG << "Queue initialized with capacity "
      << capacity << " and priority " << priority << endl;
 
+}
+
+void Queue::init_statistic_templates()
+{
+    snprintf(queue_pop_percentage_name, MAX_QUANTITY_NAME_LEN,
+     "queue%d_pop_percentage", priority);
+        
+    register_statistic_template(
+        queue_pop_percentage_name,
+        "queue_pop_percentage_over_time");
 }
 
 void Queue::init_module_params()
@@ -151,6 +166,7 @@ void Queue::sample_queue_state(QueueStateUpdate *msg)
     percentage_t buffer_pop_percentage;
 
     buffer_pop_percentage = (capacity == 0) ? 100.0 : data_buffer->getLength() * 100.0 / capacity;
+    measure_quantity(queue_pop_percentage_name, buffer_pop_percentage);
     
     // calcs percentage of queue occupation
     msg->setBuffer_pop_percentage(buffer_pop_percentage);

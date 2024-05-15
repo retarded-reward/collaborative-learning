@@ -8,6 +8,7 @@
 #include "QueueDataRequest_m.h"
 #include "QueueDataResponse_m.h"
 #include "QueueStateUpdate_m.h"
+#include "statistics.h"
 
 using namespace std;
 using namespace omnetpp;
@@ -236,6 +237,8 @@ protected:
     size_t capacity;
     int priority;
 
+    char queue_pop_percentage_name[MAX_QUANTITY_NAME_LEN] = {};
+
     /**
      * Holds the number of dropped packets since last queue state sampling.
     */
@@ -244,6 +247,7 @@ protected:
     virtual void initialize() override;
     void init_module_params();
     void init_data_buffer();
+    void init_statistic_templates();
 
     virtual void handleMessage(cMessage *msg) override;
     void handleDataMsg(DataMsg *msg);
