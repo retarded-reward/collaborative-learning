@@ -301,6 +301,7 @@ class Controller : public cSimpleModule
     */
     void update_queue_state(QueueStateUpdate *msg, size_t queue_idx);
     void charge_battery();
+    inline void measure_action(bool must_send, unsigned int queue, unsigned int power_source);
 };
 
 #endif

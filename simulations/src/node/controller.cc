@@ -97,6 +97,29 @@ void Controller::charge_battery()
     EV_DEBUG << "battery charger outputted " << charge << "mWh" << endl;
 }
 
+inline void Controller::measure_action(bool must_send, unsigned int queue, unsigned int power_source)
+{
+    unsigned int action;
+
+    if(!must_send) 
+        measure_quantity("do_nothing", 1);
+    else if (power_source == SelectPowerSource::BATTERY)
+        measure_quantity("send_battery", 1);
+    else if (power_source == SelectPowerSource::POWER_CHORD)
+        measure_quantity("send_powerchord", 1);
+
+    if (must_send)
+    {
+        action = queue * power_sources.size() + power_source + 1;
+    }
+    else 
+    {
+        action = 0;
+    }
+        
+    measure_quantity("action", action);
+}
+
 /*
     Perform action, if action is "do nothing" do nothing, otherwise ask queue for data
 */
@@ -107,12 +130,7 @@ void Controller::do_action(ActionResponse *action)
     int num_msg_to_send = action->getMsg_to_send();
     last_select_power_source = action->getSelect_power_source();
 
-    if(!action->getSend_message()) 
-        measure_quantity("do_nothing", 1);
-    else if (action->getSelect_power_source() == SelectPowerSource::BATTERY)
-        measure_quantity("send_battery", 1);
-    else if (action->getSelect_power_source() == SelectPowerSource::POWER_CHORD)
-        measure_quantity("send_powerchord", 1);
+    measure_action(action_type, queue, last_select_power_source);    
     
     //If action is "do nothing"
     if(!action_type){
