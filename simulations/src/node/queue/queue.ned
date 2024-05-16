@@ -10,6 +10,8 @@ simple Queue {
         
         @signal[queue*_pop_percentage](type=long);
         @statisticTemplate[queue_pop_percentage_over_time](record=vector,mean);
+        @signal[queue*_time](type=long);
+        @statisticTemplate[queue_time_over_time](record=vector,mean);
 
     gates:
         inout servers_inout[];

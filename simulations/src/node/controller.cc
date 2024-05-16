@@ -162,7 +162,7 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
     
     EV_DEBUG << "Performing action send data" << endl;
 
-    s_t service_interval = 0;
+    s_t service_interval;
     b_t data_bits;
 
     //No data to send
@@ -171,16 +171,18 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
         last_reward=illegal_action_penalty();
     }
     else{
-        //TODO Implement the effective send, for now it's only simulated by causing the effects of send like discharge
         _forward_data(data, num_data);
 
         // calcs service interval
         for (int i = 0; i < num_data; i++){
             data_bits = data[i]->getData() * 8;
-            service_interval += data_bits * 1e-6 / link_cap;
+            service_interval = data_bits * 1e-6 / link_cap;
+            measure_quantity("service_interval", service_interval);
+            measure_quantity("response_time", simTime() - data[i]->getQueueing_time() + service_interval);
         }
         if (service_interval > 0)
             measure_quantity("service_interval", service_interval);
+        
         
         last_reward=compute_reward();
     }
@@ -188,6 +190,7 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
     EV_DEBUG << "Sending message has generated reward: " << last_reward << endl;
 }
 
+//TODO Implement the effective send, for now it's only simulated by causing the effects of send like discharge
 void Controller::_forward_data(const DataMsg *data[], size_t num_data)
 {
     //Compute consumed energy

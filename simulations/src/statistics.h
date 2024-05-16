@@ -108,7 +108,15 @@ Register_ResultFilter("sumPerSimtime", SumPerSimtimeFilter);
 */
 #define measure_quantity(_name, _value) emit(registerSignal(_name), _value)
 
-#define register_statistic_template(_quantity_name, _template_name) getEnvir()->addResultRecorders(this, registerSignal(_quantity_name), _quantity_name, getProperties()->get("statisticTemplate", _template_name));\
+#define register_statistic_template(_quantity_name, _template_name)\
+{\
+  getEnvir()->addResultRecorders(this, registerSignal(_quantity_name), _quantity_name, getProperties()->get("statisticTemplate", _template_name));\
+} 
+#define init_statistic_template(_quantity_name_buffer, _statistic_template_name, _quantity_name_format, ...)\
+{\
+    snprintf(_quantity_name_buffer, MAX_QUANTITY_NAME_LEN, _quantity_name_format, __VA_ARGS__);\
+    register_statistic_template(_quantity_name_buffer, _statistic_template_name);\
+}
 
 
 #endif // STATISTICS_H

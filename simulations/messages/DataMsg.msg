@@ -10,4 +10,5 @@ cplusplus(DataMsg::DataMsg){{
 
 message DataMsg extends SimulationMsg{
     float data @cppType(B_t);
+    simtime_t queueing_time;
 };

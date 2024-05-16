@@ -238,6 +238,7 @@ protected:
     int priority;
 
     char queue_pop_percentage_name[MAX_QUANTITY_NAME_LEN] = {};
+    char queue_time_name[MAX_QUANTITY_NAME_LEN] = {};
 
     /**
      * Holds the number of dropped packets since last queue state sampling.

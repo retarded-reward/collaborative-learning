@@ -29,12 +29,11 @@ void Queue::initialize()
 
 void Queue::init_statistic_templates()
 {
-    snprintf(queue_pop_percentage_name, MAX_QUANTITY_NAME_LEN,
+    init_statistic_template(queue_pop_percentage_name, "queue_pop_percentage_over_time",
      "queue%d_pop_percentage", priority);
-        
-    register_statistic_template(
-        queue_pop_percentage_name,
-        "queue_pop_percentage_over_time");
+    init_statistic_template(queue_time_name, "queue_time_over_time", "queue%d_time",
+     priority);
+    
 }
 
 void Queue::init_module_params()
@@ -132,6 +131,7 @@ void Queue::drop_data(DataMsg *msg)
 
 void Queue::accept_data(DataMsg *msg)
 {
+    msg->setQueueing_time(msg->getArrivalTime());
     data_buffer->insert(msg);
     EV_DEBUG << "Data message accepted: id=" << msg->getId() << endl;
 }
@@ -141,6 +141,7 @@ void Queue::fetch_data(QueueDataResponse *response, size_t desired_n)
     try {
         for (int i = 0; i < desired_n; i ++){
             response->appendData((DataMsg *)data_buffer->pop());
+            measure_quantity(queue_time_name, simTime().dbl() - response->getData(i)->getQueueing_time());
         }
     }
     catch (cRuntimeError e){

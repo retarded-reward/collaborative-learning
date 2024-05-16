@@ -55,6 +55,9 @@ module Node
         @statistic[send_battery_count_over_time](source=count(send_battery); record=vector,last; checkSignals=false);
         @statistic[send_powerchord_count_over_time](source=count(send_powerchord); record=vector,last; checkSignals=false);
         @statistic[send_count_over_time](source=count(send_battery) + count(send_powerchord); record=vector,last; checkSignals=false);
+        
+        @statistic[response_time_over_time](source=response_time; record=vector,mean; checkSignals=false);
+
     gates:
         output network_out[number_of_ports] @loose;
         input queue_ports[num_queues] @loose;

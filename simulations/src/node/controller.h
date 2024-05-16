@@ -233,11 +233,9 @@ class Controller : public cSimpleModule
     void sample_reward(RewardMsg &reward_msg);
 
     /**
-     * Measures values for all quantities managed by
+     * Measures values for some quantities managed by
      * the controller needed to compute statistics.
      * 
-     * Since most statistics will be used to print charts, it is important to sample
-     * all quantities at the same time in order to make confrontations easier.
     */
     void measure_quantities();
     
