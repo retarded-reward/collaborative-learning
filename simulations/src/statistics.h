@@ -107,6 +107,7 @@ Register_ResultFilter("sumPerSimtime", SumPerSimtimeFilter);
  * Must be called from a cComponent object.
 */
 #define measure_quantity(_name, _value) emit(registerSignal(_name), _value)
+#define measure_quantity_by_sid(_sid, _value) emit(_sid, _value)
 
 #define register_statistic_template(_quantity_name, _template_name)\
 {\

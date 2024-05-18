@@ -9,9 +9,13 @@
 #include "QueueDataResponse_m.h"
 #include "QueueStateUpdate_m.h"
 #include "statistics.h"
+#include <cstddef>
 
 using namespace std;
 using namespace omnetpp;
+
+class QueuePacketDropPercentageStatisticListener;
+
 
 class DecCQueue : public cQueue {
 protected:
@@ -231,6 +235,9 @@ public:
 };
 
 class Queue : public cSimpleModule {
+
+    friend class QueuePacketDropPercentageStatisticListener;
+
 protected:
     cQueue *data_buffer;
 
@@ -239,6 +246,11 @@ protected:
 
     char queue_pop_percentage_name[MAX_QUANTITY_NAME_LEN] = {};
     char queue_time_name[MAX_QUANTITY_NAME_LEN] = {};
+    char queue_pkt_drop_name[MAX_QUANTITY_NAME_LEN] = {};
+    char queue_pkt_inbound_name[MAX_QUANTITY_NAME_LEN] = {};
+    char queue_pkt_drop_perc_name[MAX_QUANTITY_NAME_LEN] = {};
+
+    QueuePacketDropPercentageStatisticListener *queuePacketDropPercentageStatisticListener;
 
     /**
      * Holds the number of dropped packets since last queue state sampling.

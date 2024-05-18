@@ -9,6 +9,50 @@ using namespace std::string_literals;
 
 Define_Module(Queue);
 
+class QueuePacketDropPercentageStatisticListener : cListener
+{
+public:    
+
+    Queue *queue;
+    
+    simsignal_t pkt_drop_signal;
+    simsignal_t pkt_inbound_signal;
+    simsignal_t pkt_drop_perc_signal;
+
+    size_t pkt_drop_count = 0;
+    size_t pkt_inbound_count = 0;
+
+    QueuePacketDropPercentageStatisticListener(Queue *queue)
+    {
+        this->queue = queue;
+        pkt_drop_signal
+         = queue->registerSignal(queue->queue_pkt_drop_name);
+        pkt_inbound_signal
+         = queue->registerSignal(queue->queue_pkt_inbound_name);
+        pkt_drop_perc_signal
+         = queue->registerSignal(queue->queue_pkt_drop_perc_name);
+                
+        queue->subscribe(pkt_drop_signal, this);
+        queue->subscribe(pkt_inbound_signal, this);
+    }
+
+    virtual void receiveSignal(cComponent *src, simsignal_t id, 
+     intval_t value, cObject *details)
+    {
+        percentage_t pkt_drop_perc;
+        
+        if (id == pkt_drop_signal){
+            pkt_drop_count ++;
+        }
+        else if (id == pkt_inbound_signal){
+            pkt_inbound_count ++;
+        }
+
+        pkt_drop_perc = pkt_inbound_count? ((double) pkt_drop_count / pkt_inbound_count) * 100 : 0;
+        queue->measure_quantity_by_sid(pkt_drop_perc_signal, pkt_drop_perc);
+    }    
+};
+
 #define sample_and_send_queue_state(_queue_state_update)\
 {\
     queue_state_update = new QueueStateUpdate();\
@@ -31,8 +75,17 @@ void Queue::init_statistic_templates()
 {
     init_statistic_template(queue_pop_percentage_name, "queue_pop_percentage_over_time",
      "queue%d_pop_percentage", priority);
-    init_statistic_template(queue_time_name, "queue_time_over_time", "queue%d_time",
+    init_statistic_template(queue_time_name, "queue_time_over_time", "queue%d_queue_time",
      priority);
+    
+    init_statistic_template(queue_pkt_drop_name,"queue_pkt_drop",
+     "queue%d_pkt_drop", priority);
+    init_statistic_template(queue_pkt_inbound_name,"queue_pkt_inbound",
+     "queue%d_pkt_inbound", priority);
+    init_statistic_template(queue_pkt_drop_perc_name,
+     "queue_pkt_drop_percentage_over_time", "queue%d_pkt_drop_percentage", priority);
+    queuePacketDropPercentageStatisticListener
+     = new QueuePacketDropPercentageStatisticListener(this); 
     
 }
 
@@ -49,7 +102,7 @@ void Queue::init_data_buffer()
 }
 
 void Queue::handleMessage(cMessage *msg)
-{
+{    
     if (is_sim_msg(msg)){
         switch (msg->getKind())
         {
@@ -104,6 +157,7 @@ void Queue::handleDataMsg(DataMsg *msg)
     }
 
     measure_quantity("pkt_arrival_time", simTime().dbl());
+    measure_quantity(queue_pkt_inbound_name, 1);
 
     // state might have changed, so we sample it and send it to servers
     sample_and_send_queue_state(queue_state_update);
@@ -127,6 +181,8 @@ void Queue::drop_data(DataMsg *msg)
 {
     EV_DEBUG << "Data message dropped: id=" << msg->getId() << endl;
     dropped ++;
+
+    measure_quantity(queue_pkt_drop_name, 1);
 }
 
 void Queue::accept_data(DataMsg *msg)
