@@ -41,11 +41,22 @@ module Node
         @statistic[ewma_energy_saving_over_time](source=ewma(100 - (warmup(sum(energy_expense)/(sum(energy_potential_expense))) * 100)); record=vector,last; checkSignals=false; autoWarmupFilter=false);
         
         @statistic[cumulative_reward_over_time](source=sum(reward); record=vector,last; checkSignals=false);
-        //@statistic[reward_over_time](source=reward; record=vector; checkSignals=false);
+        @statistic[reward_over_time](source=reward; record=vector; checkSignals=false);
         
         //@statistic[service_interval](record=vector; checkSignals=false);
         //@statistic[pkt_arrival_time](record=vector; checkSignals=false);
-        @statistic[ewma_utilization_over_time](source=ewma(avg(service_interval)/avg(sinceLast(pkt_arrival_time)) * 100); record=vector,last; checkSignals=false;);
+        @statistic[ewma_utilization_over_time](source=ewma(avg(service_interval)/avg(sinceLast(pkt_arrival_time)) * 100); record=vector;last; checkSignals=false);
+        // actions are recorded as follows:
+        // 0: do nothing
+        // i * num_power_sources + j + 1: select queue i and power source j 
+        @statistic[action_over_time](source=action; record=vector,histogram; checkSignals=false);
+        
+        @statistic[do_nothing_count_over_time](source=count(do_nothing); record=vector,last; checkSignals=false);
+        @statistic[send_battery_count_over_time](source=count(send_battery); record=vector,last; checkSignals=false);
+        @statistic[send_powerchord_count_over_time](source=count(send_powerchord); record=vector,last; checkSignals=false);
+        @statistic[send_count_over_time](source=count(send_battery) + count(send_powerchord); record=vector,last; checkSignals=false);
+        
+        @statistic[response_time_over_time](source=response_time; record=vector,mean; checkSignals=false);
 
     gates:
         output network_out[number_of_ports] @loose;

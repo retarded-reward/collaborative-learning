@@ -82,6 +82,7 @@ void AgentClientPybind::init_python_interface()
     // (simulation startup will be slower)
     this->agent_module = py::module_::import("agent");
     agent_facade_bean = this->agent_module.attr("AgentFacadeBean")();
+    agent_facade_bean.attr("agent_description") = implementation;
     agent_facade_bean.attr("n_queues") = num_of_queues;
     this->agent = this->agent_module.attr("AgentFacade")(agent_facade_bean);
 

@@ -8,6 +8,7 @@ simple AgentClient{
         @display("i=device/cpu");
     
         int num_of_queues;
+        string implementation;
     gates:
         inout port;
 

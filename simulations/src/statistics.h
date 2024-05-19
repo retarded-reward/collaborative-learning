@@ -11,6 +11,8 @@ using namespace std;
 // Choose negative powers of 2 to improve perfomance
 #define EWMA_ALPHA_DEFAULT 0.25
 
+#define MAX_QUANTITY_NAME_LEN 32
+
 #define swallow_if_nan(_value) if (isnan(_value)) return false
 
 /**
@@ -105,5 +107,17 @@ Register_ResultFilter("sumPerSimtime", SumPerSimtimeFilter);
  * Must be called from a cComponent object.
 */
 #define measure_quantity(_name, _value) emit(registerSignal(_name), _value)
+#define measure_quantity_by_sid(_sid, _value) emit(_sid, _value)
+
+#define register_statistic_template(_quantity_name, _template_name)\
+{\
+  getEnvir()->addResultRecorders(this, registerSignal(_quantity_name), _quantity_name, getProperties()->get("statisticTemplate", _template_name));\
+} 
+#define init_statistic_template(_quantity_name_buffer, _statistic_template_name, _quantity_name_format, ...)\
+{\
+    snprintf(_quantity_name_buffer, MAX_QUANTITY_NAME_LEN, _quantity_name_format, __VA_ARGS__);\
+    register_statistic_template(_quantity_name_buffer, _statistic_template_name);\
+}
+
 
 #endif // STATISTICS_H

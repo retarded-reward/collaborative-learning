@@ -97,6 +97,29 @@ void Controller::charge_battery()
     EV_DEBUG << "battery charger outputted " << charge << "mWh" << endl;
 }
 
+inline void Controller::measure_action(bool must_send, unsigned int queue, unsigned int power_source)
+{
+    unsigned int action;
+
+    if(!must_send) 
+        measure_quantity("do_nothing", 1);
+    else if (power_source == SelectPowerSource::BATTERY)
+        measure_quantity("send_battery", 1);
+    else if (power_source == SelectPowerSource::POWER_CHORD)
+        measure_quantity("send_powerchord", 1);
+
+    if (must_send)
+    {
+        action = queue * power_sources.size() + power_source + 1;
+    }
+    else 
+    {
+        action = 0;
+    }
+        
+    measure_quantity("action", action);
+}
+
 /*
     Perform action, if action is "do nothing" do nothing, otherwise ask queue for data
 */
@@ -106,6 +129,8 @@ void Controller::do_action(ActionResponse *action)
     int queue = action->getQueue();
     int num_msg_to_send = action->getMsg_to_send();
     last_select_power_source = action->getSelect_power_source();
+
+    measure_action(action_type, queue, last_select_power_source);    
     
     //If action is "do nothing"
     if(!action_type){
@@ -137,7 +162,7 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
     
     EV_DEBUG << "Performing action send data" << endl;
 
-    s_t service_interval = 0;
+    s_t service_interval;
     b_t data_bits;
 
     //No data to send
@@ -146,16 +171,18 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
         last_reward=illegal_action_penalty();
     }
     else{
-        //TODO Implement the effective send, for now it's only simulated by causing the effects of send like discharge
         _forward_data(data, num_data);
 
         // calcs service interval
         for (int i = 0; i < num_data; i++){
             data_bits = data[i]->getData() * 8;
-            service_interval += data_bits * 1e-6 / link_cap;
+            service_interval = data_bits * 1e-6 / link_cap;
+            measure_quantity("service_interval", service_interval);
+            measure_quantity("response_time", simTime() - data[i]->getQueueing_time() + service_interval);
         }
         if (service_interval > 0)
             measure_quantity("service_interval", service_interval);
+        
         
         last_reward=compute_reward();
     }
@@ -163,6 +190,7 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
     EV_DEBUG << "Sending message has generated reward: " << last_reward << endl;
 }
 
+//TODO Implement the effective send, for now it's only simulated by causing the effects of send like discharge
 void Controller::_forward_data(const DataMsg *data[], size_t num_data)
 {
     //Compute consumed energy
