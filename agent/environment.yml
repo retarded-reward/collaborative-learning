@@ -10,5 +10,7 @@ dependencies:
   - pybind11
   - tensorflow
   - pip
+  - pandas
+  - matplotlib
   - pip:
     - tf-agents == 0.16.0

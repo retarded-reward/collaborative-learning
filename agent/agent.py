@@ -146,7 +146,6 @@ class AgentFacade():
     def _get_action(self, state, reward):
         # updates agent policy using reward from previous action
         if(self._last_experience is not None):
-            #print("Reward: " + str(reward.reward))
             r = tf.constant(value=reward.reward, shape = (), dtype=tf.float32)
             exp = Experience(self._last_experience[0], self._last_experience[1], r)
             
@@ -192,15 +191,14 @@ def test_plotting():
     agent_facade_bean = AgentFacadeBean(n_queues=n_queues)
     agent = AgentFacade(agent_facade_bean)
     state = StateBean(energy_level=1, queue_state=[1] * n_queues, charge_rate=0)
-    file = open("log.csv", "a")
+    file = open("tests/log.csv", "a")
     #elimino il contenuto del file
     file.truncate(0)
     #metto le colonne
     file.write("energy_level;queue_state;charge_rate;send_message;power_source;queue;reward\n")
     reward = RewardBean(0)
     action = agent.get_action(state, None)
-    #print("Azione scelta: " + str(action))
-    for i in range(100):
+    for i in range(10):
         
         random_energy = np.random.randint(0, 100) / float(100)
         random_queue = 0
@@ -227,16 +225,8 @@ def test_plotting():
     
     import pandas as pd
 
-    df = pd.read_csv('log.csv', sep=';')
-    #print(df)
-    #prendo solo la colonna della reward
+    df = pd.read_csv('tests/log.csv', sep=';')
     reward = df['reward']
-    #print(reward)
-
-    #trasformo tutti i -1000 in -1
-    #reward = reward.replace(-10000, -1)
-
-    #faccio un dataframe con la reward comulativa per ogni istante
     cumulative_reward_df = pd.DataFrame()
     for i in range(0, len(reward)):
         cumulative_reward_df.at[i, 'cumulative_reward'] = reward[0:i].sum()
@@ -247,7 +237,7 @@ def test_plotting():
     plt.plot(cumulative_reward_df)
     plt.xlabel('Time step')
     plt.ylabel('Cumulative reward')
-    plt.savefig('cumulative_reward.png')
+    plt.savefig('tests/cumulative_reward.png')
     plt.show()
 
 def test_get_action():
