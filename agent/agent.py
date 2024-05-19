@@ -55,10 +55,10 @@ class AgentFacade():
     def _init_agent_config(self, agent_description_path: str, agent_description):
         if(agent_description_path == None):
             agent_description_path = os.environ.get('AGENT_PATH') + "/agent_conf.json"
-        if(agent_description == None):
-            _agent_description = ConfParser.parse_agent_from_json(json.load(open(agent_description_path)))
-        else:
-            _agent_description = ConfParser.parse_agent_from_json(json.loads(agent_description))
+        _agent_description = ConfParser.parse_agent_from_json(json.load(open(agent_description_path)))
+        if(agent_description != None):
+            _agent_description.update(ConfParser.parse_agent_from_json(json.loads(agent_description)))
+        logging.debug("agent description: " + str(_agent_description))
         self._agent_description = _agent_description
 
     def _init_specs(self):
@@ -247,7 +247,7 @@ def test_plotting():
 
 def test_get_action():
     n_queues = 10
-    agent_facade_bean = AgentFacadeBean(n_queues=n_queues)
+    agent_facade_bean = AgentFacadeBean(n_queues=n_queues, agent_description='{"agent_type": "random_agent"}')
     agent = AgentFacade(agent_facade_bean)
     state = StateBean(energy_level=1, queue_state=[1] * n_queues, charge_rate=0)
     reward = RewardBean(-1)

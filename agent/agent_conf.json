@@ -1,3 +1,21 @@
 {
-    "agent_type": "dqn"
+    "agent_type": "dqn",
+    "activation_layer": "relu",
+    "fc_layer_params": [30, 20, 10],
+    "learning_rate": 0.0001,
+    "eps_greedy_bolz_choose": "eps_greedy",
+    "epsilon_greedy": 0.1,
+    "boltzmann_temperature": 1.0,
+    "gamma": 0.99,
+    "error_loss_fn": "squared_loss",
+    "optimizer": "adam",
+    "rsmprop_momentum": 0.0,
+    "rsmprop_rho": 0.9,
+    "adam_beta_1": 0.9,
+    "adam_beta_2": 0.999,
+    "adagrad_initial_accumulator_value": 0.1,
+    "rb_max_length": 1000,
+    "rb_batch_size": 32,
+    "rb_train_freq": 2,
+    "rb_sample_batch_size": 4
 }
