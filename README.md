@@ -38,7 +38,7 @@ Statistics are recorderd in the `simulations/results` folder.
 To analyze statistics, open the `simulations/results/General.anf` in the Omnet++ IDE and use its Analysys Tool.
 
 
-## Agent coniguration
+## Agent configuration
 The agent configuration is done through a JSON file named `agent_conf.json`. This file contains the basic configuration, which can be overridden in various ways:
 
 - by modifying the file directly,
