@@ -41,8 +41,8 @@ To analyze statistics, open the `simulations/results/General.anf` in the Omnet++
 ## Agent coniguration
 The agent configuration is done through a JSON file named "agent_conf.json". This file contains the basic configuration, which can be overridden in various ways:
 
-*by modifying the file directly,
-*by creating another file and specifying its path in the agent bean (in this case, all fields must be filled),
-*by passing a new JSON string directly into the agent bean that specifies all or some of the parameters, with any missing parameters being taken from the base configuration file.
+- by modifying the file directly,
+- by creating another file and specifying its path in the agent bean (in this case, all fields must be filled),
+- by passing a new JSON string directly into the agent bean that specifies all or some of the parameters, with any missing parameters being taken from the base configuration file.
 
 Documentation on how to configure the agent can be found at: [Agent Configuration](https://github.com/retarded-reward/collaborative-learning/wiki/Agent-Configuration).
