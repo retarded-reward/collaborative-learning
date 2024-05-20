@@ -242,6 +242,13 @@ reward_t Controller::compute_reward(){
 
     EV_DEBUG << "Computing reward" << endl;
 
+    /**
+     * First reward could be badly normalized because the normalization constants
+     * are not known yet. 
+    */
+    if (simTime() < getSimulation()->getWarmupPeriod())
+        return 0;
+
     reward_t reward = 0;
     vector<RewardTerm *> reward_terms;
 
@@ -257,6 +264,7 @@ reward_t Controller::compute_reward(){
      * The weight must be 1 since the normalization happens before applying the weight
      * to the signal value.
     */
+
 
     // includes energy term
     for(int i=0; i<power_sources.size(); i++)
