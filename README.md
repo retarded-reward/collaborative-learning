@@ -39,7 +39,7 @@ To analyze statistics, open the `simulations/results/General.anf` in the Omnet++
 
 
 ## Agent coniguration
-The agent configuration is done through a JSON file named "agent_conf.json". This file contains the basic configuration, which can be overridden in various ways:
+The agent configuration is done through a JSON file named `agent_conf.json`. This file contains the basic configuration, which can be overridden in various ways:
 
 - by modifying the file directly,
 - by creating another file and specifying its path in the agent bean (in this case, all fields must be filled),
