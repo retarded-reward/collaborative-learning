@@ -46,10 +46,6 @@ void Controller::ask_action(){
     float reward;
     
     EV_DEBUG << "Asking for action" << endl;
-
-    // We consider a timestep the elapsed time between two sending of action requests
-    // so we measure quantities at the beginning of the timestep
-    measure_quantities();
     
     // sample state in a action request object and send it to the agent client
     ar = new ActionRequest();
@@ -136,6 +132,7 @@ void Controller::do_action(ActionResponse *action)
     if(!action_type){
         EV_DEBUG << "Received action " << action_type << "->Do nothing" << endl;
         do_nothing();
+        measure_quantities();
     }
     else{
         EV_DEBUG << "Received action " << action_type << "->Send data" << endl;
@@ -186,6 +183,8 @@ void Controller::forward_data(const DataMsg *data[], size_t num_data){
         
         last_reward=compute_reward();
     }
+
+    measure_quantities();
     
     EV_DEBUG << "Sending message has generated reward: " << last_reward << endl;
 }
@@ -242,13 +241,6 @@ reward_t Controller::compute_reward(){
 
     EV_DEBUG << "Computing reward" << endl;
 
-    /**
-     * First reward could be badly normalized because the normalization constants
-     * are not known yet. 
-    */
-    if (simTime() < getSimulation()->getWarmupPeriod())
-        return 0;
-
     reward_t reward = 0;
     vector<RewardTerm *> reward_terms;
 
@@ -265,15 +257,14 @@ reward_t Controller::compute_reward(){
      * to the signal value.
     */
 
-
     // includes energy term
     for(int i=0; i<power_sources.size(); i++)
     {
-        set_if_greater(max_energy_consumed, last_energy_consumed[i]);
+        set_if_greater(max_energy_consumed[i], last_energy_consumed[i]);
         max_energy_penalty
             = RewardTerm(reward_term_models, "energy_penalty").bind_symbols(
             {
-                {"energy_consumed", cValue(max_energy_consumed)},
+                {"energy_consumed", cValue(max_energy_consumed[i])},
                 {"cost_per_mWh", cValue(power_sources[i]->getCostPerMWh())}
             })->setWeight(1)->compute();
         include_reward_term("energy_penalty",
@@ -282,7 +273,7 @@ reward_t Controller::compute_reward(){
             {"cost_per_mWh", (power_sources[i]->getCostPerMWh())}
          },
          reward_terms,
-         new MinMaxNormalizer(0, max_energy_penalty));
+         new MinMaxNormalizer(0, absolute(max_energy_penalty)));
     EV_DEBUG << "Energy term for power source " << i << ": " << reward_terms.back()->compute() << endl;
     EV_DEBUG << "max_energy_penalty for power source " << i << ": " << max_energy_penalty << endl;
     }
@@ -293,7 +284,7 @@ reward_t Controller::compute_reward(){
         max_queue_occ_penalty
          = RewardTerm(reward_term_models, "queue_occ_penalty").bind_symbols(
          {
-            {"priority", cValue(priority)},
+            {"priority", cValue(num_queues - 1)},
             {"queue_occ", cValue(100)},
          })->setWeight(1)->compute();
         include_reward_term("queue_occ_penalty",
@@ -302,7 +293,7 @@ reward_t Controller::compute_reward(){
             {"queue_occ", cValue(queue_states[priority].occupancy)}
          },
          reward_terms,
-         new MinMaxNormalizer(0, max_queue_occ_penalty));
+         new MinMaxNormalizer(0, absolute(max_queue_occ_penalty)));
         EV_DEBUG << "Queue occ term for priority "
          << priority << ": " << reward_terms.back()->compute() << endl;
         EV_DEBUG << "max queue occ penalty for priority " << priority << ": " << max_queue_occ_penalty << endl;
@@ -314,7 +305,7 @@ reward_t Controller::compute_reward(){
         max_pkt_drop_penalty
          = RewardTerm(reward_term_models, "pkt_drop_penalty").bind_symbols(
          {
-            {"priority", cValue(priority)},
+            {"priority", cValue(num_queues - 1)},
             {"pkt_drop_count", cValue(queue_states[priority].max_pkt_drop_cnt)}
          })->setWeight(1)->compute();
         include_reward_term("pkt_drop_penalty",
@@ -323,7 +314,7 @@ reward_t Controller::compute_reward(){
             {"pkt_drop_count", cValue(queue_states[priority].pkt_drop_cnt)}
          },
          reward_terms,
-         new MinMaxNormalizer(0, max_pkt_drop_penalty));
+         new MinMaxNormalizer(0, absolute(max_pkt_drop_penalty)));
         // resets pkt drop count after reading it
         queue_states[priority].pkt_drop_cnt = 0;
         EV_DEBUG << "Pkt drop term for priority " 
@@ -514,6 +505,8 @@ void Controller::init_power_sources()
      battery_charger_params->get("cap_mWh").doubleValueInUnit("mWh"));
     EV_DEBUG << "max charge is " << battery_charger->getCapacity() << endl;
     battery_charger->plug();
+
+    max_energy_consumed.resize(power_sources.size(), power_sources[SelectPowerSource::BATTERY]->getCapacity());
 
 }
 

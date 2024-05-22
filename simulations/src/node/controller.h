@@ -76,12 +76,13 @@ class MinMaxNormalizer : public Normalizer {
     double b;
 
   public:
-    MinMaxNormalizer(double min, double max) : MinMaxNormalizer(min, max, 0, 1) {}
+    MinMaxNormalizer(double min, double max) : MinMaxNormalizer(min, max, -1, 0) {}
     MinMaxNormalizer(double min, double max, double a, double b)
      : min(min), max(max), a(a), b(b) {}
 
     double normalize(double value) override {
-      return ((value - min) * (b - a)) / ((max - min)? absolute(max - min) : 1);
+      if (max == min) return 0;
+      return ((value - min) * (b - a)) / (max - min);
     }
 };
 
@@ -133,7 +134,6 @@ public:
     
     normalized = normalizer->normalize(signal->doubleValue());
     return weight * normalized;
-    //return isnan(normalized)? 0 : weight * normalized;
   }
 
   reward_t getWeight() const {
@@ -173,7 +173,7 @@ class Controller : public cSimpleModule
     Timeout *charge_battery_timeout;
 
     B_t max_packet_size = 0;
-    mWh_t max_energy_consumed = 0;
+    vector<mWh_t> max_energy_consumed;
     reward_t max_penalty_unsigned = 0;
 
     /**
