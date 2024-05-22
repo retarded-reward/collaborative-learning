@@ -14,6 +14,7 @@ void AgentClientPybind::state_msg_to_bean(const NodeStateMsg &state, py::object 
 
     bean.attr("energy_level") = state.getEnergy_percentage();
     bean.attr("charge_rate") = state.getCharge_rate_percentage();
+    bean.attr("clean_queue")();
     for (int i = 0; i < state.getQueue_pop_percentageArraySize(); i ++){
         bean.attr("add_queue_state")(state.getQueue_pop_percentage(i));
     }
