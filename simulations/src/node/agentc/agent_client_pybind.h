@@ -11,7 +11,6 @@ namespace py = pybind11;
 
 class DLL_LOCAL AgentClientPybind : public AgentClient {
     protected:
-        py::module agent_module;
         py::object agent;
 
         size_t num_of_queues;
