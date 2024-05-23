@@ -46,6 +46,7 @@ class AgentFacadeBean():
 
     def __init__(self, n_queues = 1, agent_description_path = None,
      agent_description = None):
+        
         self.n_queues = n_queues
         self.agent_description_path = agent_description_path
         self.agent_description = agent_description
@@ -62,6 +63,7 @@ class AgentFacade():
         self._agent_description = _agent_description
 
     def _init_specs(self):
+        
 
         self._observation_spec = StateBean.observation_spec(self._n_queues)
 
@@ -89,8 +91,9 @@ class AgentFacade():
         )
 
         self._time_step_spec = ts.time_step_spec(self._observation_spec)
-    
+
     def _init_decision_tree(self) -> DecisionTreeConsultant:
+
         
         agent_root = AgentFactory.create_agent(
             agent_description = self._agent_description, 
@@ -132,6 +135,7 @@ class AgentFacade():
             None
         """
         #printo il path assoluto
+        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
         print("implementation: " +  str(bean.agent_description))
         self._init_agent_config(bean.agent_description_path, bean.agent_description)
 
@@ -142,6 +146,10 @@ class AgentFacade():
         
         self._init_decision_tree()
         print("decision tree: " + str(self._root))
+        self._file = open(os.environ.get('AGENT_PATH') + "/tests_omnet/log.csv", "a")
+        self._file.truncate(0)
+        #metto le colonne
+        self._file.write("energy_level;queue_state;charge_rate;send_message;power_source;queue;reward\n")
     
 
     def get_action(self, state_bean, rewards_bean):
@@ -151,6 +159,7 @@ class AgentFacade():
     def _get_action(self, state, reward):
         # updates agent policy using reward from previous action
         if(self._last_experience is not None):
+            reward.reward = round(reward.reward, 2)
             r = tf.constant(value=reward.reward, shape = (), dtype=tf.float32)
             exp = Experience(self._last_experience[0], self._last_experience[1], r)
             
@@ -161,6 +170,8 @@ class AgentFacade():
         # Computes TimeStep object by resetting the environment
         # at the given state
         # and uses it to get the action
+        state.energy_level = round(state.energy_level, 0)
+        state.charge_rate = round(state.charge_rate, 0)
         time_step = state.to_tensor(self._n_queues)
         action = []
         self._root.get_decisions(parent_state=time_step, decision_path=action)
@@ -168,6 +179,8 @@ class AgentFacade():
         self._last_experience = (time_step, action)
 
         action_bean = self._decision_path_to_action_bean(action)
+        self._file.write(str(state.energy_level) + ";" + str(state.queue_state) + ";" + str(state.charge_rate) + ";" + str(action_bean.send_message) + ";" + str(action_bean.power_source) + ";" + str(action_bean.queue) +";" + str(reward.reward) + "\n")
+
         logging.debug("Action: " + str(action_bean))
         return action_bean
     
@@ -191,7 +204,7 @@ class AgentFacade():
 def test_plotting():
     
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
     n_queues = 10
     agent_facade_bean = AgentFacadeBean(n_queues=n_queues)
     agent = AgentFacade(agent_facade_bean)
