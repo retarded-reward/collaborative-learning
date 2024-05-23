@@ -92,6 +92,9 @@ class AgentFacade():
 
         self._time_step_spec = ts.time_step_spec(self._observation_spec)
 
+    # def observation_and_action_constraint_splitter(observation):
+    #         return observation, ([1]*self._n_queues)
+
     def _init_decision_tree(self) -> DecisionTreeConsultant:
 
         
@@ -158,11 +161,12 @@ class AgentFacade():
     
     def _get_action(self, state, reward):
         # updates agent policy using reward from previous action
+        
         if(self._last_experience is not None):
             reward.reward = round(reward.reward, 2)
             r = tf.constant(value=reward.reward, shape = (), dtype=tf.float32)
             exp = Experience(self._last_experience[0], self._last_experience[1], r)
-            
+            self._file.write(str(reward.reward) + "\n")
             self._root.train([exp])
 
         
@@ -179,7 +183,7 @@ class AgentFacade():
         self._last_experience = (time_step, action)
 
         action_bean = self._decision_path_to_action_bean(action)
-        self._file.write(str(state.energy_level) + ";" + str(state.queue_state) + ";" + str(state.charge_rate) + ";" + str(action_bean.send_message) + ";" + str(action_bean.power_source) + ";" + str(action_bean.queue) +";" + str(reward.reward) + "\n")
+        self._file.write(str(state.energy_level) + ";" + str(state.queue_state) + ";" + str(state.charge_rate) + ";" + str(action_bean.send_message) + ";" + str(action_bean.power_source) + ";" + str(action_bean.queue) +";")
 
         logging.debug("Action: " + str(action_bean))
         return action_bean
