@@ -59,6 +59,9 @@ class StateBean():
     def add_queue_state(self, queue_state):
         self._queue_state.append(queue_state)
 
+    def clean_queue(self):
+        self._queue_state = []
+
     @staticmethod
     def observation_spec(n_queues: int) -> TensorSpec:
         return (
