@@ -275,7 +275,9 @@ reward_t Controller::compute_reward(){
          },
          reward_terms,
          new MinMaxNormalizer(0, absolute(max_energy_penalty)));
-    EV_DEBUG << "Energy term for power source " << i << ": " << reward_terms.back()->compute() << endl;
+        reward_t temp=reward_terms.back()->compute();
+        reward += temp;
+    EV_DEBUG << "Energy term for power source " << i << ": " << temp << endl;
     EV_DEBUG << "max_energy_penalty for power source " << i << ": " << max_energy_penalty << endl;
     }
     
@@ -286,7 +288,7 @@ reward_t Controller::compute_reward(){
          = RewardTerm(reward_term_models, "queue_occ_penalty").bind_symbols(
          {
             {"priority", cValue(num_queues - 1)},
-            {"queue_occ", cValue(100)},
+            {"queue_occ", cValue(100)}, //100 cause it's the max value, used for normalization
          })->setWeight(1)->compute();
         include_reward_term("queue_occ_penalty",
          {
@@ -295,8 +297,11 @@ reward_t Controller::compute_reward(){
          },
          reward_terms,
          new MinMaxNormalizer(0, absolute(max_queue_occ_penalty)));
+        
+        reward_t temp=reward_terms.back()->compute();
+        reward += temp;
         EV_DEBUG << "Queue occ term for priority "
-         << priority << ": " << reward_terms.back()->compute() << endl;
+         << priority << ": " << temp << endl;
         EV_DEBUG << "max queue occ penalty for priority " << priority << ": " << max_queue_occ_penalty << endl;
     }
 
@@ -319,17 +324,19 @@ reward_t Controller::compute_reward(){
         // resets pkt drop count after reading it
         queue_states[priority].pkt_drop_cnt = 0;
         queue_states[priority].pkt_inbound_cnt = 0;
+        reward_t temp=reward_terms.back()->compute();
+        reward += temp;
         EV_DEBUG << "Pkt drop term for priority " 
-         << priority << ": " << reward_terms.back()->compute() << endl;
+         << priority << ": " << temp << endl;
         EV_DEBUG << "max pkt drop penalty for priority " << priority << ": " << max_pkt_drop_penalty << endl;
     }
 
     // computes reward by consuming and reducing all included reward terms
     for (RewardTerm *reward_term : reward_terms)
     {
-        EV_DEBUG << "reward term: " << reward_term->compute() << endl;
-        reward = reward + reward_term->compute();
-        EV_DEBUG << "partial reward: " << reward << endl;
+        //EV_DEBUG << "reward term: " << reward_term->compute() << endl;
+        //reward = reward + reward_term->compute();
+        //EV_DEBUG << "partial reward: " << reward << endl;
         delete reward_term;
     }
 
