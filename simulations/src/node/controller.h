@@ -187,7 +187,6 @@ class Controller : public cSimpleModule
     */
     int num_queues;
     s_t ask_action_timeout_delta;
-    int data_buffer_capacity;
     int max_neighbours;
     Mbps_t link_cap;
     s_t charge_battery_timeout_delta;

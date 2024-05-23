@@ -446,7 +446,6 @@ void Controller::init_reward_params()
 void Controller::init_module_params()
 {   
     ask_action_timeout_delta = par("ask_action_timeout_delta").doubleValue();
-    data_buffer_capacity = par("data_buffer_capacity").intValue();
     max_neighbours = par("max_neighbours").intValue();
     link_cap = par("link_cap").doubleValue();
     power_model = new NICPowerModel();

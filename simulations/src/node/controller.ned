@@ -20,7 +20,6 @@ simple Controller
         object reward_term_models;
         
         double ask_action_timeout_delta @unit(s); // timeout delta for asking action (in sim time)
-        int data_buffer_capacity; // how many data msgs fit in the buffer
         int max_neighbours; // how many neighbours the node can keep track of at most
         double link_cap @unit(Mbps); // link capacity
         object power_models; // defines power consumptions for node operations
