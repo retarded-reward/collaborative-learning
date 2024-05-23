@@ -149,7 +149,7 @@ class AgentFacade():
         
         self._init_decision_tree()
         print("decision tree: " + str(self._root))
-        self._file = open(os.environ.get('AGENT_PATH') + "/tests_omnet/log.csv", "a")
+        self._file = open(os.environ.get('AGENT_PATH') + "/tests_omnet/log.csv", "w")
         self._file.truncate(0)
         #metto le colonne
         self._file.write("energy_level;queue_state;charge_rate;send_message;power_source;queue;reward\n")
