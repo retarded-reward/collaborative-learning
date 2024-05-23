@@ -10,7 +10,6 @@ class StateBean():
 
     def __init__(self,
         energy_level : float = 0, 
-        queue_state : Iterable[float] = [],
         charge_rate : float = 0,
         ):
         
@@ -20,7 +19,7 @@ class StateBean():
         energy_level is a float value from 0 to 1.
         """
 
-        self._queue_state = queue_state
+        self._queue_state = []
         """
         Percentage of the buffer capacity that is currently used.
         queue_state is a float value from 0 to 1.
