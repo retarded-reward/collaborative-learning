@@ -35,8 +35,8 @@ void AgentClientPybind::action_bean_to_msg(py::object bean, ActionResponse *msg)
 
 void AgentClientPybind::handleActionRequest(ActionRequest *msg)
 {    
-    py::object state_bean = this->agent_module.attr("StateBean")();
-    py::object reward_bean = this->agent_module.attr("RewardBean")();
+    py::object state_bean = py::module_::import("agent").attr("StateBean")();
+    py::object reward_bean = py::module_::import("agent").attr("RewardBean")();
     py::object action_bean;
     py::object current_action_bean;
     ActionResponse *response;
@@ -81,18 +81,16 @@ void AgentClientPybind::init_python_interface()
 
     // preloads the agent module to speed up simulation execution
     // (simulation startup will be slower)
-    this->agent_module = py::module_::import("agent");
-    agent_facade_bean = this->agent_module.attr("AgentFacadeBean")();
+    agent_facade_bean = py::module_::import("agent").attr("AgentFacadeBean")();
     agent_facade_bean.attr("agent_description") = implementation;
     agent_facade_bean.attr("n_queues") = num_of_queues;
-    this->agent = this->agent_module.attr("AgentFacade")(agent_facade_bean);
+    this->agent = py::module_::import("agent").attr("AgentFacade")(agent_facade_bean);
 
 }
 
 AgentClientPybind::~AgentClientPybind()
 {
     this->agent.release();
-    this->agent_module.release();
     
     // unregisters from the python interpreter
     PythonInterpreter::getInstance()->put();
