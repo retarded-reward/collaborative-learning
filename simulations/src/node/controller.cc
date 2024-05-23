@@ -70,6 +70,7 @@ void Controller::update_queue_state(QueueStateUpdate *msg, size_t queue_idx)
 {
     queue_states[queue_idx].occupancy = msg->getBuffer_pop_percentage();
     queue_states[queue_idx].pkt_drop_cnt += msg->getNum_of_dropped();
+    queue_states[queue_idx].pkt_inbound_cnt += msg->getNum_of_inbound();
     set_if_greater(queue_states[queue_idx].max_pkt_drop_cnt, queue_states[queue_idx].pkt_drop_cnt);
     EV_DEBUG << "Queue " << queue_idx << " state updated with occupancy: " 
     << queue_states[queue_idx].occupancy << "%" << " and pkt dropped: " 
@@ -306,7 +307,7 @@ reward_t Controller::compute_reward(){
          = RewardTerm(reward_term_models, "pkt_drop_penalty").bind_symbols(
          {
             {"priority", cValue(num_queues - 1)},
-            {"pkt_drop_count", cValue(queue_states[priority].max_pkt_drop_cnt)}
+            {"pkt_drop_count", cValue(queue_states[priority].pkt_inbound_cnt)}
          })->setWeight(1)->compute();
         include_reward_term("pkt_drop_penalty",
          {
@@ -317,6 +318,7 @@ reward_t Controller::compute_reward(){
          new MinMaxNormalizer(0, absolute(max_pkt_drop_penalty)));
         // resets pkt drop count after reading it
         queue_states[priority].pkt_drop_cnt = 0;
+        queue_states[priority].pkt_inbound_cnt = 0;
         EV_DEBUG << "Pkt drop term for priority " 
          << priority << ": " << reward_terms.back()->compute() << endl;
         EV_DEBUG << "max pkt drop penalty for priority " << priority << ": " << max_pkt_drop_penalty << endl;
@@ -402,7 +404,7 @@ void Controller::measure_quantities()
 {
     mWh_t energy_consumption = 0;
     reward_t energy_expense = 0;
-    percentage_t energy_potential_expense = 0;
+    percentage_t energy_potential_expense = 1;
     PowerSource *most_expensive_power_source = power_sources[0];
 
     // find most expensive power source

@@ -36,6 +36,7 @@ using namespace std;
 struct QueueState {
   percentage_t occupancy;
   int pkt_drop_cnt;
+  int pkt_inbound_cnt;
   int max_pkt_drop_cnt;
 };
 

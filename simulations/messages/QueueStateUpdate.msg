@@ -15,4 +15,7 @@ message QueueStateUpdate extends QueueMsg{
     
     // how many packets have been dropped since last update
     int num_of_dropped;
+    
+    // how many packets arrived since last update
+    int num_of_inbound;
 };

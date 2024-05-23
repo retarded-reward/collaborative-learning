@@ -146,6 +146,8 @@ void Queue::handleDataMsg(DataMsg *msg)
 {
     QueueStateUpdate *queue_state_update;
 
+    inbound ++;
+
     // tries to enqueue the message. If there is no space, drops the message.
     try
     {
@@ -228,9 +230,13 @@ void Queue::sample_queue_state(QueueStateUpdate *msg)
     // calcs percentage of queue occupation
     msg->setBuffer_pop_percentage(buffer_pop_percentage);
     
+    msg->setNum_of_inbound(inbound);
+    inbound = 0;
+    
     // samples num of dropped packets and resets counter
     msg->setNum_of_dropped(dropped);
     dropped = 0;
+
 }
 
 void Queue::send_queue_state(QueueStateUpdate *msg)

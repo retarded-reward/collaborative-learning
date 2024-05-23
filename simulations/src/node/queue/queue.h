@@ -256,6 +256,10 @@ protected:
      * Holds the number of dropped packets since last queue state sampling.
     */
     unsigned int dropped = 0;
+    /**
+     * Holds the number of inbound packets since last queue state sampling.
+    */
+    unsigned int inbound = 0;
 
     virtual void initialize() override;
     void init_module_params();
