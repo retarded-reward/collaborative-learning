@@ -25,7 +25,8 @@ void SrcController::initialize()
 {
     message_count = 0;
     //Send message to node itself cause can't enter loop in initialize
-    scheduleAt(simTime(), new cMessage());
+    schedule_data();
+
 }
 
 void SrcController::handleMessage(cMessage *msg)
@@ -33,6 +34,7 @@ void SrcController::handleMessage(cMessage *msg)
     // Handle incoming messages
     if (msg->isSelfMessage()) {
         sendData();
+        schedule_data();
     }
     delete msg;
     
@@ -43,6 +45,12 @@ int SrcController::randomIntGenerator(int min, int max)
 {
     int res = min + rand() % (max - min + 1);
     return res;
+}
+
+void SrcController::schedule_data()
+{
+    simtime_t delay = par("send_interval").doubleValue();
+    scheduleAt(simTime()+delay, new cMessage());
 }
 
 
@@ -57,6 +65,4 @@ void SrcController::sendData()
     data->setData(data_size);
     message_count++;
     send(data, "network_port", neigh);
-    simtime_t delay = par("send_interval").doubleValue();
-    scheduleAt(simTime()+delay, new cMessage());
 }

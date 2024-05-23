@@ -30,6 +30,7 @@ class SrcController : public cSimpleModule
     virtual void handleMessage(cMessage *msg) override;
     void sendData();
     int randomIntGenerator(int min, int max);
+    void schedule_data();
 };
 
 #endif
