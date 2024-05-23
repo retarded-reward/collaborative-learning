@@ -174,7 +174,7 @@ class Controller : public cSimpleModule
 
     B_t max_packet_size = 0;
     vector<mWh_t> max_energy_consumed;
-    reward_t max_penalty_unsigned = 0;
+    reward_t max_penalty_unsigned = 1;
 
     /**
      * The i-th element of this vector represents the up-to-date state
