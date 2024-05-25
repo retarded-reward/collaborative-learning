@@ -8,9 +8,9 @@ channels:
 dependencies:
   - python=3.11
   - pybind11
-  - tensorflow
+  - tensorflow=2.12.0
   - pip
   - pandas
   - matplotlib
   - pip:
-    - tf-agents == 0.16.0
+    - tf-agents[reverb] == 0.16.0

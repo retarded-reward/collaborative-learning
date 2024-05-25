@@ -63,17 +63,24 @@ class StateBean():
 
     @staticmethod
     def observation_spec(n_queues: int) -> TensorSpec:
-        return (
-            BoundedTensorSpec(shape=[], dtype=np.float32, minimum=0, maximum=1, name = "energy_level"),
-            BoundedTensorSpec(shape=[n_queues], dtype=np.float32, minimum=[0] * n_queues, maximum=[1] * n_queues, name = "queue_state"),
-            BoundedTensorSpec(shape=[], dtype=np.float32, minimum=0, maximum=1, name = "charge_rate") 
-        )
+        """
+        State is described as a single vector of ints.
+        The vector has the following structure:
+        [energy_level, queue_state_1, ..., queue_state_n, charge_rate]
+        All values are integer percentages from 0 to 100.
+        """
+        return BoundedTensorSpec(shape=(1 + n_queues + 1), 
+                                 dtype=np.int32, 
+                                 minimum=(0, *[0 for i in range(n_queues)], 0), 
+                                 maximum=(100, *[100 for i in range(n_queues)], 100), 
+                                 name = "state_spec")
+        
+        
 
-    """
-    Returns a list of tensors representing the state of the agent.
-    Each tensor is a state variable.
-    """
     def to_tensor(self, n_queues : int):
+        """
+        See observation_spec for the structure of the tensor.
+        """
         
         # NOTE: keep in sync with observation_spec
         #      and with the state variables in the constructor
@@ -81,12 +88,11 @@ class StateBean():
         if len(self.queue_state) != n_queues:
             warnings.warn("The number of queues in the state does not match the number of queues in the environment. The state will be padded with zeros or truncated to match the number of queues in the environment")
         
-        queue_state = (self._queue_state[:n_queues] + (max(n_queues - len(self._queue_state), 0)) * [0])
-        node_spec = (
-            tf.constant(shape=(), dtype=tf.float32, name = "energy_level", value=self.energy_level),
-            tf.constant(shape=(n_queues), dtype=tf.float32, name = "queue_state", value=queue_state),
-            tf.constant(shape=(), dtype=tf.float32, name = "charge_rate", value=self.charge_rate)
-        )            
+        #queue_state = (self._queue_state[:n_queues] + (max(n_queues - len(self._queue_state), 0)) * [0])
+        node_spec = tf.constant(shape=(1 + n_queues + 1), 
+                                dtype=tf.int32, 
+                                name = "state", 
+                                value=[int(self.energy_level), *[int(qstate) for qstate in self._queue_state], int(self.charge_rate)])
         return node_spec
     
     def __str__(self):

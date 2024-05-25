@@ -92,9 +92,6 @@ class AgentFacade():
 
         self._time_step_spec = ts.time_step_spec(self._observation_spec)
 
-    # def observation_and_action_constraint_splitter(observation):
-    #         return observation, ([1]*self._n_queues)
-
     def _init_decision_tree(self) -> DecisionTreeConsultant:
 
         

@@ -40,7 +40,7 @@ class Experience():
     def __init__(self, 
                  state : Tensor, 
                  decision_path : Iterable[Tuple[str, Tensor]], 
-                 reward : int = None):
+                 reward : float = None):
         self._state = state
         """ The state where the decision path led """
         self._decision_path = decision_path
@@ -194,7 +194,7 @@ class DecisionTreeConsultant():
             decision_path_level (int, optional): The level of the decision path to consider. Defaults to 0.
             train (bool, optional): Whether to perform training or not. Defaults to True.
         """
-        #train=True
+        print("training consultant ", self._decision_name)
         for e in experiences:
         
             e = self._deduce_consultant_experience(e)
@@ -211,7 +211,13 @@ class DecisionTreeConsultant():
                 reward=e.reward,
                 discount=tf.constant(value=1, shape=(), dtype=tf.float32)
             )
+            #if hasattr(self._agent, "_q_network"):
+            #    print("q values before training: ", self._agent._q_network(trajectory.observation, step_type=trajectory.step_type))
+
             self._agent.train(experience=trajectory)
+            
+            #if hasattr(self._agent, "_q_network"):
+            #    print("q values after training: ", self._agent._q_network(trajectory.observation, step_type=trajectory.step_type))
         
             # train all and only consultants that are part of the decision path.
             if len(self._choices) > 0:

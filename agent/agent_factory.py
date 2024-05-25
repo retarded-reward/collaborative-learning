@@ -36,11 +36,12 @@ def with_replay_buffer(tf_agent_class, sample_batch_size,
             self._batch_size = replay_buffer_ctor_kwargs["batch_size"]
 
         def train(self, experience: Trajectory, weights: Optional[types.NestedTensor] = None, **kwargs) -> LossInfo:
+            print("called train in replay buffered agent")
             self._train_counter += 1
             values_batched = tf.nest.map_structure(lambda t: tf.stack([t] * self._batch_size), experience)
             self._replay_buffer.add_batch(values_batched)
             
-            loss_info = LossInfo(loss = 0, extra = 0)
+            loss_info = None
             if self._train_counter % self._train_frequency == 0:
                 dataset = self._replay_buffer.as_dataset(sample_batch_size=sample_batch_size, num_steps=num_steps)
                 iterator = iter(dataset)
@@ -113,7 +114,9 @@ class AgentFactory():
                 eps_greedy_bolz = agent_description["eps_greedy_bolz_choose"]
                 epsilon_greedy_value = agent_description["epsilon_greedy"]
                 boltzmann_temperature_value = agent_description["boltzmann_temperature"]
-                error_loss_fn = agent_description["error_loss_fn"]
+                # FIXME: loss function was passed as a string, but it should be a function object.
+                # see the hardcoded loss function used later in the dqn agent creation
+                #error_loss_fn = agent_description["error_loss_fn"]
                 optimizer = agent_description["optimizer"]
                 gamma = agent_description["gamma"]
                 rsmprop_momentum = agent_description["rsmprop_momentum"]
@@ -144,16 +147,16 @@ class AgentFactory():
 
                 q_encoding_net = encoding_network.EncodingNetwork(
                     input_tensor_spec=time_step_spec.observation,
-                    preprocessing_layers=(
+                    preprocessing_layers=#(
+                        # if tuple, put one layer per tensor input (ES: 3 state tensor => 3 flatten layers)
+                        # if there is only one state tensor as input, put only one layer without enclosing it in a tuple
                         tf.keras.layers.Flatten(),
-                        tf.keras.layers.Flatten(),
-                        tf.keras.layers.Flatten(),
-                    ),
+                    #),
                     preprocessing_combiner=tf.keras.layers.Concatenate(axis=-1),
                     fc_layer_params=fc_layer_params,
                     activation_fn=activation_layer.get_activation_layer(),
                     kernel_initializer=tf.keras.initializers.VarianceScaling(
-                        scale=2.0, mode='fan_in', distribution='truncated_normal')
+                        scale=2.0, mode='fan_in', distribution='truncated_normal')#, seed=696969)
                 )
                 
 
@@ -168,44 +171,25 @@ class AgentFactory():
                     max_length=rb_max__length
                 )
                 if eps_greedy_bolz == ExplorationEnum.EPSILON_GREEDY:
-                    agent = ReplayBufferedDQNAgent(
-                        time_step_spec,
-                        action_spec,
-                        q_network=q_encoding_net,
-                        optimizer=optimizer,
-                        td_errors_loss_fn=error_loss_fn.get_loss_fn(),
-                        train_step_counter=train_step_counter,
-                        epsilon_greedy=epsilon_greedy_value,
-                        gamma=gamma
-                    )
+                    epsilon_greedy = epsilon_greedy_value
+                    boltzmann_temperature = None
                 else:
-                    agent = ReplayBufferedDQNAgent(
-                        time_step_spec,
-                        action_spec,
-                        q_network=q_encoding_net,
-                        optimizer=optimizer,
-                        td_errors_loss_fn=error_loss_fn.get_loss_fn(),
-                        train_step_counter=train_step_counter,
-                        epsilon_greedy=None,
-                        boltzmann_temperature=boltzmann_temperature_value,
-                        gamma=gamma
-                    )            
+                    epsilon_greedy = None
+                    boltzmann_temperature = boltzmann_temperature_value
+
+                agent = ReplayBufferedDQNAgent(
+                    time_step_spec,
+                    action_spec,
+                    q_network=q_encoding_net,
+                    optimizer=optimizer,
+                    td_errors_loss_fn=common.element_wise_squared_loss,
+                    train_step_counter=train_step_counter,
+                    epsilon_greedy=epsilon_greedy,
+                    boltzmann_temperature=boltzmann_temperature,
+                    gamma=gamma
+                )
                 agent.initialize()
                 return agent
 
             case _:
                 raise Exception("Agent type not supported")
-
-    @staticmethod
-    def _dense_layer(num_units):
-        return tf.keras.layers.Dense(
-            num_units,
-            activation=tf.keras.activations.relu,
-            kernel_initializer=tf.keras.initializers.VarianceScaling(
-                scale=2.0, mode='fan_in', distribution='truncated_normal'))
-    
-    @staticmethod
-    def _splitter_fn(observation):
-        mask = [1, 1, 1]
-
-        return observation, mask
