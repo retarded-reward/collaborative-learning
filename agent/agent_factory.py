@@ -52,9 +52,6 @@ def with_replay_buffer(tf_agent_class, sample_batch_size,
                     print("LOSS" + str(loss_info.loss))
                 #print q values
                 print("Q_VALUES" + str(self._q_network(t.observation)))
-                weights, bias = self.get_q_network_weights()
-                print("WEIGHTS" + str(weights))
-                print("BIAS" + str(bias))
             return loss_info
         
     return ReplayBufferedAgent

@@ -38,6 +38,11 @@ struct QueueState {
   int pkt_drop_cnt;
   int pkt_inbound_cnt;
   int max_pkt_drop_cnt;
+
+  void reset_counts(){
+    pkt_drop_cnt = 0;
+    pkt_inbound_cnt = 0;
+  }
 };
 
 /**
@@ -169,6 +174,7 @@ class Controller : public cSimpleModule
     vector<PowerSource *> power_sources;
     NICPowerModel *power_model;
     PowerSource *battery_charger;
+    PowerSource *most_expensive_power_source = nullptr;
        
     Timeout *ask_action_timeout;
     Timeout *charge_battery_timeout;
@@ -182,6 +188,8 @@ class Controller : public cSimpleModule
      * of the i-th queue.
     */
     vector<QueueState> queue_states;
+
+    int sum_priorities;
     
     /**
      * Module parameters:
@@ -249,7 +257,7 @@ class Controller : public cSimpleModule
     void init_reward_params();
     void init_module_params();
     void init_power_sources();
-    void init_queue_states();    
+    void init_queue_states();
     /** Init methods (END)*/
 
     virtual void initialize() override;
