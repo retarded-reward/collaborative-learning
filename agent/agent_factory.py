@@ -175,28 +175,23 @@ class AgentFactory():
                     max_length=rb_max__length
                 )
                 if eps_greedy_bolz == ExplorationEnum.EPSILON_GREEDY:
-                    agent = ReplayBufferedDQNAgent(
-                        time_step_spec,
-                        action_spec,
-                        q_network=q_encoding_net,
-                        optimizer=optimizer,
-                        td_errors_loss_fn=error_loss_fn.get_loss_fn(),
-                        train_step_counter=train_step_counter,
-                        epsilon_greedy=epsilon_greedy_value,
-                        gamma=gamma
-                    )
+                    epsilon_greedy = epsilon_greedy_value
+                    boltzmann_temperature = None
                 else:
-                    agent = ReplayBufferedDQNAgent(
-                        time_step_spec,
-                        action_spec,
-                        q_network=q_encoding_net,
-                        optimizer=optimizer,
-                        td_errors_loss_fn=error_loss_fn.get_loss_fn(),
-                        train_step_counter=train_step_counter,
-                        epsilon_greedy=None,
-                        boltzmann_temperature=boltzmann_temperature_value,
-                        gamma=gamma,
-                    )            
+                    epsilon_greedy = None
+                    boltzmann_temperature = boltzmann_temperature_value
+
+                agent = ReplayBufferedDQNAgent(
+                    time_step_spec,
+                    action_spec,
+                    q_network=q_encoding_net,
+                    optimizer=optimizer,
+                    td_errors_loss_fn=common.element_wise_squared_loss,
+                    train_step_counter=train_step_counter,
+                    epsilon_greedy=epsilon_greedy,
+                    boltzmann_temperature=boltzmann_temperature,
+                    gamma=gamma
+                )        
                 agent.initialize()
                 return agent
 
