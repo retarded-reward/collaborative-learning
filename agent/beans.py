@@ -10,7 +10,6 @@ class StateBean():
 
     def __init__(self,
         energy_level : float = 0, 
-        queue_state : Iterable[float] = [],
         charge_rate : float = 0,
         ):
         
@@ -20,7 +19,7 @@ class StateBean():
         energy_level is a float value from 0 to 1.
         """
 
-        self._queue_state = queue_state
+        self._queue_state = []
         """
         Percentage of the buffer capacity that is currently used.
         queue_state is a float value from 0 to 1.
@@ -59,6 +58,9 @@ class StateBean():
     def add_queue_state(self, queue_state):
         self._queue_state.append(queue_state)
 
+    def add_queue_states(self, queue_states: Iterable):
+        self._queue_state.extend(queue_states)
+
     def clean_queue(self):
         self._queue_state = []
 
@@ -89,11 +91,14 @@ class StateBean():
         if len(self.queue_state) != n_queues:
             warnings.warn("The number of queues in the state does not match the number of queues in the environment. The state will be padded with zeros or truncated to match the number of queues in the environment")
         
+        print("n_queues: ", n_queues)
+        print("len(self._queue_state): ", len(self._queue_state))
         #queue_state = (self._queue_state[:n_queues] + (max(n_queues - len(self._queue_state), 0)) * [0])
         node_spec = tf.constant(shape=(1 + n_queues + 1), 
                                 dtype=tf.int32, 
                                 name = "state", 
                                 value=[int(self.energy_level), *[int(qstate) for qstate in self._queue_state], int(self.charge_rate)])
+        print("node_spec: ", node_spec)
         return node_spec
     
     def __str__(self):

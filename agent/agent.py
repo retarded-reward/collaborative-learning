@@ -208,10 +208,11 @@ def test_plotting():
     
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-    n_queues = 1
+    n_queues = 5
     agent_facade_bean = AgentFacadeBean(n_queues=n_queues)
     agent = AgentFacade(agent_facade_bean)
-    state = StateBean(energy_level=1, queue_state=[1] * n_queues, charge_rate=0)
+    state = StateBean(energy_level=1, charge_rate=0)
+    state.add_queue_states([1] * n_queues)
     file = open("tests/log.csv", "a")
     #elimino il contenuto del file
     file.truncate(0)
@@ -224,7 +225,8 @@ def test_plotting():
         random_energy = np.random.randint(0, 100) / float(100)
         random_queue = 0
         random_charge = 0
-        state = StateBean(energy_level=random_energy, queue_state=[random_queue] * n_queues, charge_rate=random_charge)
+        state = StateBean(energy_level=random_energy, charge_rate=random_charge)
+        state.add_queue_states([random_queue] * n_queues)
         action = agent.get_action(state, reward)
         #print("Azione scelta: " + str(action))
         '''
