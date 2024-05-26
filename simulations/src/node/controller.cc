@@ -52,7 +52,7 @@ void Controller::ask_action(){
     sample_state(ar->getStateForUpdate());
 
     // compute reward and write it in the action request
-    sample_reward(ar->getRewardForUpdate());//Todo mettere la last_reward
+    sample_reward(ar->getRewardForUpdate());
 
     EV_DEBUG<< "Sending state:" << endl;
     EV_DEBUG<< "Battery level: " << ar->getState().getEnergy_percentage() << endl;
