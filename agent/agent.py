@@ -92,6 +92,7 @@ class AgentFacade():
 
         self._time_step_spec = ts.time_step_spec(self._observation_spec)
 
+
     def _init_decision_tree(self) -> DecisionTreeConsultant:
 
         
@@ -113,7 +114,7 @@ class AgentFacade():
         # queue_i: {power_source_0, power_source_1}
         self._root = DecisionTreeConsultant(agent_root, "root")
         # since action values can be provided only by leaves of the tree, the root
-        # must have a leaf for the do_nothing action. This is implemented as a
+        # must have a leaf for the do_nothing action. This is implemenfted as a
         # consultant wrapping a StubbornAgent that always returns 0 (can be ignored).        
         self._root.add_choice(DecisionTreeConsultant(StubbornAgent(0), "do_nothing"))
         queue_consultant = DecisionTreeConsultant(agent_queue, "choose_queue")
@@ -171,8 +172,9 @@ class AgentFacade():
         # Computes TimeStep object by resetting the environment
         # at the given state
         # and uses it to get the action
-        state.energy_level = round(state.energy_level, 0)
-        state.charge_rate = round(state.charge_rate, 0)
+        state.energy_level = round(state.energy_level, -1)
+        state.charge_rate = round(state.charge_rate, -1)
+        state.queue_state = [round(q, -1) for q in state.queue_state]
         time_step = state.to_tensor(self._n_queues)
         action = []
         self._root.get_decisions(parent_state=time_step, decision_path=action)
@@ -206,7 +208,7 @@ def test_plotting():
     
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.DEBUG)
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-    n_queues = 10
+    n_queues = 1
     agent_facade_bean = AgentFacadeBean(n_queues=n_queues)
     agent = AgentFacade(agent_facade_bean)
     state = StateBean(energy_level=1, queue_state=[1] * n_queues, charge_rate=0)
@@ -217,7 +219,7 @@ def test_plotting():
     file.write("energy_level;queue_state;charge_rate;send_message;power_source;queue;reward\n")
     reward = RewardBean(0)
     action = agent.get_action(state, None)
-    for i in range(10):
+    for i in range(4):
         
         random_energy = np.random.randint(0, 100) / float(100)
         random_queue = 0
@@ -236,7 +238,7 @@ def test_plotting():
         if(ActionBean.SendEnum.DO_NOTHING == action.send_message):
             reward = RewardBean(-1)
         else:
-            reward = RewardBean(0)
+            reward = RewardBean(1)
         #creo un log in un file csv in cui segno lo stato e l'azione scelta e la reward ricevuta
         file.write(str(state.energy_level) + ";" + str(state.queue_state) + ";" + str(state.charge_rate) + ";" + str(action.send_message) + ";" + str(action.power_source) + ";" + str(action.queue) +";" + str(reward.reward) + "\n")
     
@@ -251,13 +253,13 @@ def test_plotting():
         cumulative_reward_df.at[i, 'cumulative_reward'] = reward[0:i].sum()
 
     #faccio un grafico
-    import matplotlib.pyplot as plt
-    plt.figure(figsize=(10, 5))
-    plt.plot(cumulative_reward_df)
-    plt.xlabel('Time step')
-    plt.ylabel('Cumulative reward')
-    plt.savefig('tests/cumulative_reward.png')
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # plt.figure(figsize=(10, 5))
+    # plt.plot(cumulative_reward_df)
+    # plt.xlabel('Time step')
+    # plt.ylabel('Cumulative reward')
+    # plt.savefig('tests/cumulative_reward.png')
+    #plt.show()
 
 def test_get_action():
     n_queues = 10

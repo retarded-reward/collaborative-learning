@@ -43,12 +43,18 @@ def with_replay_buffer(tf_agent_class, sample_batch_size,
             
             loss_info = None
             if self._train_counter % self._train_frequency == 0:
-                dataset = self._replay_buffer.as_dataset(sample_batch_size=sample_batch_size, num_steps=num_steps)
+                dataset = self._replay_buffer.as_dataset(sample_batch_size=sample_batch_size, num_steps=num_steps).prefetch(3)
                 iterator = iter(dataset)
-                for _ in range(sample_batch_size):
+                for _ in range(1):
                     t, _ = next(iterator)
+                    print("EXPERIENCE FOR TRAINING" + str(t))
                     loss_info = super().train(experience=t)
-            
+                    print("LOSS" + str(loss_info.loss))
+                #print q values
+                print("Q_VALUES" + str(self._q_network(t.observation)))
+                weights, bias = self.get_q_network_weights()
+                print("WEIGHTS" + str(weights))
+                print("BIAS" + str(bias))
             return loss_info
         
     return ReplayBufferedAgent
@@ -100,7 +106,7 @@ class ActivationEnum(Enum):
 class AgentFactory():
     
     @staticmethod
-    def create_agent(agent_description, time_step_spec, action_spec):
+    def create_agent(agent_description, time_step_spec, action_spec, observation_and_action_constraint_splitter = None):
         agent_type = agent_description["agent_type"]
         match agent_type:
             case AgentEnum.RANDOM_AGENT:
@@ -114,9 +120,7 @@ class AgentFactory():
                 eps_greedy_bolz = agent_description["eps_greedy_bolz_choose"]
                 epsilon_greedy_value = agent_description["epsilon_greedy"]
                 boltzmann_temperature_value = agent_description["boltzmann_temperature"]
-                # FIXME: loss function was passed as a string, but it should be a function object.
-                # see the hardcoded loss function used later in the dqn agent creation
-                #error_loss_fn = agent_description["error_loss_fn"]
+                error_loss_fn = agent_description["error_loss_fn"]
                 optimizer = agent_description["optimizer"]
                 gamma = agent_description["gamma"]
                 rsmprop_momentum = agent_description["rsmprop_momentum"]
@@ -137,7 +141,7 @@ class AgentFactory():
 
                 match optimizer:
                     case OptimizerEnum.SGD:
-                        optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
+                        optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate, weight_decay=0)
                     case OptimizerEnum.RSMPROP:
                         optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, momentum=rsmprop_momentum, rho=rsmprop_rho)
                     case OptimizerEnum.ADAM:
@@ -156,7 +160,7 @@ class AgentFactory():
                     fc_layer_params=fc_layer_params,
                     activation_fn=activation_layer.get_activation_layer(),
                     kernel_initializer=tf.keras.initializers.VarianceScaling(
-                        scale=2.0, mode='fan_in', distribution='truncated_normal')#, seed=696969)
+                        scale=2.0, mode='fan_in', distribution='truncated_normal', seed=3)
                 )
                 
 
@@ -171,23 +175,28 @@ class AgentFactory():
                     max_length=rb_max__length
                 )
                 if eps_greedy_bolz == ExplorationEnum.EPSILON_GREEDY:
-                    epsilon_greedy = epsilon_greedy_value
-                    boltzmann_temperature = None
+                    agent = ReplayBufferedDQNAgent(
+                        time_step_spec,
+                        action_spec,
+                        q_network=q_encoding_net,
+                        optimizer=optimizer,
+                        td_errors_loss_fn=error_loss_fn.get_loss_fn(),
+                        train_step_counter=train_step_counter,
+                        epsilon_greedy=epsilon_greedy_value,
+                        gamma=gamma
+                    )
                 else:
-                    epsilon_greedy = None
-                    boltzmann_temperature = boltzmann_temperature_value
-
-                agent = ReplayBufferedDQNAgent(
-                    time_step_spec,
-                    action_spec,
-                    q_network=q_encoding_net,
-                    optimizer=optimizer,
-                    td_errors_loss_fn=common.element_wise_squared_loss,
-                    train_step_counter=train_step_counter,
-                    epsilon_greedy=epsilon_greedy,
-                    boltzmann_temperature=boltzmann_temperature,
-                    gamma=gamma
-                )
+                    agent = ReplayBufferedDQNAgent(
+                        time_step_spec,
+                        action_spec,
+                        q_network=q_encoding_net,
+                        optimizer=optimizer,
+                        td_errors_loss_fn=error_loss_fn.get_loss_fn(),
+                        train_step_counter=train_step_counter,
+                        epsilon_greedy=None,
+                        boltzmann_temperature=boltzmann_temperature_value,
+                        gamma=gamma,
+                    )            
                 agent.initialize()
                 return agent
 
