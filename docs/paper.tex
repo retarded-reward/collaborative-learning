@@ -180,13 +180,64 @@ Per la simulazione è stato utilizzato il framework OMNeT++, il quale offre degl
 %TODO:
 
 \subsubsection{Nodo - Controller}
+Il Controller è il com
 %TODO:
+\subsubsection{Nodo - Controller - Action Loop}
+\subsubsection{Nodo - Controller - Power Model}
+\subsubsection{Nodo - Controller - Reward Computation}
 
 \subsubsection{Nodo - Agent Client}
 %TODO:
 
 \subsubsection{Nodo - Queue}
 %TODO:
+Ogni nodo dispone di una o più code adibite a ospitare i pacchetti in arrivo.
+Il controller del nodo registra ogni coda in un array, e assegna ad ognuna di esse una
+priorità pari al suo indice in tale array. Inoltre, ogni coda ha una capacità limitata,
+che se raggiunta comporta la perdita di nuovi pacchetti in arrivo. Infine, ogni coda
+può gestire più serventi.
+
+L'implementazione della coda è prodotta da una decorazione della classe \code{cQueue}
+del framework di OMNeT++. In particolare, sono stati applicati i decoratori:
+\begin{itemize}
+    \item \code{FixedCapCQueue} che limita la capacità della coda a un valore desiderato.
+    La coda dunque accetterà nuovi pacchetti solo se la sua dimensione è minore della
+    sua capacità. Se tale condizione non sussiste, l'inserimento di nuovi pacchetti
+    provoca il sollevamento di un'eccezione;
+    \item \code{PriorityCQueue} che registra la priorità desiderata nella coda;
+\end{itemize}
+Il modulo della coda mantiene un riferimento a un oggetto \code{cQueue} chiamato
+\code{data\_buffer} che viene usato
+come coda vera e propria per i pacchetti dati in arrivo.
+
+Una coda può può ricevere i seguenti messaggi:
+\begin{itemize}
+    \item \code{DataMsg}: un pacchetto dati in arrivo nella coda. La coda tenterà di
+    inserire tale pacchetto nel suo \code{data\_buffer}. Se il pacchetto è accettato,
+    viene accodato e annotato il tempo di arrivo, altrimenti è scartato.
+    \item \code{QueueDataRequest}: Un servente vuole prelevare uno o più pacchetti
+     dalla coda. La coda tenta di soddisfare la richiesta prelevando un numero di
+     pacchetti dal suo buffer che è al più pari al numero di pacchetti richiesti.
+     Tali pacchetti sono poi inviati al servente richiedente incartati in una
+     \code{QueueDataResponse}.
+
+La coda comunica informazioni relative al suo stato inviando ai suoi serventi un
+\code{QueueStateUpdate} contenente le seguenti informazioni:
+\begin{itemize}
+    \item percentuale di buffer occupato della coda rispetto alla sua capacità;
+    \item numero di pacchetti arrivato alla coda (accettati e scartati) dall'ultimo
+    aggiornamento sullo stato della coda;
+    \item numero di pacchetti scartati dalla coda dall'ultimo aggiornamento sullo stato
+    della coda;
+\end{itemize}
+La coda emette un aggiornamento sul suo stato ogni qual volta riceve un pacchetto, sia
+che venga accettato o meno. Inoltre, la coda include un aggiornamento sul suo stato
+nella risposta a una richiesta di pacchetti dati da parte di un servente.    
+\end{itemize}
+
+Una descrizione grafica dei comportamenti della coda discussi finora è presentata
+nei diagrammi in \autoref{fig:queue_handleQueueDataRequest_activity_diagram} e 
+\autoref{fig:queue_handleDataMsg_activity_diagram}.
 
 \subsubsection{SrcNode}
 E' un componente che ha il compito di generare il traffico da inviare al nodo router, in particolare, ad ogni coda del nodo router è associato un nodo sorgente differente. Il traffico è composto di pacchetti di dimensione casuale che vengono inviati ad intervalli di tempo casuali. La dimensione dei pacchetti è ottenuta campionando da una distribuzione uniforme su un intervallo configurabile che rappresenta la taglia minima e la taglia massima in byte del pacchetto, mentre l'intervallo di tempo tra l'invio di due pacchetti è ottenuto campionando da una distribuzione esponenziale di media configurabile.
@@ -214,8 +265,22 @@ E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particola
     \centering
     \includegraphics[width=\textwidth]{figs/decisions.drawio.png}
     \caption{Esempio di albero delle decisioni, usando come esempio il combattimento
-    nel gioco dei Pokémon. Un esempio di decision path:\\ \code{\{root: bag, select\_item: potions, potion: iper\}}}
+    nel gioco dei Pokémon. Un esempio di decision path:\\
+    \code{\{root: bag, select\_item: potions, potion: iper\}}}
     \label{fig:decisions}
 \end{figure*}
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{figs/queue_handleQueueDataRequest_activity_diagram.drawio.png}
+    \caption{activity diagram per la gestione di una richiesta di dati da parte di un servente di pacchetti nella coda}
+    \label{fig:queue_handleQueueDataRequest_activity_diagram}
+\end{figure*}
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{figs/queue_handleDataMsg_activity_diagram.drawio.png}
+    \caption{activity diagram per la gestione di pacchetto in arrivo nella coda}
+    \label{fig:queue_handleDataMsg_activity_diagram}
+\end{figure*}
+
 
 \end{document}
