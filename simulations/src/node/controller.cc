@@ -265,7 +265,7 @@ reward_t Controller::compute_reward(){
             {
                 {"energy_consumed", cValue(max_energy_consumed[i])},
                 {"cost_per_mWh", cValue(most_expensive_power_source->getCostPerMWh())}
-            })->setWeight(1/power_sources.size())->compute(); // distribute energy term weight among power sources
+            })->setWeight(power_sources.size())->compute(); // distribute energy term weight among power sources
         include_reward_term("energy_penalty",
          {
             {"energy_consumed", cValue(last_energy_consumed[i])},
