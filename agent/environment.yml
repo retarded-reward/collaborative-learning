@@ -3,6 +3,10 @@
 # conda env create -f ./environment.yml -p ./.conda/collaborative-learning-dev
 #
 # command must be launched in the agent folder.
+
+# NOTE: tensorflow and tf-agents versions must match according to the following matrix:
+# https://www.tensorflow.org/agents/overview#releases
+
 channels:
   - defaults
 dependencies:

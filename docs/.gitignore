@@ -1,6 +1,6 @@
-paper.*
-_minted-paper/
-!paper.tex
-slides.*
-_minted-slides/
-!slides.tex
+*.*
+_minted-*/
+!*.tex
+!*.sty
+!*.cls
+!.gitignore

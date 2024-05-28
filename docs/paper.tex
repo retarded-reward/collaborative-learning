@@ -134,10 +134,10 @@ delle seguenti responsabilità:
     \item mantiene un riferimento all'agente che prende la decisione;
     \item Mantiene una lista di consultant figli, ognuno dei quali corrisponde
     a una possibile scelta che il suo agente può prendere;
-    \item espone un metodo \code{get\_decisions()}, che prende in input
+    \item espone un metodo \code{get\_decisions()}(\autoref{fig:decisions_getDecisions_activity_diagram}), che prende in input
     lo stato e un decision path (possibilmente vuoto) e aggiunge il suo contributo
     al decision path interrogando il suo agente;
-    \item espone un metodo \code{train()}, che prende in input un'Esperienza,
+    \item espone un metodo \code{train()}(\autoref*{fig:decisions_train_activity_diagram}), che prende in input un'Esperienza,
     ovvero una tripla
     decision path, stato, reward e addestra il suo agente e quello dei nodi
     figli che fanno parte del decision path.
@@ -190,7 +190,6 @@ Per la simulazione è stato utilizzato il framework OMNeT++, il quale offre degl
 %TODO:
 
 \subsubsection{Nodo - Controller}
-Il Controller è il com
 %TODO:
 \subsubsection{Nodo - Controller - Action Loop}
 \subsubsection{Nodo - Controller - Power Model}
@@ -200,7 +199,6 @@ Il Controller è il com
 %TODO:
 
 \subsubsection{Nodo - Queue}
-%TODO:
 Ogni nodo dispone di una o più code adibite a ospitare i pacchetti in arrivo.
 Il controller del nodo registra ogni coda in un array, e assegna ad ognuna di esse una
 priorità pari al suo indice in tale array. Inoltre, ogni coda ha una capacità limitata,
@@ -281,16 +279,27 @@ E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particola
 \end{figure*}
 \begin{figure*}
     \centering
-    \includegraphics[width=\textwidth]{figs/queue_handleQueueDataRequest_activity_diagram.drawio.png}
-    \caption{activity diagram per la gestione di una richiesta di dati da parte di un servente di pacchetti nella coda}
-    \label{fig:queue_handleQueueDataRequest_activity_diagram}
+    \includegraphics[width=\textwidth]{figs/decisions_getDecisions_activity_diagram.drawio.png}
+    \caption{activity diagram per il metodo \code{getDecisions()} di un Consultant}
+    \label{fig:decisions_getDecisions_activity_diagram}
+\end{figure*}
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{figs/decisions_train_activity_diagram.drawio.png}
+    \caption{activity diagram per il metodo \code{train()} di un Consultant}
+    \label{fig:decisions_train_activity_diagram}
 \end{figure*}
 \begin{figure*}
     \centering
     \includegraphics[width=\textwidth]{figs/queue_handleDataMsg_activity_diagram.drawio.png}
-    \caption{activity diagram per la gestione di pacchetto in arrivo nella coda}
+    \caption{activity diagram per la gestione dell'arrivo di un pacchetto nella coda}
     \label{fig:queue_handleDataMsg_activity_diagram}
 \end{figure*}
-
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{figs/queue_handleQueueDataRequest_activity_diagram.drawio.png}
+    \caption{activity diagram per la gestione di una richiesta di dati da parte di un servente di pacchetti nella coda}
+    \label{fig:queue_handleQueueDataRequest_activity_diagram}
+\end{figure*}
 
 \end{document}

@@ -245,49 +245,45 @@ reward_t Controller::compute_reward(){
     reward_t reward = 0;
     vector<RewardTerm *> reward_terms;
 
-    double max_energy_penalty; 
-    double max_pkt_drop_penalty;
-    double max_queue_occ_penalty;
+    double energy_penalty_norm_factor; 
+    double pkt_drop_penalty_norm_factor;
+    double queue_occ_penalty_norm_factor;
 
     /**
      * To normalize the reward terms, we need to know the maximum value
      * for each term. To compute it, we must leverage the same signal used by the
-     * corresponding reward term. So we need to use a temporary reward term with a
-     * weight of 1 and a signal value corresponding to the maximum possible value of it.
-     * The weight must be 1 since the normalization happens before applying the weight
-     * to the signal value.
+     * corresponding reward term. So we need to use a temporary reward term with
+     * a signal value corresponding to the maximum possible value of it.
     */
 
     // includes energy term
     for(int i=0; i<power_sources.size(); i++)
     {
         set_if_greater(max_energy_consumed[i], last_energy_consumed[i]);
-        max_energy_penalty
+        energy_penalty_norm_factor
             = RewardTerm(reward_term_models, "energy_penalty").bind_symbols(
             {
                 {"energy_consumed", cValue(max_energy_consumed[i])},
-                {"cost_per_mWh", cValue(power_sources[i]->getCostPerMWh())}
-            })->setWeight(1)->compute();
+                {"cost_per_mWh", cValue(most_expensive_power_source->getCostPerMWh())}
+            })->setWeight(power_sources.size())->compute(); // distribute energy term weight among power sources
         include_reward_term("energy_penalty",
          {
             {"energy_consumed", cValue(last_energy_consumed[i])},
             {"cost_per_mWh", (power_sources[i]->getCostPerMWh())}
          },
          reward_terms,
-         new MinMaxNormalizer(0, absolute(max_energy_penalty)));
-        reward_t temp=reward_terms.back()->compute();
-        reward += temp;
-    EV_DEBUG << "Energy term for power source " << i << ": " << temp << endl;
-    EV_DEBUG << "max_energy_penalty for power source " << i << ": " << max_energy_penalty << endl;
+         new MinMaxNormalizer(0, absolute(energy_penalty_norm_factor)));
+    EV_DEBUG << "Energy term for power source " << i << "included" << endl;
+    EV_DEBUG << "energy_penalty_norm_factor for power source " << i << ": " << energy_penalty_norm_factor << endl;
     }
     
     // includes queue occ penalties, one term for each priority
     for (int priority = 0; priority < num_queues; priority ++)
     {
-        max_queue_occ_penalty
+        queue_occ_penalty_norm_factor
          = RewardTerm(reward_term_models, "queue_occ_penalty").bind_symbols(
          {
-            {"priority", cValue(num_queues - 1)},
+            {"priority", cValue(sum_priorities)},
             {"queue_occ", cValue(100)}, //100 cause it's the max value, used for normalization
          })->setWeight(1)->compute();
         include_reward_term("queue_occ_penalty",
@@ -296,22 +292,21 @@ reward_t Controller::compute_reward(){
             {"queue_occ", cValue(queue_states[priority].occupancy)}
          },
          reward_terms,
-         new MinMaxNormalizer(0, absolute(max_queue_occ_penalty)));
+         new MinMaxNormalizer(0, absolute(queue_occ_penalty_norm_factor)));
         
-        reward_t temp=reward_terms.back()->compute();
-        reward += temp;
         EV_DEBUG << "Queue occ term for priority "
-         << priority << ": " << temp << endl;
-        EV_DEBUG << "max queue occ penalty for priority " << priority << ": " << max_queue_occ_penalty << endl;
+         << priority << "included" << endl;
+        EV_DEBUG << "max queue occ penalty for priority " << priority << ": "
+         << queue_occ_penalty_norm_factor << endl;
     }
 
     // includes pkt drop penalties, one term for each priority
     for (int priority = 0; priority < num_queues; priority ++)
     {
-        max_pkt_drop_penalty
+        pkt_drop_penalty_norm_factor
          = RewardTerm(reward_term_models, "pkt_drop_penalty").bind_symbols(
          {
-            {"priority", cValue(num_queues - 1)},
+            {"priority", cValue(sum_priorities)},
             {"pkt_drop_count", cValue(queue_states[priority].pkt_inbound_cnt)}
          })->setWeight(1)->compute();
         include_reward_term("pkt_drop_penalty",
@@ -320,23 +315,22 @@ reward_t Controller::compute_reward(){
             {"pkt_drop_count", cValue(queue_states[priority].pkt_drop_cnt)}
          },
          reward_terms,
-         new MinMaxNormalizer(0, absolute(max_pkt_drop_penalty)));
-        // resets pkt drop count after reading it
-        queue_states[priority].pkt_drop_cnt = 0;
-        queue_states[priority].pkt_inbound_cnt = 0;
-        reward_t temp=reward_terms.back()->compute();
-        reward += temp;
+         new MinMaxNormalizer(0, absolute(pkt_drop_penalty_norm_factor)));
+        // resets pkt counts after reading them
+        queue_states[priority].reset_counts();
+
         EV_DEBUG << "Pkt drop term for priority " 
-         << priority << ": " << temp << endl;
-        EV_DEBUG << "max pkt drop penalty for priority " << priority << ": " << max_pkt_drop_penalty << endl;
+         << priority << "included: " << endl;
+        EV_DEBUG << "max pkt drop penalty for priority " << priority << ": "
+         << pkt_drop_penalty_norm_factor << endl;
     }
 
     // computes reward by consuming and reducing all included reward terms
     for (RewardTerm *reward_term : reward_terms)
     {
-        //EV_DEBUG << "reward term: " << reward_term->compute() << endl;
-        //reward = reward + reward_term->compute();
-        //EV_DEBUG << "partial reward: " << reward << endl;
+        EV_DEBUG << "reward term: " << reward_term->compute() << endl;
+        reward = reward + reward_term->compute();
+        EV_DEBUG << "partial reward: " << reward << endl;
         delete reward_term;
     }
 
@@ -448,7 +442,11 @@ void Controller::init_timers()
 
 void Controller::init_reward_params()
 {
-    // reward params are now written in the reward_term_models cValueMap
+    // reward params are now written in the reward_term_models cValueMap.
+    // here are inited only the params not listed in the reward_term_models.
+
+    sum_priorities = (num_queues / 2) * (num_queues + 1);
+
 }
 
 
@@ -516,6 +514,13 @@ void Controller::init_power_sources()
 
     max_energy_consumed.resize(power_sources.size(), power_sources[SelectPowerSource::BATTERY]->getCapacity());
 
+    // find most expensive power source
+    for (PowerSource *ps : power_sources){
+        if(!most_expensive_power_source || ps->getCostPerMWh() > most_expensive_power_source->getCostPerMWh()){
+            most_expensive_power_source = ps;
+        }    
+    }
+        
 }
 
 void Controller::init_queue_states()
