@@ -11,7 +11,7 @@
 \usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=green]{hyperref}
 \usepackage{minted}
 \usepackage{microtype}
-\usepackage{parskip}
+%\usepackage{parskip}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -196,8 +196,53 @@ Per la simulazione è stato utilizzato il framework OMNeT++, il quale offre degl
 \subsubsection{Nodo - Controller - Reward Computation}
 
 \subsubsection{Nodo - Agent Client}
-%TODO:
+Ogni nodo dispone di un agente di reinforcement learning che può essere interrogato
+dal controller per essere istruito su qual'è la migliore azione da intraprendere in un
+determinato momento. L'AgentClient è il componente che si occupa di fare da intermediario
+tra il controller del nodo e il suo agente. Il controller periodicamente contatta
+ l'AgentClient con una \code{AgentClientRequest}
+per poter interrogare l'agente
+su quale azione intraprendere. L'AgentClient risponderà con una
+\code{AgentClientResponse} contenente una descrizione dell'azione da intraprendere,
+che il controller interpreterà ed eseguirà.
 
+L'AgentClient è un componente di interfaccia progettato per poterne sostituire 
+l'implemntazione in maniera semplice e veloce, senza dover modificare il controller.
+Questo perché nel mondo delle implementazioni disponibili di modelli di machine learning
+ esiste un 
+ecosistema piuttosto maturo di librerie e framework scritti in linguaggio Python, il
+che lo rende una piattaforma appetibile per sviluppare prototipi e avere molta libertà
+nel configurarli. Tale ecosistema include anche implementazioni di ambienti in cui
+gli agenti delle suddette librerie posso essere addestrati e valutati. Nel caso del
+problema, l'ambiente di simulazione è stato implementato usando il framework OMNeT++,
+il quale è scritto in linguaggio C++. Nasce dunque l'esigenza di un componente che 
+permetta la comunicazione tra il Controller e l'agente di reinforcement learning, i
+quali possono essere implementati in tecnologie diverse che non possono comunicare
+tra loro senza le dovute accortezze. Ciò permette di sfruttare i vantaggi di tutte le
+tecnologie coinvolte con un ragionevole sforzo di integrazione.
+
+Nel caso di studio affrontato è stata implementata una versione dell'AgentClient chiamata
+\code{AgentClientPybind}, che sfrutta la libreria
+\href{https://pybind11.readthedocs.io/en/stable/}{PyBind} per poter invocare codice
+Python da C++. In particolare, le operazioni svolte da tale componente sono:
+\begin{itemize}
+    \item Accogliere le richieste del controller, le quali contengono un campionamento
+    dello stato e la reward dell'azione precedente;
+    \item Convertire la richiesta in oggetti Bean compatibili con l'implementazione Python
+    dell'agente;
+    \item Addestrare l'agente con la reward ricevuta e chiedere l'azione in base 
+    allo stato, ottenendo così una \code{ActionBean};
+    \item Convertire la \code{ActionBean} in un messaggio inscrivibile 
+    in una \code{AgentClientResponse};
+    \item Inviare la risposta al controller.
+\end{itemize}
+Il flusso di esecuzione delle suddette operazioni è illustrato in \autoref{fig:agentc_sequence_diagram}.
+
+Per poter eseguire codice python l'agent client sfrutta un'istanza di
+\code{PythonInterpreter}, ovvero una classe singleton con il compito di mantenere un 
+riferimento a un interprete Python.
+%TODO: inserire diagramma di sequenza
+ 
 \subsubsection{Nodo - Queue}
 Ogni nodo dispone di una o più code adibite a ospitare i pacchetti in arrivo.
 Il controller del nodo registra ogni coda in un array, e assegna ad ognuna di esse una
@@ -300,6 +345,12 @@ E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particola
     \includegraphics[width=\textwidth]{figs/queue_handleQueueDataRequest_activity_diagram.drawio.png}
     \caption{activity diagram per la gestione di una richiesta di dati da parte di un servente di pacchetti nella coda}
     \label{fig:queue_handleQueueDataRequest_activity_diagram}
+\end{figure*}
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{figs/agentc_sequence_diagram.drawio.png}
+    \caption{sequence diagram per la servitura di una richiesta di azione del Controller nei confronti dell'agente.}
+    \label{fig:agentc_sequence_diagram}
 \end{figure*}
 
 \end{document}
