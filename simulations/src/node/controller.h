@@ -189,6 +189,7 @@ class Controller : public cSimpleModule
     vector<QueueState> queue_states;
 
     int sum_priorities;
+    reward_t sum_power_sources_costs;
     
     /**
      * Module parameters:

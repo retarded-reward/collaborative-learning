@@ -264,8 +264,8 @@ reward_t Controller::compute_reward(){
             = RewardTerm(reward_term_models, "energy_penalty").bind_symbols(
             {
                 {"energy_consumed", cValue(max_energy_consumed[i])},
-                {"cost_per_mWh", cValue(most_expensive_power_source->getCostPerMWh())}
-            })->setWeight(power_sources.size())->compute(); // distribute energy term weight among power sources
+                {"cost_per_mWh", cValue(sum_power_sources_costs)}
+            })->setWeight(1)->compute();
         include_reward_term("energy_penalty",
          {
             {"energy_consumed", cValue(last_energy_consumed[i])},
@@ -444,7 +444,13 @@ void Controller::init_reward_params()
     // here are inited only the params not listed in the reward_term_models.
 
     sum_priorities = (num_queues / 2) * (num_queues + 1);
-
+    sum_power_sources_costs = [this](){
+        reward_t sum = 0;
+        for (PowerSource *ps : power_sources){
+            sum += ps->getCostPerMWh();
+        }
+        return sum;
+    }();
 }
 
 
