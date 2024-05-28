@@ -8,12 +8,17 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{dblfloatfix}
-\usepackage{hyperref}
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=green]{hyperref}
 \usepackage{minted}
+\usepackage{microtype}
+\usepackage{parskip}
+
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
+\let\subsectionautorefname\sectionautorefname
+\let\subsubsectionautorefname\sectionautorefname
 \title{Collaborative Learning\\ \large Una soluzione di reinforcement learning\\ applicata a un nodo router di messaggi\\
 {\footnotesize Progetto Machine Learning}
 }
@@ -24,7 +29,7 @@
 \IEEEauthorblockA{\textit{0320429}} \\
 \and
 \IEEEauthorblockN{Luca Falasca}
-\IEEEauthorblockA{\textit{matricola qui}} \\
+\IEEEauthorblockA{\textit{0334722}} \\
 }
 
 \newcommand{\code}[1]{\texttt{#1}}
@@ -54,12 +59,17 @@
 %TODO:
 
 \subsubsection{AgentFaçade}
-%TODO:
+L'Agent Façade rappresenta un'interfaccia che espone i metodi necessari per l'interazione con l'agente. Questa soluzione consente di nascondere tutte le interazioni tra i sottosistemi e l'agente, offrendo un'interfaccia unificata per la comunicazione con l'agente stesso. Nella nostra implementazione, non è l'agente a restituire direttamente l'azione da intraprendere; piuttosto, è il simulatore (o, in uno scenario reale, il nodo) che richiede, dato un determinato stato, quale azione intraprendere in quel momento. Ciò implica che il simulatore scandisce il tempo. In questo modo, l'agente non è consapevole del tempo trascorso e può facilmente adattarsi a uno scenario reale.
+\subsubsection{AgentFaçade - Configurazione} 
+Per utilizzare l'AgentFaçade è necessario configurare l'agente. La configurazione può essere fatta tramite un file in cui è possibile specificare varie caratteristiche dell'agente in modo da poterlo adattare a diversi scenari. La documentazione per la configurazione è disponibile \href{https://github.com/retarded-reward/collaborative-learning/wiki/Agent-Configuration}{qui}. Un'altro parametro di configurazione da specificare all'AgentFaçade è il numero di code presenti nel nodo. Questo parametro è necessario per l'agente in modo da poter generare azioni valide.
+\subsubsection{AgentFaçade - Interazione}
+Il metodo principale per interagire con l'Agent Façade è \code{get\_action}, che restituisce l'azione da intraprendere in base allo stato attuale. Questo metodo prende in input lo stato attuale e la reward associata all'azione precedente, e restituisce l'azione da intraprendere. All'interno di questo metodo, l'Agent Façade addestra l'agente con l'esperienza passata e interroga l'agente per ottenere l'azione da intraprendere utilizzando l'albero delle Decisions  (vedi \autoref{subsec:Decisions}). L'addestramento non avviene ad ogni chiamata, ma secondo un intervallo di step configurabile. Questo intervallo è necessario per evitare che l'agente si adatti troppo velocemente a uno scenario specifico e non sia in grado di generalizzare, oltre a migliorare le prestazioni computazionali.
 
 \subsubsection{AgentFactory}
-%TODO:
+L'Agent Factory è una classe che configura e crea diversi agenti disponibili nella libreria. Nel nostro caso, abbiamo utilizzato il DQN (Deep Q Network) e un RandomAgent come benchmark. Inoltre, è stato implementato un decoratore per gli agenti per integrarli dinamicamente con i replay buffer forniti dalla libreria. Utilizzando il metodo \code{create\_agent}, è possibile creare un'istanza di un agente specificando il tipo di agente e i parametri necessari per la configurazione. Questa operazione viene eseguita all'interno dell'AgentFaçade.
 
 \subsubsection{Decisions}
+\label{subsec:Decisions}
 Lo spazio di decisioni in cui un agente può trovarsi ad operare può estendersi
 attraverso
 diverse dimensioni, ognuna delle quali rappresenta un parametro che costituisce
