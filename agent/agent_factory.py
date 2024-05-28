@@ -43,7 +43,7 @@ def with_replay_buffer(tf_agent_class, sample_batch_size,
             
             loss_info = None
             if self._train_counter % self._train_frequency == 0:
-                dataset = self._replay_buffer.as_dataset(sample_batch_size=sample_batch_size, num_steps=num_steps).prefetch(3)
+                dataset = self._replay_buffer.as_dataset(sample_batch_size=sample_batch_size, num_steps=num_steps)
                 iterator = iter(dataset)
                 for _ in range(1):
                     t, _ = next(iterator)
@@ -138,7 +138,7 @@ class AgentFactory():
 
                 match optimizer:
                     case OptimizerEnum.SGD:
-                        optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate, weight_decay=0)
+                        optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate, weight_decay=10)
                     case OptimizerEnum.RSMPROP:
                         optimizer = tf.keras.optimizers.RMSprop(learning_rate=learning_rate, momentum=rsmprop_momentum, rho=rsmprop_rho)
                     case OptimizerEnum.ADAM:
