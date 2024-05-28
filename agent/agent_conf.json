@@ -1,11 +1,11 @@
 {
     "agent_type": "dqn",
     "activation_layer": "sigmoid",
-    "fc_layer_params": [100, 50, 40, 20, 10],
+    "fc_layer_params": [500, 250, 100, 50, 20],
     "learning_rate": 0.0001,
-    "eps_greedy_bolz_choose": "eps_greedy",
+    "eps_greedy_bolz_choose": "boltzmann_temperature",
     "epsilon_greedy": 0.1,
-    "boltzmann_temperature": 1.0,
+    "boltzmann_temperature": 0.3,
     "gamma": 0.99,
     "optimizer": "sgd",
     "error_loss_fn": "squared_loss",
@@ -16,6 +16,6 @@
     "adagrad_initial_accumulator_value": 0.1,
     "rb_max_length": 1000,
     "rb_batch_size": 32,
-    "rb_train_freq": 2,
-    "rb_sample_batch_size": 4
+    "rb_train_freq": 100,
+    "rb_sample_batch_size": 100
 }
