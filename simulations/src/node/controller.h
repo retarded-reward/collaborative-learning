@@ -112,6 +112,9 @@ protected:
   cOwnedDynamicExpression *signal;
   Normalizer *normalizer;
 
+  bool cached = false;
+  reward_t cached_value;
+
 public:
   RewardTerm(reward_t weight, cOwnedDynamicExpression *signal)
    : weight(weight), signal(signal->dup()) {
@@ -124,27 +127,9 @@ public:
    : RewardTerm((cValueMap *) reward_term_models->get(reward_term_model_name)
     .objectValue()) {}
   
-  RewardTerm *bind_symbols(map<string, cValue> symbols){
-    // resolver is owned by the dynamic expression, no need to delete it
-    // before setting a new one
-    signal->setResolver(new cDynamicExpression::SymbolTable(symbols));
-    return this;
-  }
-
   ~RewardTerm(){
     delete signal;
     delete normalizer;
-  }
-
-  reward_t compute() {
-    
-    reward_t normalized;
-    
-    if (signal->getResolver() == nullptr)
-      throw cRuntimeError("Signal resolver is not set. Call bind_symbols() first.");
-    
-    normalized = normalizer->normalize(signal->doubleValue());
-    return weight * normalized;
   }
 
   reward_t getWeight() const {
@@ -164,6 +149,32 @@ public:
     delete this->normalizer;
     this->normalizer = normalizer;
     return this;
+  }
+  
+  RewardTerm *bind_symbols(map<string, cValue> symbols){
+    // resolver is owned by the dynamic expression, no need to delete it
+    // before setting a new one
+    signal->setResolver(new cDynamicExpression::SymbolTable(symbols));
+    return this;
+  }
+
+  reward_t compute(bool use_cache = true) {
+    
+    reward_t normalized_value;
+    
+    if (!use_cache || !cached){
+      if (signal->getResolver() == nullptr)
+        throw cRuntimeError("Signal resolver is not set. Call bind_symbols() first.");
+      
+      normalized_value = normalizer->normalize(signal->doubleValue());
+      cached_value = weight * normalized_value;
+    }  
+
+    return cached_value;
+  }
+
+  void invalidate_cache(){
+    cached = false;
   }
 
 };
