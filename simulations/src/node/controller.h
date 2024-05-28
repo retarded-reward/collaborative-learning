@@ -114,7 +114,7 @@ protected:
 
 public:
   RewardTerm(reward_t weight, cOwnedDynamicExpression *signal)
-   : weight(weight), signal(signal) {
+   : weight(weight), signal(signal->dup()) {
     normalizer = new Normalizer();
    }
   RewardTerm(cValueMap *reward_term_map)
@@ -129,6 +129,11 @@ public:
     // before setting a new one
     signal->setResolver(new cDynamicExpression::SymbolTable(symbols));
     return this;
+  }
+
+  ~RewardTerm(){
+    delete signal;
+    delete normalizer;
   }
 
   reward_t compute() {
