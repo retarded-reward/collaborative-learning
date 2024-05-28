@@ -181,8 +181,7 @@ class Controller : public cSimpleModule
 
     B_t max_packet_size = 0;
     vector<mWh_t> max_energy_consumed;
-    reward_t max_penalty_unsigned = 1;
-
+    
     /**
      * The i-th element of this vector represents the up-to-date state
      * of the i-th queue.
@@ -202,7 +201,7 @@ class Controller : public cSimpleModule
     cValueMap *power_models;
     cValueMap *power_source_models;
     cValueMap *reward_term_models;
-    reward_t illegal_action_penalty_factor;
+    reward_t hybris;
 
     /* Module parameters (END)*/
     
@@ -299,7 +298,7 @@ class Controller : public cSimpleModule
     
     inline reward_t illegal_action_penalty()
     {
-      return - max_penalty_unsigned * illegal_action_penalty_factor;
+      return hybris;
     }
 
     /**

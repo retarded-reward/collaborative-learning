@@ -334,8 +334,6 @@ reward_t Controller::compute_reward(){
         delete reward_term;
     }
 
-    set_if_greater(max_penalty_unsigned, absolute(reward));
-
     return reward;
 }
 
@@ -466,7 +464,7 @@ void Controller::init_module_params()
     charge_battery_timeout_delta 
      = par("charge_battery_timeout_delta").doubleValue();
     reward_term_models = (cValueMap *) par("reward_term_models").objectValue()->dup();
-    illegal_action_penalty_factor = par("illegal_action_penalty_factor").doubleValue();
+    hybris = par("hybris").doubleValue();
     // add more module params here ...
 
     EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << "mW" <<endl;

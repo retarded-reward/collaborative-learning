@@ -26,10 +26,9 @@ simple Controller
         object power_source_models;
         volatile double battery_charge_rate_distribution;
         double charge_battery_timeout_delta @unit(s);
-        
-        // the illegal action penalty is the max measured reward times
-        // this factor.
-        double illegal_action_penalty_factor;
+        // Such offence to the will of the gods must not be left unpunished.
+        // https://it.wikipedia.org/wiki/Hybris  
+        double hybris;
 
     gates:
         output network_port[number_of_ports];
