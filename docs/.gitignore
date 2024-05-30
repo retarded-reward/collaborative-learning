@@ -1,4 +1,5 @@
-*.*
+paper.*
+slides.*
 _minted-*/
 !*.tex
 !*.sty
