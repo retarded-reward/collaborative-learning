@@ -303,6 +303,9 @@ reward_t Controller::compute_reward(){
     // includes pkt drop penalties, one term for each priority
     for (int priority = 0; priority < num_queues; priority ++)
     {
+        EV_DEBUG << "pkt drop count for priority " << priority << ": "
+         << queue_states[priority].pkt_drop_cnt << endl;
+                
         pkt_drop_penalty_norm_factor
          = RewardTerm(reward_term_models, "pkt_drop_penalty").bind_symbols(
          {
@@ -445,7 +448,8 @@ void Controller::init_reward_params()
     // reward params are now written in the reward_term_models cValueMap.
     // here are inited only the params not listed in the reward_term_models.
 
-    sum_priorities = (num_queues / 2) * (num_queues + 1);
+    sum_priorities = ((num_queues * (num_queues + 1))/2);
+    EV_DEBUG << "sum_priorities: " << sum_priorities << endl;
     sum_power_sources_costs = [this](){
         reward_t sum = 0;
         for (PowerSource *ps : power_sources){
