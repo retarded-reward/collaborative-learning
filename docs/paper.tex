@@ -137,7 +137,7 @@ delle seguenti responsabilità:
     \item espone un metodo \code{get\_decisions()}(\autoref{fig:decisions_getDecisions_activity_diagram}), che prende in input
     lo stato e un decision path (possibilmente vuoto) e aggiunge il suo contributo
     al decision path interrogando il suo agente;
-    \item espone un metodo \code{train()}(\autoref*{fig:decisions_train_activity_diagram}), che prende in input un'Esperienza,
+    \item espone un metodo \code{train()}(\autoref{fig:decisions_train_activity_diagram}), che prende in input un'Esperienza,
     ovvero una tripla
     decision path, stato, reward e addestra il suo agente e quello dei nodi
     figli che fanno parte del decision path.
@@ -193,7 +193,20 @@ viene il nome di collaborative learning.
 Per la simulazione è stato utilizzato il framework OMNeT++, il quale offre degli strumenti per definire e simulare in modo semplice e modulare una rete di nodi. In particolare, il framework è stato utilizzato per simulare un nodo router che riceve traffico da più nodi sorgente e prende decisioni sulle basi dell'agente di reinforcement learning montato sul nodo. Dato che OMNeT++ non supporta nativamente il linguaggio Python tramite il quale è stato definito l'agente, per integrare simulatore ed agente è stata utilizzata la libreria Pybind  che permette di esporre e fare binding tra simboli definiti in Python e simboli definiti C++. 
 
 \subsubsection{Nodo}
-%TODO:
+Un nodo corrisponde a un elemento della rete capace di ricevere pacchetti e di inoltrarli 
+al resto dei nodi nella rete a seconda delle decisioni intraprese dal suo agente.
+È suddiviso nei seguenti componenti (esempio in \autoref{fig:node_layout_3queues}):
+\begin{itemize}
+    \item Controller: É il componente che implementa la logica applicativa del nodo.
+    Tra le sue responsabilità figurano l'interrogazione dell'agente e la conseguente
+    attuazione dell'azione suggerita, la gestione delle code e delle power sources,
+    il calcolo della reward;
+    \item AgentClient: È il componente attraverso il quale il Controller e l'agente
+    comunicano;
+    \item Queues: una o più code che accodano i pacchetti in arrivo e li consegnano
+     al Controller
+    dietro una sua richiesta. Ogni coda ha una capacità limitata e una priorità.
+\end{itemize}
 
 \subsubsection{Nodo - Controller}
 %TODO:
@@ -357,6 +370,18 @@ E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particola
     \includegraphics[width=\textwidth]{figs/agentc_sequence_diagram.drawio.png}
     \caption{sequence diagram per la servitura di una richiesta di azione del Controller nei confronti dell'agente.}
     \label{fig:agentc_sequence_diagram}
+\end{figure*}
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{figs/node_layout_3queues.png}
+    \caption{Nodo con tre code}
+    \label{fig:node_layout_3queues}
+\end{figure*}
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{figs/network_layout_3queues.png}
+    \caption{Rete con tre nodi sorgente e un solo nodo con agente.}
+    \label{fig:network_layout_3queues}
 \end{figure*}
 
 \end{document}
