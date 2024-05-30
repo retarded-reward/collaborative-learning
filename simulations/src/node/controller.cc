@@ -325,8 +325,6 @@ reward_t Controller::compute_reward(){
          << pkt_drop_penalty_norm_factor << endl;
     }
 
-    if (reward < -1) EV_WARN << "reward is < -1" << endl;
-
     // computes reward by consuming and reducing all included reward terms
     for (RewardTerm *reward_term : reward_terms)
     {
@@ -336,6 +334,8 @@ reward_t Controller::compute_reward(){
         delete reward_term;
     }
 
+    if (reward < -1) EV_WARN << "reward is < -1" << endl;
+    
     return reward;
 }
 
