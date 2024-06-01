@@ -63,7 +63,7 @@
 \subsubsection{AgentFaçade}
 L'Agent Façade rappresenta un'interfaccia che espone i metodi necessari per l'interazione con l'agente. Questa soluzione consente di nascondere tutte le interazioni tra i sottosistemi e l'agente, offrendo un'interfaccia unificata per la comunicazione con l'agente stesso. Nella nostra implementazione, non è l'agente a restituire direttamente l'azione da intraprendere; piuttosto, è il simulatore (o, in uno scenario reale, il nodo) che richiede, dato un determinato stato, quale azione intraprendere in quel momento. Ciò implica che il simulatore scandisce il tempo. In questo modo, l'agente non è consapevole del tempo trascorso e può facilmente adattarsi a uno scenario reale.
 \subsubsection{AgentFaçade - Configurazione} 
-Per utilizzare l'AgentFaçade è necessario configurare l'agente. La configurazione può essere fatta tramite un file in cui è possibile specificare varie caratteristiche dell'agente in modo da poterlo adattare a diversi scenari. La documentazione per la configurazione è disponibile \href{https://github.com/retarded-reward/collaborative-learning/wiki/Agent-Configuration}{qui}. Un'altro parametro di configurazione da specificare all'AgentFaçade è il numero di code presenti nel nodo. Questo parametro è necessario per l'agente in modo da poter generare azioni valide.
+Per utilizzare l'AgentFaçade è necessario configurare l'agente. La configurazione può essere fatta tramite un file in cui è possibile specificare varie caratteristiche dell'agente in modo da poterlo adattare a diversi scenari. La documentazione per la configurazione è disponibile qui\footnote{\href{https://github.com/retarded-reward/collaborative-learning/wiki/Agent-Configuration}{https://github.com/retarded-reward/collaborative-learning/wiki/Agent-Configuration}}. Un'altro parametro di configurazione da specificare all'AgentFaçade è il numero di code presenti nel nodo. Questo parametro è necessario per l'agente in modo da poter generare azioni valide.
 \subsubsection{AgentFaçade - Interazione}
 Il metodo principale per interagire con l'Agent Façade è \code{get\_action}, che restituisce l'azione da intraprendere in base allo stato attuale. Questo metodo prende in input lo stato attuale e la reward associata all'azione precedente, e restituisce l'azione da intraprendere. All'interno di questo metodo, l'Agent Façade addestra l'agente con l'esperienza passata e interroga l'agente per ottenere l'azione da intraprendere utilizzando l'albero delle Decisions  (vedi \autoref{subsec:Decisions}). L'addestramento non avviene ad ogni chiamata, ma secondo un intervallo di step configurabile. Questo intervallo è necessario per evitare che l'agente si adatti troppo velocemente a uno scenario specifico e non sia in grado di generalizzare, oltre a migliorare le prestazioni computazionali.
 
@@ -192,7 +192,7 @@ delle azioni, senza dover esserne vincolati dagli svantaggi. Da questa idea
 viene il nome di collaborative learning.
 
 \subsection{Simulazione}
-Per la simulazione è stato utilizzato il framework OMNeT++, il quale offre degli strumenti per definire e simulare in modo semplice e modulare una rete di nodi. In particolare, il framework è stato utilizzato per simulare un nodo router che riceve traffico da più nodi sorgente e prende decisioni sulle basi dell'agente di reinforcement learning montato sul nodo. Dato che OMNeT++ non supporta nativamente il linguaggio Python tramite il quale è stato definito l'agente, per integrare simulatore ed agente è stata utilizzata la libreria \href{https://pybind11.readthedocs.io/en/stable/}{PyBind}  che permette di esporre e fare binding tra simboli definiti in Python e simboli definiti C++. 
+Per la simulazione è stato utilizzato il framework OMNeT++\footnote{\href{https://omnetpp.org/}{https://omnetpp.org/}}, il quale offre degli strumenti per definire e simulare in modo semplice e modulare una rete di nodi. In particolare, il framework è stato utilizzato per simulare un nodo router che riceve traffico da più nodi sorgente e prende decisioni sulle basi dell'agente di reinforcement learning montato sul nodo. Dato che OMNeT++ non supporta nativamente il linguaggio Python tramite il quale è stato definito l'agente, per integrare simulatore ed agente è stata utilizzata la libreria PyBind\footnote{\href{https://pybind11.readthedocs.io/en/stable/}{https://pybind11.readthedocs.io/en/stable/}} che permette di esporre e fare binding tra simboli definiti in Python e simboli definiti C++. 
 
 \subsubsection{Nodo}
 Un nodo corrisponde a un elemento della rete capace di ricevere pacchetti e di inoltrarli 
@@ -211,10 +211,94 @@ al resto dei nodi nella rete a seconda delle decisioni intraprese dal suo agente
 \end{itemize}
 
 \subsubsection{Nodo - Controller}
-%TODO:
-\subsubsection{Nodo - Controller - Action Loop}
+Il Controller è il componente del nodo necessario affinché l'agente possa interagire con
+l'ambiente simulato. Esso si preoccupa di:
+\begin{itemize}
+    \item Campionare lo stato visibile dal nodo;
+    \item Calcolare la reward frutto dell'ultima azione effettuata;
+    \item Interrogare l'agente per ottenere l'azione da intraprendere fornendogli 
+    l'ultimo campione dello stato e la reward calcolata dall'ultima azione;
+    \item Interpretare l'azione restituita dall'agente e attuarla;
+\end{itemize} 
+Queste mansioni sono svolte ciclicamente nell'ordine in cui sono presentate
+a intervalli scanditi da un \code{Timeout} dedicato denominato
+\code{ask\_action\_timeout}. La durata di tale intervallo
+definisce la durata di un timestep dal punto di vista dell'agente.
+
+\subsubsection{Nodo - Controller - Action Execution}
+Il controller utilizza l'Agent Client per interfacciarsi con l'agente, fornendogli un
+campione dello stato della simulazione e la reward dell'ultima azione intrapresa per
+poterlo interrogare sull'azione da intraprendere. Una volta ricevuta la risposta, il
+controller interpreta il da farsi (\autoref{fig:controller_doAction_activity_diagram}):
+\begin{itemize}
+    \item Se l'azione è non fare nulla, il controller procede direttamente al calcolo
+    della reward;
+    \item Se l'azione è inviare un pacchetto, il controller procede a prelevare dalla
+    coda specificata dall'agente un pacchetto inviando una richiesta al componente Queue
+    corrispondente. Una volta recuperato il pacchetto, il controller ne simula l'invio
+    calcolando il consumo energetico in funzione del power model in uso, della dimensione
+    del pacchetto e della banda disponibile. Il controller soddisfa tale
+    consumo energetico attingendo alla power source specificata dall'agente, e ne
+    registra l'uso per il calcolo della reward.
+\end{itemize}
+Da notare che se l'agente seleziona la batteria come power source e la carica di cui
+dispone non fosse sufficiente a soddisfare la domanda energetica, il controller prosciuga
+la batteria e soddisfa la rimanente domanda usando il Power Chord.
+
 \subsubsection{Nodo - Controller - Power Model}
+Il Controller si occupa anche di gestire le Power Sources da cui il Nodo può attingere
+l'energia necessaria per svolgere le sue operazioni, in particolare l'operazione di 
+invio dei pacchetti. Ogni power source implementa un'interfaccia \code{PowerSource}
+e quelle disponibili per le operazioni del nodo sono registrate nel vettore
+\code{power\_sources}. Le power sources registrate in tale vettore al momento sono: 
+\begin{itemize}
+    \item Una \code{Battery}: una power source dotata di una capacità, ricaricabile, il
+    cui uso costa zero;
+    \item Un \code{PowerChord}: una power source che non si scarica mai, ma che ha un
+    costo di utilizzo diverso da zero.
+\end{itemize}
+Tali PowerSources sono istanziate secondo i parametri defini dai rispettivi modelli
+indicati nel file di configurazione \code{omnetpp.ini}, che specificano
+i valori per la capacità energetica e il costo in reward per unità di energia.
+
+Per simulare la ricarica della batteria è stata definita una nuova \code{PowerSource}
+chiamata \code{RandomCharger}, la cui peculiarità è quella di erogare una percentuale
+aleatoria dell'energia richiesta secondo una distribuzione specificata alla costruzione.
+L'introduzione dell'aleatorietà dovrebbe simulare l'influenza di fattori ambientali
+nella ricarica della batteria, ad esempio se tale caricabatteria fosse alimentato da
+energia solare e quindi dipendesse dalle condizioni del meteo. Gli istanti di ricarica
+della batteria sono scanditi da un timer dedicato denominato
+\code{charge\_battery\_timeout}.
+
+I costi energetici delle operazioni del nodo sono anche essi definiti in modelli 
+denominati \code{power\_models} e specificati nel file \code{omnetpp.ini}. 
+
 \subsubsection{Nodo - Controller - Reward Computation}
+
+Il calcolo della reward avviene sempre dopo che il controller ha effettuato l'azione
+invocando il metodo \code{compute\_reward()}.
+La reward è concepita come una riduzione per somma di una serie di termini, ognuno
+modellato come un oggetto \code{RewardTerm}. Per ogni termine è possibile specificare
+i seguenti attributi:
+\begin{itemize}
+    \item Un \textit{segnale}, ovvero un'espressione che combina i valori di una o più grandezze osservabili nella simulazione per produrre un valore di reward;
+    \item Un \textit{peso}, che moltiplicato per il valore del segnale, ne determina il
+    contributo al calcolo della reward finale;
+\end{itemize}
+I suddetti attributi possono essere specificati nel file di configurazione
+\code{omnetpp.ini}.
+
+Per ogni \code{RewardTerm} è possibile specificare un metodo di normalizzazione da
+applicare al valore del segnale prima di moltiplicarlo per il peso. Per farlo, è
+sufficiente passare alla costruzione del termine un oggetto \code{Normalizer}. In
+particolare, per implementare la reward del modello è stato usato un
+\code{MinMaxNormalizer} per ogni termine, in maniera tale che la somma pesata di tutti i termini sia compresa tra -1 e 0.
+
+A volte può capitare che l'Agente opti per delle azioni che sono ovviamente inutili,
+come ad esempio decidere di inviare un messaggio da una coda vuota. Per scoraggiare
+l'agente da tali comportamenti, ogni qual volta un'azione del genere è suggerita
+dall'agente il controller invoca \code{illegal\_action\_penalty()} per assegnare
+la reward più negativa possibile a tale azione. 
 
 \subsubsection{Nodo - Agent Client}
 Ogni nodo dispone di un agente di reinforcement learning che può essere interrogato
@@ -243,8 +327,7 @@ tra loro senza le dovute accortezze. Ciò permette di sfruttare i vantaggi di tu
 tecnologie coinvolte con un ragionevole sforzo di integrazione.
 
 Nel caso di studio affrontato è stata implementata una versione dell'AgentClient chiamata
-\code{AgentClientPybind}, che sfrutta la libreria
-\href{https://pybind11.readthedocs.io/en/stable/}{PyBind} per poter invocare codice
+\code{AgentClientPybind}, che sfrutta la libreria PyBind per poter invocare codice
 Python da C++. In particolare, le operazioni svolte da tale componente sono:
 \begin{itemize}
     \item Accogliere le richieste del controller, le quali contengono un campionamento
@@ -262,7 +345,6 @@ Il flusso di esecuzione delle suddette operazioni è illustrato in \autoref{fig:
 Per poter eseguire codice python l'agent client sfrutta un'istanza di
 \code{PythonInterpreter}, ovvero una classe singleton con il compito di mantenere un 
 riferimento a un interprete Python.
-%TODO: inserire diagramma di sequenza
  
 \subsubsection{Nodo - Queue}
 Ogni nodo dispone di una o più code adibite a ospitare i pacchetti in arrivo.
@@ -317,7 +399,7 @@ nei diagrammi in \autoref{fig:queue_handleQueueDataRequest_activity_diagram} e
 E' un componente che ha il compito di generare il traffico da inviare al nodo router, in particolare, ad ogni coda del nodo router è associato un nodo sorgente differente. Il traffico è composto di pacchetti di dimensione casuale che vengono inviati ad intervalli di tempo casuali. La dimensione dei pacchetti è ottenuta campionando da una distribuzione uniforme su un intervallo configurabile che rappresenta la taglia minima e la taglia massima in byte del pacchetto, mentre l'intervallo di tempo tra l'invio di due pacchetti è ottenuto campionando da una distribuzione esponenziale di media configurabile.
 
 \subsubsection{Network}
-E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particolare è qui che viene esplicitata la connessione tra i nodi sorgenti e le code del nodo router. 
+E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particolare è qui che viene esplicitata la connessione tra i nodi sorgenti e le code del nodo router. (\autoref{fig:network_layout_3queues}) 
 
 \section{Risultati}
 %TODO:
@@ -334,6 +416,8 @@ E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particola
 
 \subsection{What we could improve?}
 %TODO:
+
+\section{Allegati}
 
 \begin{figure*}
     \centering
@@ -385,5 +469,12 @@ E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particola
     \caption{Rete con tre nodi sorgente e un solo nodo con agente.}
     \label{fig:network_layout_3queues}
 \end{figure*}
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{figs/controller_doAction_activity_diagram.drawio.png}
+    \caption{\code{do\_action()} Activity diagram. I consumi energetici sono annotati dal controller per poter essere utilizzati dal metodo \code{compute\_reward()} in modo da poter essere combinati con i costi di utilizzo delle rispettive power sources ai fini del calcolo della reward.}
+    \label{fig:controller_doAction_activity_diagram}
+\end{figure*}
+
 
 \end{document}
