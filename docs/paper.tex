@@ -55,7 +55,108 @@
 %TODO:
 
 \subsection{Modello}
-%TODO:
+A partire dalla specifica del problema è stato definito un modello che delinea come
+sono stati rappresentati lo Stato, le Azioni e le Reward della simulazione.
+
+\subsubsection{Stato}
+Per catturare lo stato della simulazione è stato deciso di campionare a ogni timestep le
+seguenti variabili:
+\begin{itemize}
+    \item Percentuale di carica della batteria;
+    \item Quanta percentuale di batteria è stata ricaricata nell'ultimo timestep;
+    \item La percentuale di occupazione delle code, un valore per ogni coda. 
+\end{itemize}
+Tali valori sono stati discretizzati ove possibile per permetterne la comprensione da
+parte di alcune implementazioni di agenti, ad esempio il DQN.
+\subsubsection{Azioni}
+Un nodo può essenzialmente svolgere due operazioni in un qualunque timestep:
+\begin{itemize}
+    \item Non fare nulla
+    \item Inviare un pacchetto
+\end{itemize}
+Qualora l'azione scelta sia quella di inviare un pacchetto, allora è necessario anche
+scegliere:
+\begin{itemize}
+    \item Da quale coda prelevare il pacchetto
+    \item Da quale power source attingere l'energia necessaria per l'invio
+\end{itemize}
+\subsubsection{Reward}
+La reward $r$ da inviare all'agente per un qualunque timestep $t$ è calcolata secondo la
+seguente formula:
+\begin{equation}
+    \label{eq:reward}
+    \begin{aligned}
+        & r(t) = \sum_{i \in T} w_i \cdot r_i(t), & -1 \leq r_i \leq 0\\
+        && 0 \leq w_i \leq 1, \\
+        && \sum_{i \in T} w_i = 1, \\
+        && T = \{e, o, d\},\\
+        && t \geq 0 \in \mathbb{N}
+    \end{aligned}
+\end{equation}
+In sostanza, la reward è calcolata come la somma pesata dei contributi normalizzati di
+diversi termini.
+I pedici $\{e, o, d\}$ si riferiscono rispettivamente ai contributi derivati dal termine
+energetico, di occupazione delle code e di drop dei pacchetti in quel timestep.
+
+Il termine energetico è calcolato come:
+\begin{equation}
+    \label{eq:reward_energy}
+    \begin{aligned}
+        & r_e(t) = -\sum_{p \in P}\frac{\text{cons}_p(t) \cdot \text{cost}_p}{\max_{\tau < t}\{\text{cons}_p(\tau)\} \cdot \sum_{p \in P}\text{cost}_p},\\
+        & P = \{\text{battery}, \text{power chord}\} 
+    \end{aligned}
+\end{equation}
+Al numeratore abbiamo il prodotto tra il consumo energetico della power source $p$ e il
+suo costo di utilizzo, normalizzato sul massimo consumo energetico registrato fino
+a quel time step per quella power source moltiplicato per la somma dei costi di utilizzo.
+La batteria
+ha un costo di utilizzo pari a zero ma una capacità limitata e una ricarica influenzata
+da fattori casuali, mentre il Power Chord ha un costo di utilizzo diverso da zero ma
+una capacità pressoché illimitata.
+
+Il termine dell'occupazione delle code è calcolato come:
+\begin{equation}
+    \label{eq:reward_occupancy}
+    \begin{aligned}
+        & r_o(t) = -\sum_{q \in Q}\frac{\text{occ}_q(t) \cdot p_q}{\max_{\tau < t}\{\text{occ}_q(\tau)\} \cdot \sum_{q \in Q}p_q},\\
+        & Q = \{0, 1, \dots \#Q - 1\} 
+    \end{aligned}
+\end{equation}
+Al numeratore abbiamo il prodotto tra la percentuale di occupazione della coda $q$ nel 
+timestep $t$ e la sua priorità $p_q$, normalizzato sul massimo valore di occupazione
+registrato fino a quel time step per quella coda moltiplicato per la somma delle priorità. 
+Essendo il termine dell'occupazione delle code una percentuale e la priorità definita
+come $p_q = q + 1$ possiamo riscrivere \autoref{eq:reward_occupancy} come:
+\begin{equation}
+    \label{eq:reward_occupancy_simplified}
+    \begin{aligned}
+        & r_o(t) = -\sum_{q \in Q}\frac{\text{occ}_q(t) \cdot (q + 1)}{100 \cdot \frac{1}{2}\#Q(\#Q + 1)},\\
+        & Q = \{0, 1, \dots \#Q - 1\} 
+    \end{aligned}
+\end{equation}
+
+Il termine del drop dei pacchetti delle code è calcolato come:
+\begin{equation}
+    \label{eq:reward_drop}
+    \begin{aligned}
+        & r_d(t) = -\sum_{q \in Q}\frac{\text{drop}_q(t) \cdot p_q}{\text{inbound}_q(t) \cdot \sum_{q \in Q}p_q},\\
+        & Q = \{0, 1, \dots \#Q - 1\} 
+    \end{aligned}
+\end{equation}
+Al numeratore abbiamo il prodotto tra il numero di pacchetti persi dalla coda $q$ nel 
+timestep $t$ e la sua priorità $p_q$, normalizzato sul numero di pacchetti arrivati alla coda in quel time step moltiplicato per la somma delle priorità.
+
+In un modo analogo per scrivere \autoref{eq:reward_occupancy_simplified} possiamo
+riscrivere \autoref{eq:reward_drop} come:
+\begin{equation}
+    \begin{aligned}
+        & r_d(t) = -\sum_{q \in Q}\frac{\text{drop}_q(t) \cdot (q + 1)}{\text{inbound}_q(t) \cdot \frac{1}{2}\#Q(\#Q + 1)},\\
+        & Q = \{0, 1, \dots \#Q - 1\} 
+    \end{aligned}
+\end{equation}
+
+Con i termini della reward così definiti, è possibile dimostrare che $ -1 \leq r_i \leq 0 \, \forall i \in T$, e dunque tutti i termini della reward normalizzati sono 
+confrontabili.
 
 \subsection{Agente}
 %TODO:
