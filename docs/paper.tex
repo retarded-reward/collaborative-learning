@@ -64,6 +64,17 @@
 L'Agent Façade rappresenta un'interfaccia che espone i metodi necessari per l'interazione con l'agente. Questa soluzione consente di nascondere tutte le interazioni tra i sottosistemi e l'agente, offrendo un'interfaccia unificata per la comunicazione con l'agente stesso. Nella nostra implementazione, non è l'agente a restituire direttamente l'azione da intraprendere; piuttosto, è il simulatore (o, in uno scenario reale, il nodo) che richiede, dato un determinato stato, quale azione intraprendere in quel momento. Ciò implica che il simulatore scandisce il tempo. In questo modo, l'agente non è consapevole del tempo trascorso e può facilmente adattarsi a uno scenario reale.
 \subsubsection{AgentFaçade - Configurazione} 
 Per utilizzare l'AgentFaçade è necessario configurare l'agente. La configurazione può essere fatta tramite un file in cui è possibile specificare varie caratteristiche dell'agente in modo da poterlo adattare a diversi scenari. La documentazione per la configurazione è disponibile qui\footnote{\href{https://github.com/retarded-reward/collaborative-learning/wiki/Agent-Configuration}{https://github.com/retarded-reward/collaborative-learning/wiki/Agent-Configuration}}. Un'altro parametro di configurazione da specificare all'AgentFaçade è il numero di code presenti nel nodo. Questo parametro è necessario per l'agente in modo da poter generare azioni valide.
+\subsubsection{AgentFaçade - Rappresentazione}
+Per rappresentare lo stato è stato fatto uso di un Tensore unidimensionale, in cui
+ogni componente rappresenta una variabile dello stato. Questo vuol dire che variabili
+di stato multidimensionali, come ad esempio le occupancies delle code, sono state
+appiattite in un vettore unidimensionale, e poi concatenate alle altre variabili in modo
+da produrre un unico Tensore.
+
+L'azione che il nodo può intraprendere è composta da valori di diverse componenti,
+ognuna delle quali è rappresentata da un valore scalare intero. Come è spiegato meglio
+nella sezione delle \autoref{subsec:Decisions}, ogni componente dell'azione è chiamata Decision, e 
+la combinazione di Decisions di diversi agenti produce l'azione da intraprendere.
 \subsubsection{AgentFaçade - Interazione}
 Il metodo principale per interagire con l'Agent Façade è \code{get\_action}, che restituisce l'azione da intraprendere in base allo stato attuale. Questo metodo prende in input lo stato attuale e la reward associata all'azione precedente, e restituisce l'azione da intraprendere. All'interno di questo metodo, l'Agent Façade addestra l'agente con l'esperienza passata e interroga l'agente per ottenere l'azione da intraprendere utilizzando l'albero delle Decisions  (vedi \autoref{subsec:Decisions}). L'addestramento non avviene ad ogni chiamata, ma secondo un intervallo di step configurabile. Questo intervallo è necessario per evitare che l'agente si adatti troppo velocemente a uno scenario specifico e non sia in grado di generalizzare, oltre a migliorare le prestazioni computazionali.
 
