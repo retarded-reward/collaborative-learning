@@ -1,1 +1,0 @@
-To import this project in omnet probably the best way is to clone the repository and then in omnet select "open project from file system" and select the folder where you cloned the repository.
