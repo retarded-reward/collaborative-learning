@@ -86,16 +86,28 @@ class AgentFacade():
             shape=(),
             dtype=tf.int32, 
             minimum=0, 
-            maximum=1, 
+            maximum=ActionBean.PowerSourceEnum.NR_POWER_SOURCE - 1, 
             name = "choose_power_source"
         )
 
+        self._action_spec_flat = tensor_spec.BoundedTensorSpec(
+            shape=(),
+            dtype=tf.int32, 
+            minimum=0,
+            maximum=self._n_queues * ActionBean.PowerSourceEnum.NR_POWER_SOURCE, 
+            name = "choose_action_flat")
+
         self._time_step_spec = ts.time_step_spec(self._observation_spec)
 
-
-    def _init_decision_tree(self) -> DecisionTreeConsultant:
-
-        
+    def _build_decision_tree_flat(self):
+        agent_root = AgentFactory.create_agent(
+        agent_description = self._agent_description, 
+        time_step_spec = self._time_step_spec,
+        action_spec = self._action_spec_flat)
+        return DecisionTreeConsultant(agent_root, "root")
+    
+    
+    def _build_decision_tree(self):
         agent_root = AgentFactory.create_agent(
             agent_description = self._agent_description, 
             time_step_spec = self._time_step_spec,
@@ -112,16 +124,28 @@ class AgentFacade():
         # root: {do_nothing, send_message}
         # send_message: {queue_0, queue_1, ...}
         # queue_i: {power_source_0, power_source_1}
-        self._root = DecisionTreeConsultant(agent_root, "root")
+        root = DecisionTreeConsultant(agent_root, "root")
         # since action values can be provided only by leaves of the tree, the root
         # must have a leaf for the do_nothing action. This is implemenfted as a
         # consultant wrapping a StubbornAgent that always returns 0 (can be ignored).        
-        self._root.add_choice(DecisionTreeConsultant(StubbornAgent(0), "do_nothing"))
+        root.add_choice(DecisionTreeConsultant(StubbornAgent(0), "do_nothing"))
         queue_consultant = DecisionTreeConsultant(agent_queue, "choose_queue")
-        self._root.add_choice(queue_consultant)
+        root.add_choice(queue_consultant)
         for i in range(self._n_queues):
             queue_consultant.add_choice(DecisionTreeConsultant(
                 agent_power_source, f"power_source_for_queue_{i}"))
+        return root
+    
+    def _init_decision_tree(self) -> DecisionTreeConsultant:
+
+        if (self._agent_description["decision_tree_type"] == "flat"):
+            self._root = self._build_decision_tree_flat()
+            self._decision_path_to_action_bean_impl = self._decision_path_to_action_bean_flat
+        elif (self._agent_description["decision_tree_type"] == "deep"):
+            self._root = self._build_decision_tree()
+            self._decision_path_to_action_bean_impl = self._decision_path_to_action_bean_deep
+        else:
+            raise ValueError("Invalid decision tree type: " + str(self._agent_description["decision_tree_type"]))
     
     def __init__(self, bean: AgentFacadeBean):
         """
@@ -187,7 +211,23 @@ class AgentFacade():
         logging.debug("Action: " + str(action_bean))
         return action_bean
     
-    def _decision_path_to_action_bean(self, decision_path):
+    def _decision_path_to_action_bean_flat(self, decision_path):
+        action = action = int(decision_path[0].value.action)
+        if action == self._n_queues * 2:
+            action_bean = ActionBean(send_message=ActionBean.SendEnum.DO_NOTHING)
+            action_bean.power_source = ActionBean.PowerSourceEnum.NO_SOURCE
+            action_bean.queue = -1
+        else:
+            action_bean = ActionBean(send_message=ActionBean.SendEnum.SEND_MESSAGE)
+            action_bean.queue = action // 2  
+        if action % 2 == 0:
+            action_bean.power_source = ActionBean.PowerSourceEnum.BATTERY
+        else:
+            action_bean.power_source = ActionBean.PowerSourceEnum.POWER_CHORD
+        return action_bean
+    
+    def _decision_path_to_action_bean_deep(self, decision_path):
+                
         action = int(decision_path[0].value.action)
         if action == int(ActionBean.SendEnum.DO_NOTHING):
             action_bean = ActionBean(send_message=ActionBean.SendEnum.DO_NOTHING)
@@ -200,7 +240,9 @@ class AgentFacade():
             action_bean.power_source = ActionBean.PowerSourceEnum(selected_power_source)
             action_bean.queue = selected_queue
         return action_bean              
-            
+    
+    def _decision_path_to_action_bean(self, decision_path):
+        return self._decision_path_to_action_bean_impl(decision_path)
                   
             
 # Test main

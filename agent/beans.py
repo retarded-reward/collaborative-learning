@@ -134,6 +134,7 @@ class ActionBean():
         NO_SOURCE = -1
         BATTERY = 0
         POWER_CHORD = 1
+        NR_POWER_SOURCE = 2
 
     def __init__(self, send_message : SendEnum, power_source : PowerSourceEnum = PowerSourceEnum.NO_SOURCE, queue : int = -1):
         self._send_message = send_message
