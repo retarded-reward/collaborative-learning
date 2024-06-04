@@ -11,7 +11,12 @@
 \usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=green]{hyperref}
 \usepackage{minted}
 \usepackage{microtype}
+\usepackage{svg}
+\svgsetup{inkscapelatex=false}
 %\usepackage{parskip}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\providecommand*{\listingautorefname}{Listing}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -31,8 +36,6 @@
 \IEEEauthorblockN{Luca Falasca}
 \IEEEauthorblockA{\textit{0334722}} \\
 }
-
-\newcommand{\code}[1]{\texttt{#1}}
 
 \maketitle
 \thispagestyle{plain}
@@ -514,11 +517,36 @@ E' un componente che ha il compito di generare il traffico da inviare al nodo ro
 E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particolare è qui che viene esplicitata la connessione tra i nodi sorgenti e le code del nodo router. (\autoref{fig:network_layout_3queues}) 
 
 \section{Risultati}
-%TODO:
+Sono stati condotti diversi esperimenti per valutare le prestazioni del nodo in base 
+alle azioni suggerite dal suo agente. Le specifiche della macchina su cui sono stati
+eseguiti gli esperimenti sono elencate in \autoref{listing:trials_machine_specs}.
+Per effettuare gli esperimenti si è partiti da una configurazione dei parametri di 
+base\footnote{\href{https://github.com/retarded-reward/collaborative-learning/blob/main/simulations/res/omnetpp.ini}{https://github.com/retarded-reward/collaborative-learning/blob/main/simulations/res/omnetpp.ini}}, a cui poi sono state apportate modifiche a seconda dello scenario considerato
+nell'esperimento.
 
-\subsection{Condizioni}
+\subsection{Scenario 1: Balanced}
+Nel primo scenario sono state valutate le prestazioni del nodo router con valori dei
+parametri della soluzione di default. In particolare, l'agente del nodo tiene conto
+di tutti i termini della reward in ugual misura, il nodo dispone di una sola coda
+e la frequenza di richiesta delle azioni eguaglia il tasso di arrivo dei pacchetti. 
+In \autoref{fig:cumulative_reward_dqnDeep_dqnFlat_random_defaultConfig} si può notare
+come dal punto di vista della reward cumulativa gli agenti DQN, DQN con decisions e
+Random si comportino in maniera simile. Ciò è strano poiché ci si aspetterebbe che 
+l'agente DQN, da un certo punto in poi, impari a prendere decisioni migliori rispetto
+a un agente Random.
 
-% TODO: una subsection per ogni scenario
+Se si analizza \autoref{fig:pktDrop_allAgents_defaultConfig} si può notare che l'agente
+DQN perde meno pacchetti rispetto al random in uno stesso timestep, quindi è possibile
+che i risultati ottenuti precedentemente confrontando le reward cumulative sia dovuto
+al fatto che l'agente DQN invia più pacchetti rispetto al random, quindi consuma più
+energia e conseguentemente è penalizzato di più.
+
+La \autoref{fig:cumulativeReward_noEnergyPenalty_allAgents_120s} sembra confermare la
+suddetta tesi: azzerando il peso del termine energetico nella reward, l'agente DQN
+sembra andare meglio del random in termini di reward cumulativa. É possibile che il
+modello energetico utilizzato di default nella simulazione preveda una batteria
+inadeguata rispetto ai consumi imposti dalla NIC utilizzata per l'invio dei pacchetti,
+e quindi il ricorso al Power Chord comporti spesso delle penalità.
 
 \section{Conclusioni}
 %TODO:
@@ -529,8 +557,9 @@ E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particola
 \subsection{What we could improve?}
 %TODO:
 
-\section{Allegati}
+%%%%%%%%%%%%%%%%% Allegati %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%% diagrams
 \begin{figure*}
     \centering
     \includegraphics[width=\textwidth]{figs/decisions.drawio.png}
@@ -538,6 +567,12 @@ E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particola
     nel gioco dei Pokémon. Un esempio di decision path:\\
     \code{\{root: bag, select\_item: potions, potion: iper\}}}
     \label{fig:decisions}
+\end{figure*}
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{figs/controller_doAction_activity_diagram.drawio.png}
+    \caption{\code{do\_action()} Activity diagram. I consumi energetici sono annotati dal controller per poter essere utilizzati dal metodo \code{compute\_reward()} in modo da poter essere combinati con i costi di utilizzo delle rispettive power sources ai fini del calcolo della reward.}
+    \label{fig:controller_doAction_activity_diagram}
 \end{figure*}
 \begin{figure*}
     \centering
@@ -568,6 +603,8 @@ E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particola
     \includegraphics[width=\textwidth]{figs/agentc_sequence_diagram.drawio.png}
     \caption{sequence diagram per la servitura di una richiesta di azione del Controller nei confronti dell'agente.}
     \label{fig:agentc_sequence_diagram}
+
+%%%%%%%% images
 \end{figure*}
 \begin{figure*}
     \centering
@@ -581,12 +618,46 @@ E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particola
     \caption{Rete con tre nodi sorgente e un solo nodo con agente.}
     \label{fig:network_layout_3queues}
 \end{figure*}
+
+%%%%%%%%% result charts
 \begin{figure*}
     \centering
-    \includegraphics[width=\textwidth]{figs/controller_doAction_activity_diagram.drawio.png}
-    \caption{\code{do\_action()} Activity diagram. I consumi energetici sono annotati dal controller per poter essere utilizzati dal metodo \code{compute\_reward()} in modo da poter essere combinati con i costi di utilizzo delle rispettive power sources ai fini del calcolo della reward.}
-    \label{fig:controller_doAction_activity_diagram}
+    \includesvg[width=\textwidth]{figs/results_charts/cumulative_reward_dqnDeep_dqnFlat_random_defaultConfig}
+    \caption{Confronto cumulative reward tra agenti DQN con decision, DQN semplice ("flat") e Random.}
+    \label{fig:cumulative_reward_dqnDeep_dqnFlat_random_defaultConfig}
 \end{figure*}
+\begin{figure*}
+    \centering
+    \includesvg[width=\textwidth]{figs/results_charts/pktDrop_allAgents_defaultConfig.svg}
+    \caption{Confronto packet drop tra agenti DQN con decision, DQN semplice ("flat") e Random.}
+    \label{fig:pktDrop_allAgents_defaultConfig}
+\end{figure*}
+\begin{figure*}
+    \centering
+    \includesvg[width=\textwidth]{figs/results_charts/cumulativeReward_noEnergyPenalty_allAgents_120s.svg}
+    \caption{Confronto cumulative reward tra agenti DQN con decision, DQN semplice ("flat") e Random, con peso termine energetico reward a 0, i restanti a 1/2.}
+    \label{fig:cumulativeReward_noEnergyPenalty_allAgents_120s}
+\end{figure*}
+
+%%%%%%%%%% code snippets
+\begin{listing*}
+    \begin{minted}[autogobble, fontsize=\scriptsize, frame=lines]{text}
+        Operating System: Fedora Linux 40
+        KDE Plasma Version: 6.0.5
+        KDE Frameworks Version: 6.2.0
+        Qt Version: 6.7.1
+        Kernel Version: 6.8.11-300.fc40.x86_64 (64-bit)
+        Graphics Platform: Wayland
+        Processors: 12 × AMD Ryzen 5 7530U with Radeon Graphics
+        Memory: 13.5 GiB of RAM
+        Graphics Processor: AMD Radeon Graphics
+        Manufacturer: LENOVO
+        Product Name: 21KK
+        System Version: ThinkBook 16 G6 ABP
+    \end{minted}
+    \caption{Specifiche della macchina su cui sono stati eseguiti gli esperimenti}
+    \label{listing:trials_machine_specs}
+\end{listing*}
 
 
 \end{document}

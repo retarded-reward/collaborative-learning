@@ -5,3 +5,4 @@ _minted-*/
 !*.sty
 !*.cls
 !.gitignore
+svg-inkscape/
