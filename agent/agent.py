@@ -138,7 +138,8 @@ class AgentFacade():
     
     def _init_decision_tree(self) -> DecisionTreeConsultant:
 
-        if (self._agent_description["decision_tree_type"] == "flat"):
+        # random agents are always flat to preserve the probability distribution
+        if (self._agent_description["decision_tree_type"] == "flat" or self._agent_description["agent_type"] == "random"):
             self._root = self._build_decision_tree_flat()
             self._decision_path_to_action_bean_impl = self._decision_path_to_action_bean_flat
         elif (self._agent_description["decision_tree_type"] == "deep"):
