@@ -17,6 +17,8 @@ package org.cl.simulations;
 import org.cl.simulations.node.Node;
 import org.cl.simulations.srcnode.SrcNode;
 import org.cl.simulations.sinknode.SinkNode;
+import org.cl.simulations.srcnode.SrcController;
+
 
 //Network description including nodes and their connections
 network NodeNetwork
@@ -26,10 +28,10 @@ network NodeNetwork
         int number_of_queues @value(number_of_queues);
     submodules:
         node[number_of_nodes]: Node;
-        srcNode[number_of_queues]: SrcNode;
+        srcNode[number_of_queues]: SrcController;
     connections allowunconnected:
         for i=0..number_of_queues-1 {
-            srcNode[i].data_out[0] --> node[0].queue_ports[i];
+            srcNode[i].network_port[0] --> node[0].queue_ports[i];
         }
               
 }

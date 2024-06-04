@@ -7,6 +7,7 @@ simple SrcController
         volatile double send_interval;
         double avg_arrival_rate;
         volatile double pkt_size;
+        @display("i=block/source");
     gates:
         output network_port[1];
 }
