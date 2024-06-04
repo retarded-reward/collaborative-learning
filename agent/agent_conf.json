@@ -17,5 +17,6 @@
     "rb_max_length": 1000,
     "rb_batch_size": 32,
     "rb_train_freq": 100,
-    "rb_sample_batch_size": 100
+    "rb_sample_batch_size": 100,
+    "decision_tree_type": "deep"
 }
