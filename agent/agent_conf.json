@@ -3,7 +3,7 @@
     "activation_layer": "sigmoid",
     "fc_layer_params": [500, 250, 100, 50, 20],
     "learning_rate": 0.0001,
-    "eps_greedy_bolz_choose": "boltzmann_temperature",
+    "eps_greedy_bolz_choose": "epsilon_greedy",
     "epsilon_greedy": 0.1,
     "boltzmann_temperature": 0.3,
     "gamma": 0.99,

@@ -13,17 +13,15 @@ conda env create -f $PROJECT_PATH/agent/environment.yml -p $PROJECT_PATH/agent/.
 export AGENT_PATH=$PROJECT_PATH/agent
 ```
 
-- if needed, checkout the cmake submodule first
-
+- checkout the cmake submodule 
 ```
 git submodule update --init --recursive
-
-- if it complains about not finding the Omnet++ package, it could be that you forgot to set its env:
+```
+- set Omnet++ environment:
 ```
 source $OMNETPP_PATH/setenv
 ```
 
-```
 3) Configure the cmake project and generate the Makefile:
 ```
 /usr/bin/cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++ -S$PROJECT_PATH -B$PROJECT_PATH/bin -G "Unix Makefiles"

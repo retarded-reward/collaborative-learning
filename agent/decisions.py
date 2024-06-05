@@ -8,7 +8,8 @@ from tf_agents.trajectories import time_step
 from tf_agents.trajectories.time_step import StepType
 from tf_agents.trajectories.policy_step import PolicyStep
 from tf_agents.agents.tf_agent import TFAgent
-from tf_agents.replay_buffers import tf_uniform_replay_buffer
+from tf_agents.policies import random_tf_policy
+
 
 from typing import Callable, Iterable, List, Tuple
 
@@ -143,6 +144,11 @@ class DecisionTreeConsultant():
         Specify an implementation in the constructor params if you want to use
         a refined experience starting from the one passed by the parent.
         """
+        if(agent.time_step_spec is not None):
+            self._random_policy = random_tf_policy.RandomTFPolicy(
+                time_step_spec = agent.time_step_spec,
+                action_spec = agent.action_spec)
+        
             
 
     def _deduce_consultant_state(self, parent_state : Tensor) -> Tensor:
@@ -173,7 +179,18 @@ class DecisionTreeConsultant():
         
         # uses embedded agent to compute decision and adds it as a deeper level
         # of the decision path
-        decision = Decision(name=self.decision_name, value=self._agent.collect_policy.action(ts))
+        has_attr = hasattr(self._agent, '_epsilon_greedy')
+        if has_attr:
+            eps = self._agent._epsilon_greedy
+        else:
+            eps = 0
+        random = tf.random.uniform((), 0, 1)
+        if random > eps:
+            decision = Decision(name=self.decision_name, value=self._agent.policy.action(ts))
+        else:
+            decision = Decision(name=self.decision_name, value=self._random_policy.action(ts))
+
+        #decision = Decision(name=self.decision_name, value=self._agent.collect_policy.action(ts))
         decision_path.append(decision)
 
         # If this consultant has choices, it means that the decision path
