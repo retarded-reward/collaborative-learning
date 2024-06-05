@@ -278,7 +278,7 @@ reward_t Controller::compute_reward(){
     }
     
     // includes queue occ penalties, one term for each priority
-    for (int priority = 0; priority < num_queues; priority ++)
+    for (int queue = 0; queue < num_queues; queue ++)
     {
         queue_occ_penalty_norm_factor
          = RewardTerm(reward_term_models, "queue_occ_penalty").bind_symbols(
@@ -288,43 +288,43 @@ reward_t Controller::compute_reward(){
          })->setWeight(1)->compute();
         include_reward_term("queue_occ_penalty",
          {
-            {"priority", cValue(priority)},
-            {"queue_occ", cValue(queue_states[priority].occupancy)}
+            {"priority", cValue(queue + 1)},
+            {"queue_occ", cValue(queue_states[queue].occupancy)}
          },
          reward_terms,
          new MinMaxNormalizer(0, absolute(queue_occ_penalty_norm_factor)));
         
         EV_DEBUG << "Queue occ term for priority "
-         << priority << "included" << endl;
-        EV_DEBUG << "max queue occ penalty for priority " << priority << ": "
+         << queue << "included" << endl;
+        EV_DEBUG << "max queue occ penalty for priority " << queue << ": "
          << queue_occ_penalty_norm_factor << endl;
     }
 
     // includes pkt drop penalties, one term for each priority
-    for (int priority = 0; priority < num_queues; priority ++)
+    for (int queue = 0; queue < num_queues; queue ++)
     {
-        EV_DEBUG << "pkt drop count for priority " << priority << ": "
-         << queue_states[priority].pkt_drop_cnt << endl;
+        EV_DEBUG << "pkt drop count for priority " << queue << ": "
+         << queue_states[queue].pkt_drop_cnt << endl;
                 
         pkt_drop_penalty_norm_factor
          = RewardTerm(reward_term_models, "pkt_drop_penalty").bind_symbols(
          {
             {"priority", cValue(sum_priorities)},
-            {"pkt_drop_count", cValue(queue_states[priority].pkt_inbound_cnt)}
+            {"pkt_drop_count", cValue(queue_states[queue].pkt_inbound_cnt)}
          })->setWeight(1)->compute();
         include_reward_term("pkt_drop_penalty",
          {
-            {"priority", cValue(priority)},
-            {"pkt_drop_count", cValue(queue_states[priority].pkt_drop_cnt)}
+            {"priority", cValue(queue + 1)},
+            {"pkt_drop_count", cValue(queue_states[queue].pkt_drop_cnt)}
          },
          reward_terms,
          new MinMaxNormalizer(0, absolute(pkt_drop_penalty_norm_factor)));
         // resets pkt counts after reading them
-        queue_states[priority].reset_counts();
+        queue_states[queue].reset_counts();
 
         EV_DEBUG << "Pkt drop term for priority " 
-         << priority << "included: " << endl;
-        EV_DEBUG << "max pkt drop penalty for priority " << priority << ": "
+         << queue << "included: " << endl;
+        EV_DEBUG << "max pkt drop penalty for priority " << queue << ": "
          << pkt_drop_penalty_norm_factor << endl;
     }
 
