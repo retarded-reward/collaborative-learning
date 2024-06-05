@@ -179,7 +179,11 @@ class DecisionTreeConsultant():
         
         # uses embedded agent to compute decision and adds it as a deeper level
         # of the decision path
-        eps = self._agent._epsilon_greedy
+        has_attr = hasattr(self._agent, '_epsilon_greedy')
+        if has_attr:
+            eps = self._agent._epsilon_greedy
+        else:
+            eps = 0
         random = tf.random.uniform((), 0, 1)
         if random > eps:
             decision = Decision(name=self.decision_name, value=self._agent.policy.action(ts))

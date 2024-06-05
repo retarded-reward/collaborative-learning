@@ -35,6 +35,7 @@ class StubbornAgent():
         self.policy = self
         self.collect_policy = self.policy
         self.time_step_spec = None
+        self._epsilon_greedy = 0
 
     def action(self, time_step: TimeStep):
         return self._action
