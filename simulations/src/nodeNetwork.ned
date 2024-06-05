@@ -26,8 +26,11 @@ network NodeNetwork
     parameters:
         int number_of_nodes @value(number_of_nodes);//= default(1);
         int number_of_queues @value(number_of_queues);
+        double max_pkt_size @unit(B);
     submodules:
-        node[number_of_nodes]: Node;
+        node[number_of_nodes]: Node{
+            max_pkt_size = parent.max_pkt_size;
+        };
         srcNode[number_of_queues]: SrcController;
     connections allowunconnected:
         for i=0..number_of_queues-1 {

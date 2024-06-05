@@ -477,6 +477,7 @@ void Controller::init_module_params()
      = par("charge_battery_timeout_delta").doubleValue();
     reward_term_models = (cValueMap *) par("reward_term_models").objectValue()->dup();
     hybris = par("hybris").doubleValue();
+    max_pkt_size = par("max_pkt_size").doubleValueInUnit("B");
     // add more module params here ...
 
     EV_DEBUG << "Power model tx_mW: " << power_model->getTx_mW() << "mW" <<endl;
@@ -487,6 +488,7 @@ void Controller::init_module_params()
     EV_DEBUG << "num_queues: " << num_queues << endl;
     EV_DEBUG << "max_neighbours: " << max_neighbours << endl;
     EV_DEBUG << "link_cap: " << link_cap << "bps" << endl;
+    EV_DEBUG << "max_pkt_size: " << max_pkt_size << "B" << endl;
 }
 
 void Controller::init_power_sources()
@@ -526,7 +528,8 @@ void Controller::init_power_sources()
     EV_DEBUG << "max charge is " << battery_charger->getCapacity() << endl;
     battery_charger->plug();
 
-    max_energy_consumed.resize(power_sources.size(), 512 * 8 * power_model->getTx_mW());
+    // inits max energy consumed    
+    max_energy_consumed.resize(power_sources.size(), max_packet_size * 8 * power_model->getTx_mW());
 
     // find most expensive power source
     for (PowerSource *ps : power_sources){

@@ -219,6 +219,7 @@ class Controller : public cSimpleModule
     cValueMap *power_source_models;
     cValueMap *reward_term_models;
     reward_t hybris;
+    B_t max_pkt_size;
 
     /* Module parameters (END)*/
     

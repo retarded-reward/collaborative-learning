@@ -26,6 +26,7 @@ module Node
     parameters:
         int number_of_ports  @value(number-of-ports);//=default(1);
         int num_queues @value(num_queues);
+        double max_pkt_size @unit(B) ;
         
         // statistics
         @statistic[avg_cost_per_mWh](source=warmup(sum(energy_expense)/sum(energy_consumption)); record=mean; checkSignals=false; autoWarmupFilter=false);
@@ -64,6 +65,7 @@ module Node
     submodules:
         controller: Controller{
             num_queues = parent.num_queues;
+            max_pkt_size = parent.max_pkt_size;
         };
         agent: AgentClient{
             num_of_queues = parent.num_queues;

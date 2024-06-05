@@ -7,6 +7,7 @@ simple Controller
         @display("i=block/app");
         int number_of_ports @value(number-of-ports);//=default(1);
         int num_queues;
+        double max_pkt_size @unit(B);
 
         // Dictionary of reward term models.
         // A reward term model can be used to construct one or more reward terms.
