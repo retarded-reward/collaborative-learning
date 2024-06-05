@@ -218,13 +218,14 @@ class AgentFacade():
             action_bean = ActionBean(send_message=ActionBean.SendEnum.DO_NOTHING)
             action_bean.power_source = ActionBean.PowerSourceEnum.NO_SOURCE
             action_bean.queue = -1
+
         else:
             action_bean = ActionBean(send_message=ActionBean.SendEnum.SEND_MESSAGE)
             action_bean.queue = action // 2  
-        if action % 2 == 0:
-            action_bean.power_source = ActionBean.PowerSourceEnum.BATTERY
-        else:
-            action_bean.power_source = ActionBean.PowerSourceEnum.POWER_CHORD
+            if action % 2 == 0:
+                action_bean.power_source = ActionBean.PowerSourceEnum.BATTERY
+            else:
+                action_bean.power_source = ActionBean.PowerSourceEnum.POWER_CHORD
         return action_bean
     
     def _decision_path_to_action_bean_deep(self, decision_path):
