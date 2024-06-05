@@ -202,7 +202,7 @@ void Controller::_forward_data(const DataMsg *data[], size_t num_data)
     for(int i=0; i<num_data; i++){
         EV_DEBUG << "Data " << i << " size: " << (int) data[i]->getData() << std::endl;
         tot_consumed
-            += power_model->calc_tx_consumption_mWs((int) data[i]->getData()*8, link_cap); // *8 for bits,
+            += (60 * 60 * power_model-> calc_tx_consumption_mWs((int) data[i]->getData()*8, link_cap)); // *8 for bits, converted in mWh
     }      
     
     //Consume energy
@@ -234,7 +234,7 @@ void Controller::_forward_data(const DataMsg *data[], size_t num_data)
     power_sources[SelectPowerSource::BATTERY]->discharge(last_energy_consumed[SelectPowerSource::BATTERY]);
     
     for(int i=0; i<power_sources.size(); i++){
-        EV_DEBUG << "Consumed energy: " << last_energy_consumed[i] << " mWs from power source: " << i << endl;
+        EV_DEBUG << "Consumed energy: " << last_energy_consumed[i] << " mWh from power source: " << i << endl;
     }
 }
 
@@ -464,7 +464,7 @@ void Controller::init_module_params()
 {   
     ask_action_timeout_delta = par("ask_action_timeout_delta").doubleValue();
     max_neighbours = par("max_neighbours").intValue();
-    link_cap = par("link_cap").doubleValue();
+    link_cap = par("link_cap").doubleValueInUnit("bps");
     power_model = new NICPowerModel();
     power_models = (cValueMap *) par("power_models").objectValue()->dup();
     cValueMap *raw_power_model = (cValueMap *) power_models->get("intel_dualband_wireless_AC_7256").objectValue();
@@ -483,6 +483,10 @@ void Controller::init_module_params()
     EV_DEBUG << "Power model idle_mW: " << power_model->getIdle_mW() << "mW" << endl;
     EV_DEBUG << "charge battery timeout delta: "<< charge_battery_timeout_delta << endl;
     EV_DEBUG << "ask action timeout delta: " << ask_action_timeout_delta << endl;
+    EV_DEBUG << "hybris: " << hybris << endl;
+    EV_DEBUG << "num_queues: " << num_queues << endl;
+    EV_DEBUG << "max_neighbours: " << max_neighbours << endl;
+    EV_DEBUG << "link_cap: " << link_cap << "bps" << endl;
 }
 
 void Controller::init_power_sources()
