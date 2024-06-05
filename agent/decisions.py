@@ -18,11 +18,13 @@ class Decision():
     The result of a node in the decision tree
     """
 
-    def __init__(self, name: str, value: PolicyStep):
+    def __init__(self, name: str, value: PolicyStep, random: bool = False):
         self._name = name
         """ Human readable name of decision """
         self._value = value
         """ The value of the decision """
+        self._random = random
+        """ Whether the decision was taken randomly or not """
 
     @property
     def name(self):
@@ -32,8 +34,12 @@ class Decision():
     def value(self):
         return self._value
     
+    @property
+    def random(self):
+        return self._random
+    
     def __repr__(self):
-        return f"Decision(name={self._name}, value={self._value})"
+        return f"Decision(name={self._name}, value={self._value}, random={self._random})"
     
 
 class Experience():
@@ -188,7 +194,7 @@ class DecisionTreeConsultant():
         if random > eps:
             decision = Decision(name=self.decision_name, value=self._agent.policy.action(ts))
         else:
-            decision = Decision(name=self.decision_name, value=self._random_policy.action(ts))
+            decision = Decision(name=self.decision_name, value=self._random_policy.action(ts), random=True)
 
         #decision = Decision(name=self.decision_name, value=self._agent.collect_policy.action(ts))
         decision_path.append(decision)
@@ -216,6 +222,7 @@ class DecisionTreeConsultant():
         
             e = self._deduce_consultant_experience(e)
             decision = e.decision_path[decision_path_level]
+            random = decision.random
             action = tf.constant(value=int(decision.value.action), shape=(), dtype=tf.int32)
             
             # trains embedded agent
@@ -230,8 +237,10 @@ class DecisionTreeConsultant():
             )
             #if hasattr(self._agent, "_q_network"):
             #    print("q values before training: ", self._agent._q_network(trajectory.observation, step_type=trajectory.step_type))
-
-            self._agent.train(experience=trajectory)
+            if not random:
+                self._agent.train(experience=trajectory)
+            else:
+                self._agent.train(experience=trajectory, random=random)
             
             #if hasattr(self._agent, "_q_network"):
             #    print("q values after training: ", self._agent._q_network(trajectory.observation, step_type=trajectory.step_type))

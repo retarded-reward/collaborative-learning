@@ -25,7 +25,11 @@ def with_replay_buffer(tf_agent_class, sample_batch_size,
     class ReplayBufferedAgent(tf_agent_class):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self._replay_buffer = replay_buffer_class(
+            self._replay_buffer_policy = replay_buffer_class(
+                data_spec=self.collect_data_spec,
+                *replay_buffer_ctor_args,
+                **replay_buffer_ctor_kwargs)
+            self._replay_buffer_greedy = replay_buffer_class(
                 data_spec=self.collect_data_spec,
                 *replay_buffer_ctor_args,
                 **replay_buffer_ctor_kwargs)
@@ -35,16 +39,22 @@ def with_replay_buffer(tf_agent_class, sample_batch_size,
             self._train_counter = 0
             self._batch_size = replay_buffer_ctor_kwargs["batch_size"]
 
-        def train(self, experience: Trajectory, weights: Optional[types.NestedTensor] = None, **kwargs) -> LossInfo:
+        def train(self, experience: Trajectory, weights: Optional[types.NestedTensor] = None, random : bool = False, **kwargs) -> LossInfo:
             print("called train in replay buffered agent")
             self._train_counter += 1
             values_batched = tf.nest.map_structure(lambda t: tf.stack([t] * self._batch_size), experience)
-            self._replay_buffer.add_batch(values_batched)
-            
+            if(random):
+                self._replay_buffer_greedy.add_batch(values_batched)
+            else:
+                self._replay_buffer_policy.add_batch(values_batched)
+
             loss_info = None
             if self._train_counter % self._train_frequency == 0:
-                dataset = self._replay_buffer.as_dataset(sample_batch_size=sample_batch_size, num_steps=num_steps)
-                iterator = iter(dataset)
+                dataset_policy = self._replay_buffer_policy.as_dataset(sample_batch_size=int(sample_batch_size*0.9), num_steps=num_steps)
+                dataset_greedy = self._replay_buffer_greedy.as_dataset(sample_batch_size=int(sample_batch_size*0.1), num_steps=num_steps)
+                ds = dataset_policy.concatenate(dataset_greedy)
+                ds = ds.shuffle(sample_batch_size, seed = 42)
+                iterator = iter(ds)
                 for _ in range(1):
                     t, _ = next(iterator)
                     print("EXPERIENCE FOR TRAINING" + str(t))
@@ -157,7 +167,7 @@ class AgentFactory():
                     fc_layer_params=fc_layer_params,
                     activation_fn=activation_layer.get_activation_layer(),
                     kernel_initializer=tf.keras.initializers.VarianceScaling(
-                        scale=2.0, mode='fan_in', distribution='truncated_normal', seed=3)
+                        scale=2.0, mode='fan_out', distribution='truncated_normal', seed=3)
                 )
                 
 

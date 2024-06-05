@@ -40,9 +40,10 @@ class StubbornAgent():
     def action(self, time_step: TimeStep):
         return self._action
     
-    def train(self, experience: types.TimeStep):
+    def train(self, experience: types.TimeStep, random: bool = False):
         # too stubborn to learn
         pass
+
 
     
 
@@ -192,6 +193,7 @@ class AgentFacade():
         if(self._last_experience is not None):
             reward.reward = round(reward.reward, 2)
             r = tf.constant(value=reward.reward, shape = (), dtype=tf.float32)
+            print("last experience: " + str(self._last_experience))
             exp = Experience(self._last_experience[0], self._last_experience[1], r)
             self._file.write(str(reward.reward) + "\n")
             self._root.train([exp])
@@ -268,7 +270,7 @@ def test_plotting():
     file.write("energy_level;queue_state;charge_rate;send_message;power_source;queue;reward\n")
     reward = RewardBean(0)
     action = agent.get_action(state, None)
-    for i in range(4):
+    for i in range(100):
         
         random_energy = np.random.randint(0, 100) / float(100)
         random_queue = 0

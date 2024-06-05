@@ -136,10 +136,15 @@ class ActionBean():
         POWER_CHORD = 1
         NR_POWER_SOURCE = 2
 
-    def __init__(self, send_message : SendEnum, power_source : PowerSourceEnum = PowerSourceEnum.NO_SOURCE, queue : int = -1):
+    def __init__(self, send_message : SendEnum, power_source : PowerSourceEnum = PowerSourceEnum.NO_SOURCE, queue : int = -1, random: bool = False):
         self._send_message = send_message
         self._power_source = power_source
         self._queue = queue
+        self._random = random
+
+    @property
+    def random(self):
+        return self._random
 
     @property
     def send_message(self):
