@@ -1,4 +1,5 @@
 from enum import Enum
+import logging
 from tf_agents.agents.random import fixed_policy_agent, random_agent
 from typing import Callable, Union
 from tf_agents.agents.dqn import dqn_agent
@@ -55,13 +56,15 @@ def with_replay_buffer(tf_agent_class, sample_batch_size,
                 ds = dataset_policy.concatenate(dataset_greedy)
                 ds = ds.shuffle(sample_batch_size, seed = 42)
                 iterator = iter(ds)
-                for _ in range(1):
-                    t, _ = next(iterator)
-                    print("EXPERIENCE FOR TRAINING" + str(t))
-                    loss_info = super().train(experience=t)
-                    print("LOSS" + str(loss_info.loss))
-                #print q values
-                print("Q_VALUES" + str(self._q_network(t.observation)))
+                try:
+                    for _ in range(1):
+                        t, _ = next(iterator)
+                        print("EXPERIENCE FOR TRAINING" + str(t))
+                        loss_info = super().train(experience=t)
+                        print("LOSS" + str(loss_info.loss))
+                        print("Q_VALUES" + str(self._q_network(t.observation)))
+                except tf.errors.InvalidArgumentError:
+                    logging.warn("Not enough data for training in the replay buffer. Skipping training step.")
             return loss_info
         
     return ReplayBufferedAgent
