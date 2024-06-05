@@ -526,7 +526,7 @@ void Controller::init_power_sources()
     EV_DEBUG << "max charge is " << battery_charger->getCapacity() << endl;
     battery_charger->plug();
 
-    max_energy_consumed.resize(power_sources.size(), power_sources[SelectPowerSource::BATTERY]->getCapacity());
+    max_energy_consumed.resize(power_sources.size(), 512 * 8 * power_model->getTx_mW());
 
     // find most expensive power source
     for (PowerSource *ps : power_sources){
