@@ -191,7 +191,7 @@ class AgentFacade():
         # updates agent policy using reward from previous action
         
         if(self._last_experience is not None):
-            reward.reward = round(reward.reward, 2)
+            reward.reward = round(reward.reward, 8)
             r = tf.constant(value=reward.reward, shape = (), dtype=tf.float32)
             print("last experience: " + str(self._last_experience))
             exp = Experience(self._last_experience[0], self._last_experience[1], r)
