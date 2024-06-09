@@ -51,10 +51,9 @@
 \subsection{Contesto}
 In un sistema moderno i QoS possono essere di vario genere e non sempre sono legati alle sole prestazioni, in particolare, hanno acquistato sempre più rilevanza aspetti come il valore portato dal sistema e la sostenibilità dello stesso. In un sistema di comunicazione, ad esempio, il valore portato da un messaggio può variare a seconda del tempo che impiega ad essere processato, allo stesso tempo un messaggio inviato utilizzando energia green può avere un valore maggiore rispetto a un messaggio inviato tramite energia tradizionale.
 
-Nel nostro progetto viene fatto il design di un nodo di rete dotato di code di priorità, di una batteria e di una presa elettrica, il quale monta un agente di reinforcement learning che impara a prendere decisioni sulla base di un modello di reward che tiene conto di diversi QoS come il consumo energetico, l'occupazione delle code ed il numero di pacchetti persi. L'agente è in grado di interagire con l'ambiente e di apprendere da queste interazioni, in modo da ottimizzare il suo comportamento e massimizzare la reward accumulata. Il modello di reward è configurabile in modo da dare più o meno peso a ciascuna delle metriche di QoS, in modo da poter adattare il comportamento dell'agente a diversi scenari.
-
 \subsection{Obiettivi}
-L'obiettivo del progetto è quello di valutare le performance del nodo di rete sulla base della scelte prese dall'agente in diversi scenari, in particolare al variare di:
+Il progetto in questione riguarda il design di un nodo di rete dotato di code di priorità, di una batteria e di una presa elettrica, il quale monta un agente di reinforcement learning che impara a prendere decisioni sulla base di un modello di reward che tiene conto di diversi QoS come il consumo energetico, l'occupazione delle code ed il numero di pacchetti persi. L'agente è in grado di interagire con l'ambiente e di apprendere da queste interazioni, in modo da ottimizzare il suo comportamento e massimizzare la reward accumulata. Il modello di reward è configurabile in modo da dare più o meno peso a ciascuna delle metriche di QoS, in modo da poter adattare il comportamento dell'agente a diversi scenari.
+\\Le performance del nodo vengono valutate sulla base delle scelte prese dall'agente in diversi scenari, in particolare al variare di:
 \begin{itemize}
     \item Configurazione del modello di reward dell'agente
     \item Grado di esplorazione dell'agente
