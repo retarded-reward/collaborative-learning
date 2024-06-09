@@ -169,8 +169,7 @@ class AgentFactory():
                     preprocessing_combiner=tf.keras.layers.Concatenate(axis=-1),
                     fc_layer_params=fc_layer_params,
                     activation_fn=activation_layer.get_activation_layer(),
-                    kernel_initializer=tf.keras.initializers.VarianceScaling(
-                        scale=2.0, mode='fan_out', distribution='truncated_normal', seed=3)
+                    kernel_initializer=tf.keras.initializers.Zeros()
                 )
                 
 
