@@ -634,13 +634,19 @@ strategia appropriata. Tuttavia, il DQN con decisions sembra soffrire di meno ri
 alla variante flat.
 
 \section{Conclusioni}
-%TODO:
-
-\subsection{What we have learned?}
-%TODO:
-
-\subsection{What we could improve?}
-%TODO:
+\begin{itemize}
+    \item Nello sviluppo di soluzioni di reinforcement learning è di importanza fondamentale
+    che il modello di stato, azioni e reward utilizzati siano rappresentativi del 
+    problema, validi e verificati, poichè un minimo errore ad esempio nel calcolo della
+    reward può indurre comportamenti nell'agente molto differenti;
+    \item Apportare delle soluzioni che permettono di non dimenticare facilemente
+    esperienze di exploration può aiutare l'agente a imparare una strategia ottima;
+    \item All'aumentare del numero delle code la difficoltà di apprendimento dell'agente
+    aumenta considerevolmente, per cui forse è opportuno considerare un modello diverso;
+    \item L'utilità dell'uso di un albero delle decisioni sembra essere limitata
+    rispetto a un DQN normale, anche se sembra migliorare le prestazioni del DQN
+    con'aumentare del numero delle azioni possibili;
+\end{itemize}
 
 \begin{thebibliography}{00}
     \bibitem{b1} Bruin, T. D., Jens Kober, and K. Tuyls. \href{https://rll.berkeley.edu/deeprlworkshop/papers/database_composition.pdf}{"The importance of experience replay database composition in deep reinforcement learning."} Computer Science, 2015, pp. 5-8.
