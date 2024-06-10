@@ -489,21 +489,6 @@ su quale azione intraprendere. L'AgentClient risponderà con una
 \code{AgentClientResponse} contenente una descrizione dell'azione da intraprendere,
 che il controller interpreterà ed eseguirà.
 
-L'AgentClient è un componente di interfaccia progettato per poterne sostituire 
-l'implemntazione in maniera semplice e veloce, senza dover modificare il controller.
-Questo perché nel mondo delle implementazioni disponibili di modelli di machine learning
- esiste un 
-ecosistema piuttosto maturo di librerie e framework scritti in linguaggio Python, il
-che lo rende una piattaforma appetibile per sviluppare prototipi e avere molta libertà
-nel configurarli. Tale ecosistema include anche implementazioni di ambienti in cui
-gli agenti delle suddette librerie posso essere addestrati e valutati. Nel caso del
-problema, l'ambiente di simulazione è stato implementato usando il framework OMNeT++,
-il quale è scritto in linguaggio C++. Nasce dunque l'esigenza di un componente che 
-permetta la comunicazione tra il Controller e l'agente di reinforcement learning, i
-quali possono essere implementati in tecnologie diverse che non possono comunicare
-tra loro senza le dovute accortezze. Ciò permette di sfruttare i vantaggi di tutte le
-tecnologie coinvolte con un ragionevole sforzo di integrazione.
-
 Nel caso di studio affrontato è stata implementata una versione dell'AgentClient chiamata
 \code{AgentClientPybind}, che sfrutta la libreria PyBind per poter invocare codice
 Python da C++. In particolare, le operazioni svolte da tale componente sono:
