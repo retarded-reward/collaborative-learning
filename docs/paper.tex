@@ -524,7 +524,6 @@ Per effettuare gli esperimenti si è partiti da una configurazione dei parametri
 base\footnote{\href{https://github.com/retarded-reward/collaborative-learning/blob/main/simulations/res/omnetpp.ini}{https://github.com/retarded-reward/collaborative-learning/blob/main/simulations/res/omnetpp.ini}}, a cui poi sono state apportate modifiche a seconda dello scenario considerato
 nell'esperimento.
 
-\subsection{Scenario 1: Balanced}
 Nel primo scenario sono state valutate le prestazioni del nodo router con valori dei
 parametri della soluzione di default. In particolare, l'agente del nodo tiene conto
 di tutti i termini della reward in ugual misura, il nodo dispone di una sola coda
@@ -563,8 +562,28 @@ sono evidenziati i periodi di tempo in cui l'agente DQN si concentra su una part
 azione. Da notare che il DQN con decision oscilla di meno rispetto alla versione flat,
 ricordando però che il primo accumula più reward negativa rispetto al secondo.
 
-% TODO: reward cumulative per casi (1/2, 1/2, 0), (0, 0, 1)
-% TODO: reward cumulativa per caso balanced con multicoda
+Nelle figure \autoref{fig:noPowerSaving_allAgents_defaultConfig} e 
+\autoref{fig:allPowerSaving_allAgents_defaultConfig} possiamo vedere i comportamenti dei
+vari agenti a seguito del cambio dei pesi assegnati ai termini della reward. In
+particolare, nella figura \autoref{fig:noPowerSaving_allAgents_defaultConfig} si può
+notare come le varianti di DQN accumulino un quantitivo di reward simile rispetto a
+quello ottenuto ponendo i pesi di tutti i termini della reward a 1/3 (nel caso in figura,
+il termine energetico è azzerato e il resto è diviso tra packet drop e occupazione
+delle code). Il random, invece, va molto peggio. Ciò sembra suggerire che a inficiare
+maggiormente sulla reward siano proprio i termini che riguardano gli aspetti delle code,
+e quindi che la strategia imparata dal DQN in entrambi i casi punti ad azzerare tali
+termini. In \autoref{fig:allPowerSaving_allAgents_defaultConfig} si può notare come
+gli agenti DQN, dopo un transitorio iniziale, imparino che non conviene inviare pacchetti
+praticamente mai e non consumano più energia. Inoltre, il DQN con decisions sembra 
+andare meglio rispetto alla controparte flat. Questo potrebbe essere dovuto al fatto
+che la root deve decidere solo tra due azioni, ovvero inviare e non fare nulla, e quindi
+impari più in fretta che non conviene inviare mai rispetto al DQN flat, che ha a 
+disposizione più opzioni per la sua azione.
+
+In figura \autoref{fig:balanced_allAgents_5queues_300s} possiamo vedere che gli agenti 
+DQN hanno un comportamento peggiore del random, segno che non sono a imparare una 
+strategia appropriata. Tuttavia, il DQN con decisions sembra soffrire di meno rispetto
+alla variante flat.
 
 \section{Conclusioni}
 %TODO:
@@ -667,6 +686,22 @@ ricordando però che il primo accumula più reward negativa rispetto al secondo.
     \includegraphics[width=\textwidth]{figs/results_charts/actionOverTime_allAgents_defaultConfig_annotated.png}
     \caption{Confronto delle azioni scelte per ogni istante di tempo tra agenti DQN con decision, DQN semplice ("flat") e Random. 0 corrisponde a do nothing, 1 a send message dalla batteria, 2 a send message dal power chord.}
     \label{fig:actionOverTime_allAgents_defaultConfig_annotated}
+\end{figure*}
+\begin{figure*}
+    \centering
+    \includesvg[width=\textwidth]{figs/results_charts/noPowerSaving_allAgents_defaultConfig.svg}
+    \caption{Confronto cumulative reward tra agenti DQN con decision, DQN semplice ("flat") e Random nel caso in cui le priorità dell'agente sono distribuite unicamente tra il ridurre le perdite e le occupazioni delle code.}
+    \label{fig:noPowerSaving_allAgents_defaultConfig}
+\end{figure*}
+\begin{figure*}
+    \includesvg[width=\textwidth]{figs/results_charts/allPowerSaving_allAgents_defaultConfig.svg}
+\caption{Confronto cumulative reward tra agenti DQN con decision, DQN semplice ("flat") e Random nel caso in cui l'agente si concentri solo sul risparmio energetico.}
+\label{fig:allPowerSaving_allAgents_defaultConfig}
+\end{figure*}
+\begin{figure*}
+    \includesvg[width=\textwidth]{figs/results_charts/balanced_allAgents_5queues_300s.svg}
+\caption{Confronto cumulative reward tra agenti DQN con decision, DQN semplice ("flat") e Random nel caso in cui l'agente abbia tre code da gestire.}
+\label{fig:balanced_allAgents_5queues_300s}
 \end{figure*}
 
 %%%%%%%%%% code snippets
