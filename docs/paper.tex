@@ -204,7 +204,7 @@ Con i termini della reward così definiti, è possibile dimostrare che $ -1 \leq
 confrontabili.
 
 \subsection{Agente}
-L'agente preso utilizzato per il progetto è un DQN (Deep Q-Network). Il DQN è un algoritmo di reinforcement learning che apprende una Q function utilizzando una rete neurale profonda. L'agente utilizza la Q function per selezionare l'azione da intraprendere in base allo stato attuale. L'addestramento dell'agente avviene tramite l'esperienza accumulata durante l'interazione con l'ambiente. L'agente memorizza l'esperienza in un replay buffer e addestra la rete neurale utilizzando un algoritmo di ottimizzazione come stochastic gradient descent. L'agente utilizza una politica di esplorazione $\epsilon$-greedy per esplorare lo spazio delle azioni. L'agente non è stato implementato da zero, ma è stato utilizzato un'implementazione già esistente fornita dalla libreria TF-Agents\footnote{\href{https://www.tensorflow.org/agents}{https://www.tensorflow.org/agents}}.
+L'agente preso utilizzato per il progetto è un DQN (Deep Q-Network). Il DQN è un algoritmo di reinforcement learning che apprende una Q function utilizzando una rete neurale profonda. L'agente utilizza la Q function per selezionare l'azione da intraprendere in base allo stato attuale. L'addestramento dell'agente avviene tramite l'esperienza accumulata durante l'interazione con l'ambiente. L'agente memorizza l'esperienza in un replay buffer e addestra la rete neurale utilizzando un algoritmo di ottimizzazione come Stochastic Gradient Descent (SGD). L'agente utilizza una politica di esplorazione $\epsilon$-greedy per esplorare lo spazio delle azioni. L'agente non è stato implementato da zero, ma è stato utilizzato un'implementazione già esistente fornita dalla libreria TF-Agents\footnote{\href{https://www.tensorflow.org/agents}{https://www.tensorflow.org/agents}}.
 Tuttavia sono state adattate diverse caratteristiche peculiari.
 \subsubsection{Rete neurale}
 La rete neurale utilizzata fa uso di soli layer densi, tutti con la stessa funzione di attivazione sigmoidale. In particolare la rete è composta da cinque layer densi, con rispettivamente 500, 250, 100, 50, 20 neuroni, più un ultimo layer che ha un numero di neuroni pari al numero di azioni possibili. In questo modo la rete neurale approssima la funzione Q per ogni azione. Inoltre prima di essere passato alla rete neurale, lo stato viene preprocessato tramite un layer flatter che permette di appiattire il tensore dello stato in un vettore unidimensionale. 
@@ -216,7 +216,7 @@ Come replay buffer è stato usato quello messo a disposizione dalla libreria TF-
     \item Train frequency: la frequenza di step con cui l'agente addestra la rete neurale. Nel nostro caso è stato scelto 100 step, perchè sperimentando abbiamo notato che il comportamento dell'agente non cambiava significativamente addestrandolo più frequentemente, mentre invece migliorava molto la velocità di esecuzione.
     \item Sample batch size: la dimensione del minibatch da prelevare dal replay buffer. Nel nostro caso è stato scelto 100 come la train frequency in modo da prendere in media lo stesso numero di esperienze inserite nel buffer ed evitare così di perderci troppe esperienze.
 \end{itemize}
-Tuttavia in seguito alla lettura del paper \textit{"The importance of experience replay database composition in deep reinforcement learning"}\cite{b1} abbiamo deciso di fare dei cambiamenti all'implementazione del buffer. Il paper in questione mostra che per avere una buon stabilità nel processo di learning è necessario avere un replay buffer composto da esperienze abbastanza diversificate. Nella nostra situazione accadeva spesso che l'agente non imparasse abbastanza in fretta e che quindi lo stato tendesse a convergere ad una situazione molto specifica (e.g esempio le code piene). Questo faceva si che replay buffer si andasse a riempire di esperienze molto simili, bloccando l'apprendimento dell'agente; l'esplorazione non è risultata sufficiente ad uscire da questa situazione in quanto essa era componeva solo una minima parte del buffer. Per risolvere questo problema ed usare i criteri di diversificazione proposti dal paper, abbiamo deciso di dividere il replay buffer in due parti, una contenente solo esperienze di esplorazione ed una contenente solo esperienze di exploitation. In questo modo è possibile addestrare l'agente con esperienze diverse senza compromettere la quantità di esplorazione e facendo in modo che esso riesca sempre a vedere esperienze abbastanza variegate anche nel caso il buffer di explotation contenga solo esperienze molto simili tra loro.Inoltre questo ha anche l'effetto di aumentare la memoria dell'agente rispetto alle esplorazioni fatte in passato, in modo da non scordarsi di esperienze di esplorazioni passate e rimanere fossilizzato su un comportamento specifico.
+Tuttavia in seguito alla lettura del paper \textit{"The importance of experience replay database composition in deep reinforcement learning"}\cite{b1} abbiamo deciso di fare dei cambiamenti all'implementazione del buffer. Il paper in questione mostra che per avere una buon stabilità nel processo di learning è necessario avere un replay buffer composto da esperienze abbastanza diversificate. Nella nostra situazione accadeva spesso che l'agente non imparasse abbastanza in fretta e che quindi lo stato tendesse a convergere ad una situazione molto specifica (e.g esempio le code piene). Questo faceva si che replay buffer si andasse a riempire di esperienze molto simili tra loro, bloccando l'apprendimento dell'agente; l'esplorazione non è risultata sufficiente ad uscire da questa situazione in quanto essa componeva solo una minima parte del buffer. Per risolvere questo problema ed usare i criteri di diversificazione proposti dal paper, abbiamo deciso di dividere il replay buffer in due parti, una contenente solo esperienze di esplorazione ed una contenente solo esperienze di exploitation. In questo modo è possibile addestrare l'agente con esperienze diverse senza compromettere la quantità di esplorazione e facendo in modo che esso riesca sempre a vedere esperienze abbastanza variegate anche nel caso il buffer di explotation contenga solo esperienze molto simili tra loro.Inoltre questo ha anche l'effetto di aumentare la memoria dell'agente rispetto alle esplorazioni fatte in passato, in modo da non dimenticare le esperienze di esplorazioni passate e rimanere bloccato su un comportamento specifico.
 
 \subsubsection{Politica di esplorazione}
 Come politica di esplorazione abbiamo usato una politica $\epsilon$-greedy. Questa politica permette all'agente di esplorare lo spazio delle azioni con una probabilità $\epsilon$ e di sfruttare la conoscenza acquisita con una probabilità $1 - \epsilon$. 
@@ -585,8 +585,8 @@ nell'esperimento. \\
 Negli esperimenti andiamo a confrontare tre tipologie di agenti:
 \begin{itemize}
     \item DQN: Agente DQN implementato secondo le specifiche delle Decisions
-    \item DQN Flat: Agente DQN in cui le azioni sono l'enumerazione di tutte le possibili azioni (Albero delle decisions con 1 singolo nodo). 
-    \item Random: Agente che sceglie casualmente tra le azioni legali. Utilizzato per avere un benchmark di confronto.
+    \item DQN flat: Agente DQN in cui le azioni sono l'enumerazione di tutte le possibili azioni (Albero delle decisions con 1 singolo nodo). 
+    \item Random: Agente che sceglie casualmente tra le azioni, utilizzato per avere un benchmark di confronto.
 \end{itemize}
 
 Nel primo scenario sono state valutate le prestazioni del nodo router con valori dei
@@ -594,10 +594,10 @@ parametri della soluzione di default. In particolare, l'agente del nodo tiene co
 di tutti i termini della reward in ugual misura, il nodo dispone di una sola coda
 e la frequenza di richiesta delle azioni eguaglia il tasso di arrivo dei pacchetti. 
 In \autoref{fig:cumulative_reward_dqnDeep_dqnFlat_random_defaultConfig} si può notare
-come dal punto di vista della reward cumulativa gli agenti DQN, DQN Flat e
+come dal punto di vista della reward cumulativa gli agenti DQN, DQN flat e
 Random si comportino in maniera simile fino a circa 50 secondi di simulazione, dopodiché
 l'agente DQN sembra imparare una politica più vantaggiosa. Il DQN con decisions sembra
-imparare più lentamente rispetto al DQN Flat, poichè notiamo uno scostamento dalle
+imparare più lentamente rispetto al DQN flat, poichè notiamo uno scostamento dalle
 prestazioni del Random intorno ai 110 secondi. Inoltre, andando avanti con la simulazione,
 le sue prestazioni sembrano peggiorare. Ciò potrebbe essere dovuto al fatto che 
 l'agente root venga scoraggiato dall'inviare pacchetti a causa delle scelte di agenti
@@ -607,7 +607,7 @@ scelta della power source scelga spesso di ricorrere al power chord. Il grafico 
 ipotesi.
 
 Se osserviamo il grafico in \autoref{fig:energySaving_defaultConfig_allAgents} notiamo
-che gli agenti DQN e DQN Flat presentano un risparmio di spesa energetica più
+che gli agenti DQN e DQN flat presentano un risparmio di spesa energetica più
 basso (6\%, 8\%) rispetto al Random (14\%). Questo vuol dire che, per qualche ragione,
 gli agenti DQN
 sembrano inviare più spesso pacchetti dalla power chord piuttosto che dalla batteria,
@@ -618,7 +618,7 @@ a soddisfare la domanda energetica. Si tenga presente che nello stato dell'agent
 di carica della batteria.
 
 Il grafico in \autoref{fig:occupancies_allAgents_defaultConfig} mostra come gli agenti
-DQN e DQN Flat riescano a gestire meglio la popolazione della coda rispetto al
+DQN e DQN flat riescano a gestire meglio la popolazione della coda rispetto al
 Random, riducendo i periodi di tempo in cui si hanno perdite di pacchetti. Inoltre,
 si nota anche come gli agenti DQN abbiano dei comportamenti oscillanti: in certi periodi
 si concentrano nell'invio di pacchetti continuo, mentre in altri non fanno niente. Ciò
