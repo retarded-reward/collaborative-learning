@@ -594,10 +594,10 @@ parametri della soluzione di default. In particolare, l'agente del nodo tiene co
 di tutti i termini della reward in ugual misura, il nodo dispone di una sola coda
 e la frequenza di richiesta delle azioni eguaglia il tasso di arrivo dei pacchetti. 
 In \autoref{fig:cumulative_reward_dqnDeep_dqnFlat_random_defaultConfig} si può notare
-come dal punto di vista della reward cumulativa gli agenti DQN, DQN con decisions e
+come dal punto di vista della reward cumulativa gli agenti DQN, DQN Flat e
 Random si comportino in maniera simile fino a circa 50 secondi di simulazione, dopodiché
 l'agente DQN sembra imparare una politica più vantaggiosa. Il DQN con decisions sembra
-imparare più lentamente rispetto al DQN semplice, poichè notiamo uno scostamento dalle
+imparare più lentamente rispetto al DQN Flat, poichè notiamo uno scostamento dalle
 prestazioni del Random intorno ai 110 secondi. Inoltre, andando avanti con la simulazione,
 le sue prestazioni sembrano peggiorare. Ciò potrebbe essere dovuto al fatto che 
 l'agente root venga scoraggiato dall'inviare pacchetti a causa delle scelte di agenti
@@ -607,7 +607,7 @@ scelta della power source scelga spesso di ricorrere al power chord. Il grafico 
 ipotesi.
 
 Se osserviamo il grafico in \autoref{fig:energySaving_defaultConfig_allAgents} notiamo
-che gli agenti DQN e DQN con decision presentano un risparmio di spesa energetica più
+che gli agenti DQN e DQN Flat presentano un risparmio di spesa energetica più
 basso (6\%, 8\%) rispetto al Random (14\%). Questo vuol dire che, per qualche ragione,
 gli agenti DQN
 sembrano inviare più spesso pacchetti dalla power chord piuttosto che dalla batteria,
@@ -618,7 +618,7 @@ a soddisfare la domanda energetica. Si tenga presente che nello stato dell'agent
 di carica della batteria.
 
 Il grafico in \autoref{fig:occupancies_allAgents_defaultConfig} mostra come gli agenti
-DQN e DQN con decisions riescano a gestire meglio la popolazione della coda rispetto al
+DQN e DQN Flat riescano a gestire meglio la popolazione della coda rispetto al
 Random, riducendo i periodi di tempo in cui si hanno perdite di pacchetti. Inoltre,
 si nota anche come gli agenti DQN abbiano dei comportamenti oscillanti: in certi periodi
 si concentrano nell'invio di pacchetti continuo, mentre in altri non fanno niente. Ciò
