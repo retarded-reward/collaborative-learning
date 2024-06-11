@@ -49,7 +49,7 @@
 %TODO
 
 \subsection{Contesto}
-In un sistema moderno i QoS possono essere di vario genere e non sempre sono legati alle sole prestazioni, in particolare, hanno acquistato sempre più rilevanza aspetti come il valore portato dal sistema e la sostenibilità dello stesso. In un sistema di comunicazione, ad esempio, il valore portato da un messaggio può variare a seconda del tempo che impiega ad essere processato, allo stesso tempo un messaggio inviato utilizzando energia green può avere un valore maggiore rispetto a un messaggio inviato tramite energia tradizionale.
+In un sistema moderno i QoS possono essere di vario genere e non sempre sono legati alle sole prestazioni, in particolare, hanno acquistato sempre più rilevanza aspetti come il valore portato dal sistema e la sostenibilità dello stesso. In un sistema di comunicazione, ad esempio, il valore portato da un messaggio può variare a seconda del tempo che impiega ad essere processato, allo stesso tempo un messaggio inviato utilizzando energia green può avere un valore maggiore rispetto ad un messaggio inviato tramite energia tradizionale.
 
 \subsection{Obiettivi}
 Il progetto in questione riguarda il design di un nodo di rete dotato di code di priorità, di una batteria e di una presa elettrica, il quale monta un agente di reinforcement learning che impara a prendere decisioni sulla base di un modello di reward che tiene conto di diversi QoS come il consumo energetico, l'occupazione delle code ed il numero di pacchetti persi. L'agente è in grado di interagire con l'ambiente e di apprendere da queste interazioni, in modo da ottimizzare il suo comportamento e massimizzare la reward accumulata. Il modello di reward è configurabile in modo da dare più o meno peso a ciascuna delle metriche di QoS, in modo da poter adattare il comportamento dell'agente a diversi scenari.
@@ -64,7 +64,7 @@ Il progetto in questione riguarda il design di un nodo di rete dotato di code di
     \item Tasso di arrivo dei pacchetti
 \end{itemize}
 
-Per valutare le performance dell'agente esso verrà confrontato con un agente che fa scelte casuali, sulla base di diverse metriche, alcune derivanti dai QoS del nodo di rete ed altre derivanti dall'agente stesso, in particolare:
+Per valutare le performance dell'agente esso verrà confrontato con un agente che fa scelte casuali, sulla base di diverse metriche, alcune derivanti dai QoS del nodo ed altre derivanti dall'agente stesso, in particolare:
 \begin{itemize}
     \item Reward per unità di tempo
     \item Reward cumulativa per unità di tempo
@@ -202,20 +202,20 @@ Con i termini della reward così definiti, è possibile dimostrare che $ -1 \leq
 confrontabili.
 
 \subsection{Agente}
-L'agente preso utilizzato per il progetto è un DQN (Deep Q-Network). Il DQN è un algoritmo di reinforcement learning che apprende una funzione Q approssimata utilizzando una rete neurale profonda. La funzione Q approssimata è una funzione che prende in input uno stato e restituisce un valore per ciascuna azione possibile. L'agente utilizza la funzione Q per selezionare l'azione da intraprendere in base allo stato attuale. L'addestramento dell'agente avviene tramite l'esperienza accumulata durante l'interazione con l'ambiente. L'agente memorizza l'esperienza in un replay buffer e addestra la rete neurale utilizzando un algoritmo di ottimizzazione come l'Adam. L'agente utilizza una politica di esplorazione $\epsilon$-greedy per esplorare lo spazio delle azioni. L'agente non è stato implementato da zero, ma è stato utilizzato un'implementazione già esistente fornita dalla libreria TF-Agents.
+L'agente preso utilizzato per il progetto è un DQN (Deep Q-Network). Il DQN è un algoritmo di reinforcement learning che apprende una funzione Q approssimata utilizzando una rete neurale profonda. La funzione Q approssimata è una funzione che prende in input uno stato e restituisce un valore per ciascuna azione possibile. L'agente utilizza la funzione Q per selezionare l'azione da intraprendere in base allo stato attuale. L'addestramento dell'agente avviene tramite l'esperienza accumulata durante l'interazione con l'ambiente. L'agente memorizza l'esperienza in un replay buffer e addestra la rete neurale utilizzando un algoritmo di ottimizzazione come SGD. L'agente utilizza una politica di esplorazione $\epsilon$-greedy per esplorare lo spazio delle azioni. L'agente non è stato implementato da zero, ma è stato utilizzato un'implementazione già esistente fornita dalla libreria TF-Agents.
 Tuttavia sono state adattate diverse caratteristiche peculiari.
 \subsubsection{Rete neurale}
 La rete neurale utilizzata fa uso di soli layer densi, tutti con la stessa funzione di attivazione sigmoidale. In particolare la rete è composta da cinque layer densi, con rispettivamente 500, 250, 100, 50, 20 neuroni, più un ultimo layer che ha un numero di neuroni pari al numero di azioni possibili. In questo modo la rete neurale approssima la funzione Q per ogni azione. Inoltre prima di essere passato alla rete neurale, lo stato viene preprocessato tramite un layer flatter che permette di appiattire il tensore dello stato in un vettore unidimensionale. 
 
 \subsubsection{Replay buffer}
-Come replay buffer è stato usato quello messo a disposizione dalla libreria TF-Agents: TFUniformReplayBuffer. Questo buffer è un semplice buffer circolare che memorizza l'esperienza in un vettore di tuple. Una volta che il buffer è pieno, l'esperienza più vecchia viene sovrascritta. L'agente addestra la rete neurale utilizzando un minibatch di esperienze prelevate casualmente in modo uniforme dal replay buffer. Questo metodo di addestramento permette di decorrelare le esperienze e di evitare che l'agente si adatti troppo velocemente a uno scenario specifico. Nel buffer era possibile specificare vari parametri di configurazione:
+Come replay buffer è stato usato quello messo a disposizione dalla libreria TF-Agents: TFUniformReplayBuffer. Questo buffer è un semplice buffer circolare che memorizza l'esperienza in un vettore di tuple. Una volta che il buffer è pieno, l'esperienza più vecchia viene sovrascritta. L'agente addestra la rete neurale utilizzando un minibatch di esperienze prelevate casualmente in modo uniforme dal replay buffer. Questo metodo di addestramento permette di decorrelare le esperienze e di evitare che l'agente si adatti troppo velocemente a uno scenario specifico. Nel buffer è possibile specificare vari parametri di configurazione:
 \begin{itemize}
     \item Max length: la lunghezza massima del buffer. Nel nostro caso è stato scelto 1000;
     \item Batch size: la dimensione del tensore da aggiungere al buffer. Nel nostro caso è stato scelto 32, andando a duplicare la singola esperienza 32 volte;
     \item Train frequency: la frequenza di step con cui l'agente addestra la rete neurale. Nel nostro caso è stato scelto 100 step, perchè sperimentando abbiamo notato che il comportamento dell'agente non cambiava significativamente addestrandolo più frequentemente, ma invece migliorava molto la velocità di esecuzione.
-    \item Sample batch size: la dimensione del minibatch da prelevare dal replay buffer. Nel nostro caso è stato scelto 100 come la train frequency in modo da prendere in media lo stesso numero di esperienze inserite nel buffer ed evitare così di perderci troppe esperienze.
+    \item Sample batch size: la dimensione del minibatch da prelevare dal replay buffer. Nel nostro caso è stato scelto 100 come la train frequency in modo da prendere in media lo stesso numero di esperienze inserite nel buffer ed evitare così di perdere troppe esperienze.
 \end{itemize}
-Tuttavia in seguito alla lettura del paper "The importance of experience replay database composition in deep reinforcement learning"\cite{b1} abbiamo deciso di fare dei cambiamenti. Il paper in questione mostra che per avere una buon stabilità nel processo di learning è necessario avere un replay buffer composto da esperienze abbastanza diversificate. Siccome nella nostra situazione succedeva spesso che siccome l'agente non imparava abbastanza in fretta quello che succedeva è che lo stato tendeva a convergere ad uno stato in particolare (per esempio le code piene), il buffer si andava a riempire di sempre le stesse esperienze e quindi l'agente non imparava nulla di nuovo, perchè anche se c'era una fase di esplorazione essa era minima. Per risolvere questo problema ed usare i criteri di diversificazione proposti dal paper, abbiamo deciso di utilizzare un secondo replay buffer il quale mantenesse solo le esperienze di esplorazione. In questo modo sarebbe stato possibile allenare l'agente con esperienze diverse anche senza compromettere la quantità di esplorazione e facendo in modo che esso potesse sempre vedere esperienze abbastanza variegate nonostante il buffer principale fosse composto da esperienze simili.
+Tuttavia in seguito alla lettura del paper "The importance of experience replay database composition in deep reinforcement learning"\cite{b1} abbiamo deciso di fare dei cambiamenti all'implementazione del buffer. Il paper in questione mostra che per avere una buon stabilità nel processo di learning è necessario avere un replay buffer composto da esperienze abbastanza diversificate. Nella nostra situazione accadeva spesso che l'agente non imparasse abbastanza in fretta quello che succedeva e che quindi lo stato tendesse a convergere ad una situazione molto specifica (e.g esempio le code piene). Questo faceva si che replay buffer si andasse a riempire di esperienze molto simili, bloccando l'apprendimento dell'agente; l'esplorazione non è risultata sufficiente ad uscire da questa situazione in quanto essa era componeva solo una minima parte del buffer. Per risolvere questo problema ed usare i criteri di diversificazione proposti dal paper, abbiamo deciso di dividere il replay buffer in due parti, una contenente solo esperienze di esplorazione ed una contenente solo esperienze di exploitation. In questo modo è possibile addestrare l'agente con esperienze diverse senza compromettere la quantità di esplorazione e facendo in modo che esso riesca sempre a vedere esperienze abbastanza variegate anche nel caso il buffer di explotation contenga solo esperienze molto simili tra loro.
 
 \subsubsection{Politica di esplorazione}
 Come politica di esplorazione abbiamo usato una politica $\epsilon$-greedy. Questa politica permette all'agente di esplorare lo spazio delle azioni con una probabilità $\epsilon$ e di sfruttare la conoscenza acquisita con una probabilità $1 - \epsilon$. %La probabilità $\epsilon$ è stata impostata fissa a 0.1 perché la libreria non permetteva nativamente di impostare un decay rate per $\epsilon$.
@@ -224,7 +224,7 @@ Come politica di esplorazione abbiamo usato una politica $\epsilon$-greedy. Ques
 Per l'ottimizzazione della rete neurale è stato utilizzato Stoachastic Gradient Descent (SGD) con un learning rate di 0.0001. Questo ottimizzatore è stato scelto perché è uno degli ottimizzatori più semplici e più utilizzati per l'addestramento di reti neurali. Inoltre, è stato scelto un learning rate molto basso per evitare che l'addestramento della rete neurale avvenga troppo velocemente e che l'agente non sia in grado di generalizzare. La funzione da minimizzare è la squared loss, che è la funzione di loss più utilizzata per l'addestramento di reti neurali.
 
 \subsubsection{Gamma}
-Il parametro gamma è stato impostato a 0.99. Questo parametro è importante perché definisce il peso che viene dato alle future reward rispetto alle reward attuali. Un valore di gamma vicino a 1 indica che l'agente darà molto peso alle future reward, mentre un valore di gamma vicino a 0 indica che l'agente darà poco peso alle future reward. In generale, un valore di gamma vicino a 1 è consigliato per problemi in cui le future reward sono importanti, mentre un valore di gamma vicino a 0 è consigliato per problemi in cui le future reward sono meno importanti.
+Il parametro gamma è stato impostato a 0.99. Questo parametro è importante perché definisce il peso che viene dato alle reward future rispetto alle reward attuali. Un valore di gamma vicino a 1 indica che l'agente darà molto peso alle reward future, mentre un valore di gamma vicino a 0 indica che l'agente darà molto peso alle reward attuali. In generale, un valore di gamma vicino a 1 è consigliato per problemi in cui le reward future sono importanti, mentre un valore di gamma vicino a 0 è consigliato per problemi in cui le reward future sono meno importanti.
 
 
 \subsubsection{AgentFaçade}
@@ -232,11 +232,11 @@ L'Agent Façade rappresenta un'interfaccia che espone i metodi necessari per l'i
 \subsubsection{AgentFaçade - Configurazione} 
 Per utilizzare l'AgentFaçade è necessario configurare l'agente. La configurazione può essere fatta tramite un file in cui è possibile specificare varie caratteristiche dell'agente in modo da poterlo adattare a diversi scenari. La documentazione per la configurazione è disponibile qui\footnote{\href{https://github.com/retarded-reward/collaborative-learning/wiki/Agent-Configuration}{https://github.com/retarded-reward/collaborative-learning/wiki/Agent-Configuration}}. Un'altro parametro di configurazione da specificare all'AgentFaçade è il numero di code presenti nel nodo. Questo parametro è necessario per l'agente in modo da poter generare azioni valide.
 \subsubsection{AgentFaçade - Rappresentazione}
-Per rappresentare lo stato è stato fatto uso di un Tensore unidimensionale, in cui
+Per rappresentare lo stato è stato fatto uso di un tensore unidimensionale, in cui
 ogni componente rappresenta una variabile dello stato. Questo vuol dire che variabili
 di stato multidimensionali, come ad esempio le occupancies delle code, sono state
 appiattite in un vettore unidimensionale, e poi concatenate alle altre variabili in modo
-da produrre un unico Tensore.
+da produrre un unico tensore.
 
 L'azione che il nodo può intraprendere è composta da valori di diverse componenti,
 ognuna delle quali è rappresentata da un valore scalare intero. Come è spiegato meglio
@@ -246,7 +246,7 @@ la combinazione di Decisions di diversi agenti produce l'azione da intraprendere
 Il metodo principale per interagire con l'Agent Façade è \code{get\_action}, che restituisce l'azione da intraprendere in base allo stato attuale. Questo metodo prende in input lo stato attuale e la reward associata all'azione precedente, e restituisce l'azione da intraprendere. All'interno di questo metodo, l'Agent Façade addestra l'agente con l'esperienza passata e interroga l'agente per ottenere l'azione da intraprendere utilizzando l'albero delle Decisions  (vedi \autoref{subsec:Decisions}). L'addestramento non avviene ad ogni chiamata, ma secondo un intervallo di step configurabile. Questo intervallo è necessario per evitare che l'agente si adatti troppo velocemente a uno scenario specifico e non sia in grado di generalizzare, oltre a migliorare le prestazioni computazionali.
 
 \subsubsection{AgentFactory}
-L'Agent Factory è una classe che configura e crea diversi agenti disponibili nella libreria. Nel nostro caso, abbiamo utilizzato il DQN (Deep Q-Network) ed un RandomAgent come benchmark. Inoltre, è stato implementato un decoratore per gli agenti per integrarli dinamicamente con i replay buffer forniti dalla libreria. Utilizzando il metodo \code{create\_agent}, è possibile creare un'istanza di un agente specificando il tipo di agente e i parametri necessari per la configurazione. Questa operazione viene eseguita all'interno dell'AgentFaçade.
+L'Agent Factory è una classe che configura e crea diversi agenti disponibili nella libreria. Nel nostro caso, abbiamo utilizzato il DQN (Deep Q-Network) ed un RandomAgent come benchmark. Inoltre, è stato implementato un decoratore per gli agenti, in modo da poterli integrare dinamicamente con i replay buffer forniti dalla libreria. Utilizzando il metodo \code{create\_agent}, è possibile creare un'istanza di un agente specificando il tipo di agente e i parametri necessari per la configurazione. Questa operazione viene eseguita all'interno dell'AgentFaçade.
 
 \subsubsection{Decisions}
 \label{subsec:Decisions}
@@ -261,7 +261,7 @@ rappresentabile da un vettore a tre dimensioni così codificato:
 \item Azione[2] = seleziona power source j, $j \in [0, \code{num\_power\_sources} - 1]$.
 \end{itemize}
 Si noti che non tutte le combinazioni di valori di questi parametri
-rappresentino dei punti legali all'interno dello spazio delle azioni.
+rappresentano dei punti legali all'interno dello spazio delle azioni.
 Ad esempio, se la prima componente è pari a 0 (non fare nulla), allora i valori delle
 altre componenti devono essere don't care.
 
@@ -270,11 +270,11 @@ lo spazio delle azioni lungo un'unica dimensione i cui valori sono rappresentati
 dalle sole combinazioni che rappresentano azioni legali. È una soluzione semplice e
 immediata, tuttavia comporta alcuni problemi:
 \begin{itemize}
-    \item la dimensione dello spazio delle azioni aumenta molto velocemente rispetto
+    \item La dimensione dello spazio delle azioni aumenta molto velocemente rispetto
     all'aumentare delle opzioni disponibili. Nel caso del problema, avere in generale
     10 code e 2 power sources comporta 20 possibili azioni diverse. Aggiungere una
     sola power source aggiunge altre 10 azioni disponibili all'agente.
-    \item come conseguenza del primo problema, l'apprendimento dell'agente può
+    \item Come conseguenza del primo problema, l'apprendimento dell'agente può
     rallentare. %TODO: inserire calcolo reward
 \end{itemize}
 Le decisions sono una possibile soluzione che combina i vantaggi dell'enumerazione
@@ -311,13 +311,13 @@ valore. Un esempio è visibile in \autoref{fig:decisions}.
 Ogni nodo dell'albero delle decisioni è un Consultant. Un Consultant si occupa
 delle seguenti responsabilità:
 \begin{itemize}
-    \item mantiene un riferimento all'agente che prende la decisione;
+    \item Mantiene un riferimento all'agente che prende la decisione;
     \item Mantiene una lista di consultant figli, ognuno dei quali corrisponde
     a una possibile scelta che il suo agente può prendere;
-    \item espone un metodo \code{get\_decisions()}(\autoref{fig:decisions_getDecisions_activity_diagram}), che prende in input
+    \item Espone un metodo \code{get\_decisions()}(\autoref{fig:decisions_getDecisions_activity_diagram}), che prende in input
     lo stato e un decision path (possibilmente vuoto) e aggiunge il suo contributo
     al decision path interrogando il suo agente;
-    \item espone un metodo \code{train()}(\autoref{fig:decisions_train_activity_diagram}), che prende in input un'Esperienza,
+    \item Espone un metodo \code{train()}(\autoref{fig:decisions_train_activity_diagram}), che prende in input un'Esperienza,
     ovvero una tripla
     decision path, stato, reward e addestra il suo agente e quello dei nodi
     figli che fanno parte del decision path.
@@ -370,7 +370,7 @@ delle azioni, senza dover esserne vincolati dagli svantaggi. Da questa idea
 viene il nome di collaborative learning.
 
 \subsection{Simulazione}
-Per la simulazione è stato utilizzato il framework OMNeT++\footnote{\href{https://omnetpp.org/}{https://omnetpp.org/}}, il quale offre degli strumenti per definire e simulare in modo semplice e modulare una rete di nodi. In particolare, il framework è stato utilizzato per simulare un nodo router che riceve traffico da più nodi sorgente e prende decisioni sulle basi dell'agente di reinforcement learning montato sul nodo. Dato che OMNeT++ non supporta nativamente il linguaggio Python tramite il quale è stato definito l'agente, per integrare simulatore ed agente è stata utilizzata la libreria PyBind\footnote{\href{https://pybind11.readthedocs.io/en/stable/}{https://pybind11.readthedocs.io/en/stable/}} che permette di esporre e fare binding tra simboli definiti in Python e simboli definiti C++. 
+Per la simulazione è stato utilizzato il framework OMNeT++\footnote{\href{https://omnetpp.org/}{https://omnetpp.org/}}, il quale offre degli strumenti per definire e simulare in modo semplice e modulare una rete di nodi. In particolare, il framework è stato utilizzato per simulare un nodo router che riceve traffico da più nodi sorgente e prende decisioni sulla base dell'agente di reinforcement learning montato sul nodo. Dato che OMNeT++ non supporta nativamente il linguaggio Python tramite il quale è stato definito l'agente, per integrare simulatore ed agente è stata utilizzata la libreria PyBind\footnote{\href{https://pybind11.readthedocs.io/en/stable/}{https://pybind11.readthedocs.io/en/stable/}} che permette di esporre e fare binding tra simboli definiti in Python e simboli definiti C++. 
 
 \subsubsection{Nodo}
 Un nodo corrisponde a un elemento della rete capace di ricevere pacchetti e di inoltrarli 
@@ -383,7 +383,7 @@ al resto dei nodi nella rete a seconda delle decisioni intraprese dal suo agente
     il calcolo della reward;
     \item AgentClient: È il componente attraverso il quale il Controller e l'agente
     comunicano;
-    \item Queues: una o più code che accodano i pacchetti in arrivo e li consegnano
+    \item Queues: Una o più code che accodano i pacchetti in arrivo e li consegnano
      al Controller
     dietro una sua richiesta. Ogni coda ha una capacità limitata e una priorità.
 \end{itemize}
@@ -430,9 +430,9 @@ invio dei pacchetti. Ogni power source implementa un'interfaccia \code{PowerSour
 e quelle disponibili per le operazioni del nodo sono registrate nel vettore
 \code{power\_sources}. Le power sources registrate in tale vettore al momento sono: 
 \begin{itemize}
-    \item Una \code{Battery}: una power source dotata di una capacità, ricaricabile, il
+    \item Una \code{Battery}: Una power source dotata di una capacità, ricaricabile, il
     cui uso costa zero;
-    \item Un \code{PowerChord}: una power source che non si scarica mai, ma che ha un
+    \item Un \code{PowerChord}: Una power source che non si scarica mai, ma che ha un
     costo di utilizzo diverso da zero.
 \end{itemize}
 Tali PowerSources sono istanziate secondo i parametri defini dai rispettivi modelli
@@ -559,7 +559,7 @@ nei diagrammi in \autoref{fig:queue_handleQueueDataRequest_activity_diagram} e
 \autoref{fig:queue_handleDataMsg_activity_diagram}.
 
 \subsubsection{SrcNode}
-E' un componente che ha il compito di generare il traffico da inviare al nodo router, in particolare, ad ogni coda del nodo router è associato un nodo sorgente differente. Il traffico è composto di pacchetti di dimensione casuale che vengono inviati ad intervalli di tempo casuali. La dimensione dei pacchetti è ottenuta campionando da una distribuzione uniforme su un intervallo configurabile che rappresenta la taglia minima e la taglia massima in byte del pacchetto, mentre l'intervallo di tempo tra l'invio di due pacchetti è ottenuto campionando da una distribuzione esponenziale di media configurabile.
+E' un componente che ha il compito di generare il traffico da inviare al nodo router, in particolare, ad ogni coda del nodo router è associato un SrcNode differente. Il traffico è composto di pacchetti di dimensione casuale che vengono inviati ad intervalli di tempo casuali. La dimensione dei pacchetti è ottenuta campionando da una distribuzione uniforme su un intervallo configurabile che rappresenta la taglia minima e la taglia massima in byte del pacchetto, mentre l'intervallo di tempo tra l'invio di due pacchetti è ottenuto campionando da una distribuzione esponenziale di media configurabile.
 
 \subsubsection{Network}
 E' l'ambiente in cui vivono il nodo router e tutte i nodi sorgente, in particolare è qui che viene esplicitata la connessione tra i nodi sorgenti e le code del nodo router. (\autoref{fig:network_layout_3queues}) 
@@ -622,7 +622,7 @@ maggiormente sulla reward siano proprio i termini che riguardano gli aspetti del
 e quindi che la strategia imparata dal DQN in entrambi i casi punti ad azzerare tali
 termini. In \autoref{fig:allPowerSaving_allAgents_defaultConfig} si può notare come
 gli agenti DQN, dopo un transitorio iniziale, imparino che non conviene inviare pacchetti
-praticamente mai e non consumano più energia. Inoltre, il DQN con decisions sembra 
+praticamente mai e non consumino più energia. Inoltre, il DQN con decisions sembra 
 andare meglio rispetto alla controparte flat. Questo potrebbe essere dovuto al fatto
 che la root deve decidere solo tra due azioni, ovvero inviare e non fare nulla, e quindi
 impari più in fretta che non conviene inviare mai rispetto al DQN flat, che ha a 
