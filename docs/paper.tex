@@ -581,7 +581,13 @@ alle azioni suggerite dal suo agente. Le specifiche della macchina su cui sono s
 eseguiti gli esperimenti sono elencate in \autoref{listing:trials_machine_specs}.
 Per effettuare gli esperimenti si è partiti da una configurazione dei parametri di 
 base\footnote{\href{https://github.com/retarded-reward/collaborative-learning/blob/main/simulations/res/omnetpp.ini}{https://github.com/retarded-reward/collaborative-learning/blob/main/simulations/res/omnetpp.ini}}, a cui poi sono state apportate modifiche a seconda dello scenario considerato
-nell'esperimento.
+nell'esperimento. \\
+Negli esperimenti andiamo a confrontare tre tipologie di agenti:
+\begin{itemize}
+    \item DQN: Agente DQN implementato secondo le specifiche delle Decisions
+    \item DQN Flat: Agente DQN in cui le azioni sono l'enumerazione di tutte le possibili azioni (Albero delle decisions con 1 singolo nodo). 
+    \item Random: Agente che sceglie casualmente tra le azioni legali. Utilizzato per avere un benchmark di confronto.
+\end{itemize}
 
 Nel primo scenario sono state valutate le prestazioni del nodo router con valori dei
 parametri della soluzione di default. In particolare, l'agente del nodo tiene conto
@@ -623,12 +629,13 @@ ricordando però che il primo accumula più reward negativa rispetto al secondo.
 
 Nelle figure \autoref{fig:noPowerSaving_allAgents_defaultConfig} e 
 \autoref{fig:allPowerSaving_allAgents_defaultConfig} possiamo vedere i comportamenti dei
-vari agenti a seguito del cambio dei pesi assegnati ai termini della reward. In
-particolare, nella figura \autoref{fig:noPowerSaving_allAgents_defaultConfig} si può
+vari agenti a seguito del cambio dei pesi assegnati ai termini della reward. Lo scenario 
+considerato è quello in cui il peso energetico è 0 e i pesi del packet drop e dell'
+occupazione della coda sono entrambi 1/2.
+In particolare, nella figura \autoref{fig:noPowerSaving_allAgents_defaultConfig} si può
 notare come le varianti di DQN accumulino un quantitivo di reward simile rispetto a
-quello ottenuto ponendo i pesi di tutti i termini della reward a 1/3 (nel caso in figura,
-il termine energetico è azzerato e il resto è diviso tra packet drop e occupazione
-delle code). Il random, invece, va molto peggio. Ciò sembra suggerire che a inficiare
+quello ottenuto ponendo i pesi di tutti i termini della reward a 1/3. 
+Il random, invece, va molto peggio. Ciò sembra suggerire che a inficiare
 maggiormente sulla reward siano proprio i termini che riguardano gli aspetti delle code,
 e quindi che la strategia imparata dal DQN in entrambi i casi punti ad azzerare tali
 termini. In \autoref{fig:allPowerSaving_allAgents_defaultConfig} si può notare come
@@ -639,7 +646,8 @@ che la root deve decidere solo tra due azioni, ovvero inviare e non fare nulla, 
 impari più in fretta che non conviene inviare mai rispetto al DQN flat, che ha a 
 disposizione più opzioni per la sua azione.
 
-In figura \autoref{fig:balanced_allAgents_5queues_300s} possiamo vedere che gli agenti 
+In figura \autoref{fig:balanced_allAgents_5queues_300s}, viene mostrato il comportamento 
+dell'agente nel caso in cui ci siano 3 code con priorità. Possiamo vedere che gli agenti 
 DQN hanno un comportamento peggiore del random, segno che non sono a imparare una 
 strategia appropriata. Tuttavia, il DQN con decisions sembra soffrire di meno rispetto
 alla variante flat.
@@ -650,7 +658,7 @@ alla variante flat.
     che il modello di stato, azioni e reward utilizzati siano rappresentativi del 
     problema, validi e verificati, poichè un minimo errore ad esempio nel calcolo della
     reward può indurre comportamenti nell'agente molto differenti;
-    \item Apportare delle soluzioni che permettono di non dimenticare facilemente
+    \item Apportare delle soluzioni che permettono di non dimenticare facilmente
     esperienze di exploration può aiutare l'agente a imparare una strategia ottima;
     \item All'aumentare del numero delle code la difficoltà di apprendimento dell'agente
     aumenta considerevolmente, per cui forse è opportuno considerare un modello diverso;
