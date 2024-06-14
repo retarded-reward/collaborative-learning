@@ -13,6 +13,7 @@
 \usepackage{minted}
 \usepackage{algorithm}
 \usepackage{hyperref}
+\usepackage{adjustbox}
 
 \begin{document}
 
@@ -44,16 +45,52 @@
 \subsubsection*{Decisions}
 %TODO:
 
-
 \subsection*{Simulazione}
 %TODO:
 
 \subsubsection*{Nodo}
-%TODO:
+\begin{frame}{Nodo}
+    E' l'elemento della rete che è in grado di ricevere e inviare messaggi sulla base della scelta dell'agente, è composto da:
+    \begin{columns}
+        \column{0.5\textwidth}
+            \begin{minipage}[b]{1\textwidth}
+                \begin{itemize}
+                    \item Controller, che implementa la logica del nodo
+                    \item AgentClient, che permette la comunicazione con l'agente
+                    \item Queues, una o più code che accodano messaggi
+                \end{itemize}
+            \end{minipage}
+        \column{0.5\textwidth}
+            \begin{minipage}{1\textwidth}
+                \begin{adjustbox}{margin=0cm 0cm 0.1cm 0.2cm, center} % left, bottom, right, top
+                    \includegraphics[width=1\textwidth]{figs/node_layout_3queues.png}
+                \end{adjustbox}
+            \end{minipage}
+    \end{columns}
+\end{frame}
 
 \subsubsection*{Nodo - Controller}
-%TODO:
-
+\begin{frame}{Nodo - Controller}
+E' il componente che implementa la logica del nodo, in particolare:
+\vspace{0.5cm}
+    \begin{columns}
+        \column{0.6\textwidth}
+            \begin{minipage}[b]{1\textwidth}
+                \begin{itemize}
+                    \item Campiona lo stato visibile al nodo
+                    \item Interroga l'agente per ottenere l'azione consegnandogli la reward dell'azione precedente
+                    \item Attua l'azione ricevuta dall'agente
+                    \item Calcola la reward per le azioni ricevute dall'agente
+                \end{itemize}
+            \end{minipage}
+        \column{0.4\textwidth}
+            \begin{minipage}{.9\textwidth}
+                \begin{adjustbox}{margin=0.5cm 0cm 0.1cm 0.2cm, center} % left, bottom, right, top
+                    \includegraphics[width=1\textwidth]{figs/control_loop.png}
+                \end{adjustbox}
+            \end{minipage}
+    \end{columns}
+\end{frame}
 \subsubsection*{Nodo - Agent Client}
 %TODO:
 
