@@ -70,7 +70,7 @@
 \end{frame}
 
 \subsubsection*{Nodo - Controller}
-\begin{frame}{Nodo - Controller}
+\begin{frame}{Nodo - Controller (1)}
 E' il componente che implementa la logica del nodo, in particolare:
 \vspace{0.5cm}
     \begin{columns}
@@ -91,8 +91,49 @@ E' il componente che implementa la logica del nodo, in particolare:
             \end{minipage}
     \end{columns}
 \end{frame}
+
+\begin{frame}{Nodo - Controller (2)}
+    Il controller si occupa anche di gestire le sorgenti energetiche del nodo, in particolare:
+    \vspace{0.5cm}
+        \begin{columns}
+            \column{0.6\textwidth}
+                \begin{minipage}[b]{1\textwidth}
+                    \begin{itemize}
+                        \item Una batteria, la cui carica dipende da fattori ambientali
+                        \item Una presa di corrente, che ha un costo di utilizzo
+                    \end{itemize}
+                \end{minipage}
+            \column{0.4\textwidth}
+                \begin{minipage}{.9\textwidth}
+                    \begin{adjustbox}{margin=0.5cm 0cm 0.1cm 0.2cm, center} % left, bottom, right, top
+                        \includegraphics[width=1\textwidth]{figs/socket_battery.png}
+                    \end{adjustbox}
+                \end{minipage}
+        \end{columns}
+    \end{frame}
+
 \subsubsection*{Nodo - Agent Client}
-%TODO:
+\begin{frame}{Nodo - Controller}
+    E' il componente che implementa la logica del nodo, in particolare:
+    \vspace{0.5cm}
+        \begin{columns}
+            \column{0.6\textwidth}
+                \begin{minipage}[b]{1\textwidth}
+                    \begin{itemize}
+                        \item Campiona lo stato visibile al nodo
+                        \item Interroga l'agente per ottenere l'azione consegnandogli la reward dell'azione precedente
+                        \item Attua l'azione ricevuta dall'agente
+                        \item Calcola la reward per le azioni ricevute dall'agente
+                    \end{itemize}
+                \end{minipage}
+            \column{0.4\textwidth}
+                \begin{minipage}{.9\textwidth}
+                    \begin{adjustbox}{margin=0.5cm 0cm 0.1cm 0.2cm, center} % left, bottom, right, top
+                        \includegraphics[width=1\textwidth]{figs/control_loop.png}
+                    \end{adjustbox}
+                \end{minipage}
+        \end{columns}
+\end{frame}
 
 \subsubsection*{Nodo - Queue}
 %TODO:
