@@ -113,26 +113,16 @@ E' il componente che implementa la logica del nodo, in particolare:
     \end{frame}
 
 \subsubsection*{Nodo - Agent Client}
-\begin{frame}{Nodo - Controller}
-    E' il componente che implementa la logica del nodo, in particolare:
-    \vspace{0.5cm}
-        \begin{columns}
-            \column{0.6\textwidth}
-                \begin{minipage}[b]{1\textwidth}
-                    \begin{itemize}
-                        \item Campiona lo stato visibile al nodo
-                        \item Interroga l'agente per ottenere l'azione consegnandogli la reward dell'azione precedente
-                        \item Attua l'azione ricevuta dall'agente
-                        \item Calcola la reward per le azioni ricevute dall'agente
-                    \end{itemize}
-                \end{minipage}
-            \column{0.4\textwidth}
-                \begin{minipage}{.9\textwidth}
-                    \begin{adjustbox}{margin=0.5cm 0cm 0.1cm 0.2cm, center} % left, bottom, right, top
-                        \includegraphics[width=1\textwidth]{figs/control_loop.png}
-                    \end{adjustbox}
-                \end{minipage}
-        \end{columns}
+\begin{frame}{Nodo - Agent Client}
+    E' il componente che che fa da intermediario tra il controller e l'agente, in particolare:
+    \begin{itemize}
+        \item Accoglie le action request del controller, le quali contengono stato e reward dell'azione precedente 
+        \item Converte l'action request in una bean compatibile con l'implementazione Python dell'agente
+        \item Inoltra la bean all'agente
+        \item Accoglie le bean di risposta dell'agente, le quali contengono l'azione da attuare
+        \item Converte la bena di risposta in una action response compatibile con l'implementazione in C++ del controller
+        \item Inoltra l'action response al controller
+    \end{itemize}
 \end{frame}
 
 \subsubsection*{Nodo - Queue}
