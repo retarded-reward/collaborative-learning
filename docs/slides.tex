@@ -153,12 +153,17 @@ E' il componente che implementa la logica del nodo, in particolare:
     E' l'elemento della rete che si occupa di generare il traffico, ogni Queue ha associato un SrcNode.
     Il tempo di interarrivo dei pacchetti è regolato da una distribuzione esponenziale con tasso $\lambda$ configurabile, mentre la dimensione dei pacchetti è regolata da una distribuzione uniforme su un intervallo configurabile.
     \begin{adjustbox}{margin=0.5cm 0cm 0.5cm 0.5cm, center} % left, bottom, right, top
-        \includegraphics[width=1\textwidth]{figs/src_scheme.png}
+        \includegraphics[width=.8\textwidth]{figs/src_scheme.png}
     \end{adjustbox}
 \end{frame}
 
 \subsubsection*{Network}
-%TODO:
+\begin{frame}{Network}
+E' l'ambiente in cui vivono tutti gli elementi della simulazione, qui vengono specificati i collegamenti tra i SrcNode e le code del nodo router. 
+    \begin{adjustbox}{margin=0cm 0cm 0cm 0cm, center} % left, bottom, right, top
+        \includegraphics[width=.65\textwidth]{figs/network_layout_3queues.png}
+    \end{adjustbox}
+\end{frame}
 
 
 \section*{Risultati}
