@@ -114,7 +114,7 @@ E' il componente che implementa la logica del nodo, in particolare:
 
 \subsubsection*{Nodo - Agent Client}
 \begin{frame}{Nodo - Agent Client}
-    E' il componente che che fa da intermediario tra il controller e l'agente, in particolare:
+    E' il componente che fa da intermediario tra il controller e l'agente, in particolare:
     \begin{itemize}
         \item Accoglie le action request del controller, le quali contengono stato e reward dell'azione precedente 
         \item Converte l'action request in una bean compatibile con l'implementazione Python dell'agente
@@ -126,7 +126,27 @@ E' il componente che implementa la logica del nodo, in particolare:
 \end{frame}
 
 \subsubsection*{Nodo - Queue}
-%TODO:
+\begin{frame}{Nodo - Queue}
+    E' il componente che implementa la logica della coda, in particolare:
+    \vspace{0.5cm}
+        \begin{columns}
+            \column{0.6\textwidth}
+                \begin{minipage}[b]{1\textwidth}
+                    \begin{itemize}
+                        \item Accoglie i pacchetti in arrivo, scartandoli se la coda è piena
+                        \item Riceve le QueueDataRequest di pacchetti da parte del controller
+                        \item Consegna i pacchetti al controller in delle QueueDataResponse
+                        \item Comunica al controller gli aggiornamenti sullo stato della coda, tramite una QueueStateUpdate, ogni volta che arriva un pacchetto
+                    \end{itemize}
+                \end{minipage}
+            \column{0.4\textwidth}
+                \begin{minipage}{.9\textwidth}
+                    \begin{adjustbox}{margin=0.5cm 0cm 0.1cm 0cm, center} % left, bottom, right, top
+                        \includegraphics[width=1\textwidth]{figs/queue_scheme.png}
+                    \end{adjustbox}
+                \end{minipage}
+        \end{columns}
+\end{frame}
 
 \subsubsection*{SrcNode}
 %TODO:
