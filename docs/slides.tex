@@ -339,12 +339,44 @@ E' l'ambiente in cui vivono tutti gli elementi della simulazione, qui vengono sp
 \end{frame}
 
 \section{Conclusioni}
-%TODO:
+\begin{frame}
+    \frametitle{\secname}
+    \begin{itemize}
+        \onslide<+-> \item All'aumentare del numero delle code la difficoltà di apprendimento dell'agente
+        aumenta considerevolmente, per cui forse è opportuno considerare un modello diverso;
+        \onslide<+-> \item L'utilità dell'uso di un albero delle decisioni sembra essere limitata
+        rispetto a un DQN normale, anche se sembra migliorare le prestazioni del DQN
+        con'aumentare del numero delle azioni possibili;    
+    \end{itemize}
+\end{frame}
+\begin{frame}
+    \frametitle{\secname}
+    \begin{itemize}
+        \onslide<+-> \item Nello sviluppo di soluzioni di reinforcement learning è di importanza fondamentale
+        che il modello di stato, azioni e reward utilizzati siano rappresentativi del 
+        problema, validi e verificati, poichè un minimo errore ad esempio nel calcolo della
+        reward può indurre comportamenti nell'agente molto differenti e difficilmente
+        spiegabili;
+        \onslide<+-> \item Apportare delle soluzioni che permettono di non dimenticare facilmente
+        esperienze di exploration può aiutare l'agente a imparare una strategia ottima;
+    \end{itemize}        
+\end{frame}
+\begin{frame}
+    \frametitle{Grazie per l'attenzione!}
+    \begin{itemize}
+        \item Tutto il codice che implementa ambiente di simulazione e agente è disponibile al 
+        seguente repository: \href{https://github.com/retarded-reward/collaborative-learning}{https://github.com/retarded-reward/collaborative-learning}
+        \item Consultare README per dettagli build, e la relazione per ulteriori approfondimenti;
+        \item contattaci a:
+            \begin{itemize}
+                \item \href{mailto:daniele.laprova@students.uniroma2.eu}{daniele.laprova@students.uniroma2.eu}
+                \item \href{mailto:matteo.conti@students.uniroma2.eu}{matteo.conti@students.uniroma2.eu}
+                \item \href{mailto:luca.falasca@students.uniroma2.eu}{luca.falasca@students.uniroma2.eu}
+            \end{itemize}
+        \item Domande ???
+        \item Fatto con \includegraphics[scale=0.5]{figs/icons/icons8-heart-24.png} \includegraphics[scale=0.4]{figs/icons/icons8-coffee-cup-48.png}
+    \end{itemize}
+\end{frame}
 
-\subsection{What we have learned?}
-%TODO:
-
-\subsection{What we could improve?}
-%TODO:
 
 \end{document}
