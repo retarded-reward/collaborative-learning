@@ -46,7 +46,12 @@
 %TODO:
 
 \subsection*{Simulazione}
-%TODO:
+\begin{frame}{Simulazione}
+    Per la simulazione è stato utilizzato il framework OMNeT++, il quale permette di definire e simulare una rete di nodi. \\Dato che OMNeT++ non supporta nativamente Python per permettere la comunicazione tra l'agente ed il nodo, è stata utilizzata la libreria PyBind la quale permette di esporre simboli in Python e C++ e farne il binding.
+    \begin{adjustbox}{margin=0cm 0cm 0cm 0.5cm, center} % left, bottom, right, top
+        \includegraphics[width=.8\textwidth]{figs/pybind_omnet.png}
+    \end{adjustbox}
+\end{frame}
 
 \subsubsection*{Nodo}
 \begin{frame}{Nodo}
