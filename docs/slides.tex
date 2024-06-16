@@ -57,7 +57,118 @@
 \subsection{Obiettivi}
 
 \section{Metodologia}
-%TODO:
+\subsection{Modello}
+\subsubsection{Stato}
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{itemize}
+        \item Per catturare lo stato della simulazione è stato deciso di campionare a ogni timestep le
+        seguenti variabili:
+        \begin{itemize}
+            \item Percentuale di carica della batteria;
+            \item Quanta percentuale di batteria è stata ricaricata nell'ultimo timestep;
+            \item La percentuale di occupazione delle code, un valore per ogni coda. 
+        \end{itemize}
+        \item Tali valori sono stati discretizzati ove possibile per permetterne la comprensione da
+        parte di alcune implementazioni di agenti, ad esempio il DQN.        
+    \end{itemize}
+\end{frame}
+
+\subsubsection{Azioni}
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{itemize}
+        \item Un nodo può essenzialmente svolgere due operazioni in un qualunque timestep:
+        \begin{itemize}
+            \item Non fare nulla
+            \item Inviare un pacchetto
+        \end{itemize}
+            \item Qualora l'azione scelta sia quella di inviare un pacchetto, allora è necessario anche
+            scegliere:
+        \begin{itemize}
+            \item Da quale coda prelevare il pacchetto
+            \item Da quale power source attingere l'energia necessaria per l'invio
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\subsubsection{Reward}
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{Definition}[Reward per timestep]
+        \begin{equation}
+            \label{eq:reward}
+            \begin{aligned}
+                & r(t) = \sum_{i \in T} w_i \cdot r_i(t), & -1 \leq r_i \leq 0\\
+                && 0 \leq w_i \leq 1, \\
+                && \sum_{i \in T} w_i = 1, \\
+                && T = \{e, o, d\},\\
+                && t \geq 0 \in \mathbb{N}
+            \end{aligned}
+        \end{equation}
+    \end{Definition}
+    \only<+>{ \begin{itemize}
+        \item La reward $r$ da inviare all'agente per un qualunque timestep $t$ è calcolata come la somma pesata dei contributi normalizzati del termine energetico,
+        di occupazione delle code e di drop dei pacchetti in quel timestep
+    \end{itemize}}
+    \only<+> {\begin{itemize}
+        \item Tutti i termini della reward sono confrontabili tra loro;
+        \item configurando opportunamente i pesi è possibile costringere l'agente
+        a minimizzare dei termini anche a discapito di altri
+    \end{itemize}}
+\end{frame}
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{Definition}[Reward Power Term]
+        \begin{equation}
+            \label{eq:reward_energy}
+            \begin{aligned}
+                & r_e(t) = -\sum_{p \in P}\frac{\text{cons}_p(t) \cdot \text{cost}_p}{\max_{\tau < t}\{\text{cons}_p(\tau)\} \cdot \sum_{p \in P}\text{cost}_p},\\
+                & P = \{\text{battery}, \text{power chord}\} 
+            \end{aligned}
+        \end{equation}
+    \end{Definition}
+    \begin{itemize}
+        \item Il termine energetico per una power source è calcolato come il prodotto tra il consumo energetico della power source $p$ e il
+        suo costo di utilizzo, normalizzato sul massimo consumo energetico registrato fino
+        a quel time step per quella power source moltiplicato per la somma dei costi di utilizzo.
+        \item i costi e i consumi energetici sono tutti maggiori di zero
+    \end{itemize}
+\end{frame}
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{Definition}[Reward Queue Occupancy Term]
+        \begin{equation}
+            \label{eq:reward_occupancy}
+            \begin{aligned}
+                & r_o(t) = -\sum_{q \in Q}\frac{\text{occ}_q(t) \cdot p_q}{\max_{\tau < t}\{\text{occ}_q(\tau)\} \cdot \sum_{q \in Q}p_q},\\
+                & Q = \{0, 1, \dots \#Q - 1\} 
+            \end{aligned}
+        \end{equation}
+    \end{Definition}
+    \begin{itemize}
+        \item Il termine dell'occupazione di una coda è calcolato come il prodotto tra la percentuale di occupazione della coda $q$ nel 
+        timestep $t$ e la sua priorità $p_q$, normalizzato sul massimo valore di occupazione
+        registrato fino a quel time step per quella coda moltiplicato per la somma delle priorità.
+        \item La priorità di una coda $p_q$ è data dal suo indice di coda $q + 1$ 
+    \end{itemize}
+\end{frame}
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{Definition}[Reward Packet Drop Term]
+        \begin{equation}
+            \label{eq:reward_drop}
+            \begin{aligned}
+                & r_d(t) = -\sum_{q \in Q}\frac{\text{drop}_q(t) \cdot p_q}{\text{inbound}_q(t) \cdot \sum_{q \in Q}p_q},\\
+                & Q = \{0, 1, \dots \#Q - 1\} 
+            \end{aligned}
+        \end{equation}
+    \end{Definition}
+    \begin{itemize}
+        \item Il termine del drop dei pacchetti di una coda è calcolato come il prodotto tra il numero di pacchetti persi dalla coda $q$ nel 
+        timestep $t$ e la sua priorità $p_q$, normalizzato sul numero di pacchetti arrivati alla coda in quel time step moltiplicato per la somma delle priorità.
+    \end{itemize}
+\end{frame}
 
 \subsection{Agente}
 %TODO:
@@ -130,8 +241,11 @@ E' il componente che implementa la logica del nodo, in particolare:
             \column{0.6\textwidth}
                 \begin{minipage}[b]{1\textwidth}
                     \begin{itemize}
-                        \item Una batteria, la cui carica dipende da fattori ambientali
-                        \item Una presa di corrente, che ha un costo di utilizzo
+                        \item una batteria,
+                        avente un costo di utilizzo pari a zero ma una capacità limitata e una ricarica influenzata
+                        da fattori ambientali;
+                        \item Una presa di corrente, che ha un costo di utilizzo diverso
+                        da zero ma una capacità pressoché illimitata.
                     \end{itemize}
                 \end{minipage}
             \column{0.4\textwidth}
@@ -321,7 +435,7 @@ E' l'ambiente in cui vivono tutti gli elementi della simulazione, qui vengono sp
         strategia imparata dal DQN punta sempre a minimizzarli.
     \end{itemize}
 \end{frame}
-\subsection{Coda multipla, reward bilanciata}
+\subsection{5 Code, reward bilanciata}
 \begin{frame}
     \frametitle{\secname: \subsecname}
     \begin{figure}
