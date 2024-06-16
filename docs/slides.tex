@@ -27,15 +27,16 @@
 %TODO:
 
 \subsection{Contesto}
-\begin{frame}{Contesto}
+\begin{frame}{\subsecname\ (1)}
     In un sistema moderno i QoS possono essere di vario genere e non sempre sono legati alle sole prestazioni, in particolare, hanno acquisito sempre più rilevanza aspetti come la sostenibilità ed il valore portato dal sistema.\\ E' quindi necessario trovare delle soluzioni che siano flessibili rispetto a tali aspetti in modo da poter essere adattate a diversi contesti.
     \vspace{2cm}
     \begin{adjustbox}{margin=0.4cm 0cm 0cm 0.65cm, center} % left, bottom, right, top
         \includegraphics[width=.6\textwidth]{figs/qos_adapt.png}
     \end{adjustbox}
 \end{frame}
-\begin{frame}{\subsecname}
-    Il progetto verte sulla realizzazione di un nodo di rete dotato di code di priorità e diverse fonti energetiche il cui comportamento è determinato da un agente di reinforcement learning che cerca di minimizzare una reward basata sui seguenti QoS:
+
+\begin{frame}{\subsecname\ (2)}
+    Il progetto verte sulla realizzazione di un nodo di rete dotato di code di priorità e diverse fonti energetiche il cui comportamento è determinato da un agente di reinforcement learning che cerca di minimizzare una reward configurabile basata sui seguenti QoS:
     \begin{columns}
         \column{0.5\textwidth}
             \begin{minipage}[b]{1\textwidth}
@@ -55,8 +56,6 @@
 \end{frame}
 \subsection{Obiettivi}
 
-%TODO:
-
 \section{Metodologia}
 %TODO:
 
@@ -73,7 +72,7 @@
 %TODO:
 
 \subsection{Simulazione}
-\begin{frame}{Simulazione}
+\begin{frame}{\subsecname}
     Per la simulazione è stato utilizzato il framework OMNeT++, il quale permette di definire e simulare una rete di nodi. \\Dato che OMNeT++ non supporta nativamente Python per permettere la comunicazione tra l'agente ed il nodo, è stata utilizzata la libreria PyBind la quale permette di esporre simboli in Python e C++ e farne il binding.
     \begin{adjustbox}{margin=0cm 0cm 0cm 0.5cm, center} % left, bottom, right, top
         \includegraphics[width=.8\textwidth]{figs/pybind_omnet.png}
@@ -81,7 +80,7 @@
 \end{frame}
 
 \subsubsection{Nodo}
-\begin{frame}{Nodo}
+\begin{frame}{\subsubsecname}
     E' l'elemento della rete che è in grado di ricevere e inviare messaggi sulla base della scelta dell'agente, è composto da:
     \begin{columns}
         \column{0.5\textwidth}
@@ -101,8 +100,8 @@
     \end{columns}
 \end{frame}
 
-\subsubsection{Nodo - Controller}
-\begin{frame}{Nodo - Controller (1)}
+\subsubsection*{Nodo - Controller}
+\begin{frame}{\subsubsecname\ (1)}
 E' il componente che implementa la logica del nodo, in particolare:
 \vspace{0.5cm}
     \begin{columns}
@@ -124,7 +123,7 @@ E' il componente che implementa la logica del nodo, in particolare:
     \end{columns}
 \end{frame}
 
-\begin{frame}{Nodo - Controller (2)}
+\begin{frame}{\subsubsecname\ (2)}
     Il controller si occupa anche di gestire le sorgenti energetiche del nodo, in particolare:
     \vspace{0.5cm}
         \begin{columns}
@@ -144,8 +143,8 @@ E' il componente che implementa la logica del nodo, in particolare:
         \end{columns}
     \end{frame}
 
-\subsubsection{Nodo - Agent Client}
-\begin{frame}{Nodo - Agent Client}
+\subsubsection*{Nodo - Agent Client}
+\begin{frame}{\subsubsecname}
     E' il componente che fa da intermediario tra il controller e l'agente, in particolare:
     \begin{itemize}
         \item Accoglie le action request del controller, le quali contengono stato e reward dell'azione precedente 
@@ -157,8 +156,8 @@ E' il componente che implementa la logica del nodo, in particolare:
     \end{itemize}
 \end{frame}
 
-\subsubsection{Nodo - Queue}
-\begin{frame}{Nodo - Queue}
+\subsubsection*{Nodo - Queue}
+\begin{frame}{\subsubsecname}
     E' il componente che implementa la logica della coda, in particolare:
     \vspace{0.5cm}
         \begin{columns}
@@ -181,7 +180,7 @@ E' il componente che implementa la logica del nodo, in particolare:
 \end{frame}
 
 \subsubsection{SrcNode}
-\begin{frame}{SrcNode}
+\begin{frame}{\subsubsecname}
     E' l'elemento della rete che si occupa di generare il traffico, ogni Queue ha associato un SrcNode.
     Il tempo di interarrivo dei pacchetti è regolato da una distribuzione esponenziale con tasso $\lambda$ configurabile, mentre la dimensione dei pacchetti è regolata da una distribuzione uniforme su un intervallo configurabile.
     \begin{adjustbox}{margin=0.5cm 0cm 0.5cm 0.5cm, center} % left, bottom, right, top
@@ -190,7 +189,7 @@ E' il componente che implementa la logica del nodo, in particolare:
 \end{frame}
 
 \subsubsection{Network}
-\begin{frame}{Network}
+\begin{frame}{\subsubsecname}
 E' l'ambiente in cui vivono tutti gli elementi della simulazione, qui vengono specificati i collegamenti tra i SrcNode e le code del nodo router. 
     \begin{adjustbox}{margin=0cm 0cm 0cm 0cm, center} % left, bottom, right, top
         \includegraphics[width=.65\textwidth]{figs/network_layout_3queues.png}
