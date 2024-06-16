@@ -25,7 +25,33 @@
 %TODO:
 
 \subsection*{Contesto}
-%TODO:
+\begin{frame}{Contesto (1)}
+    In un sistema moderno i QoS possono essere di vario genere e non sempre sono legati alle sole prestazioni, in particolare, hanno acquisito sempre più rilevanza aspetti come la sostenibilità ed il valore portato dal sistema.\\ E' quindi necessario trovare delle soluzioni che siano flessibili rispetto a tali aspetti in modo da poter essere adattate a diversi contesti.
+    \vspace{2cm}
+    \begin{adjustbox}{margin=0.4cm 0cm 0cm 0.65cm, center} % left, bottom, right, top
+        \includegraphics[width=.6\textwidth]{figs/qos_adapt.png}
+    \end{adjustbox}
+\end{frame}
+
+\begin{frame}{Contesto (2)}
+    Il progetto verte sulla realizzazione di un nodo di rete dotato di code di priorità e diverse fonti energetiche il cui comportamento è determinato da un agente di reinforcement learning che cerca di minimizzare una reward basata sui seguenti QoS:
+    \begin{columns}
+        \column{0.5\textwidth}
+            \begin{minipage}[b]{1\textwidth}
+                \begin{itemize}
+                    \item Costo energetico
+                    \item Occupazione delle code
+                    \item Perdita di pacchetti dalle code 
+                \end{itemize}
+            \end{minipage}
+            \column{0.5\textwidth}
+                \begin{minipage}{1\textwidth}
+                    \begin{adjustbox}{margin=0cm 0cm 0cm 0cm, center} % left, bottom, right, top
+                        \includegraphics[width=.65\textwidth]{figs/agent_icon.png}
+                    \end{adjustbox}
+                \end{minipage}
+    \end{columns}
+\end{frame}
 
 \subsection*{Obiettivi}
 %TODO:
