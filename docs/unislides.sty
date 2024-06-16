@@ -130,7 +130,14 @@
 {
     \begin{frame}
     \frametitle{Roadmap}
-    \tableofcontents[currentsection]
+    \begin{columns}[t]
+        \begin{column}{.5\textwidth}
+            \tableofcontents[sections={1-2}]
+        \end{column}
+        \begin{column}{.5\textwidth}
+            \tableofcontents[sections={3-4}]
+        \end{column}
+    \end{columns}
     \end{frame}
 }
 \setbeamertemplate{caption}[numbered]

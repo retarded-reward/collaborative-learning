@@ -53,8 +53,13 @@
     \end{columns}
 \end{frame}
 \subsection{Obiettivi}
-
-%TODO:
+\begin{frame}{\subsecname\ (1)}
+    Le performance del nodo vengono valutate sulla base delle scelte prese dall'agente in diversi scenari, in particolare al variare di:
+    \begin{itemize}
+        \item Configurazione del modello di reward dell'agente
+        \item Numero di code del nodo
+    \end{itemize}
+\end{frame}
 
 \section{Metodologia}
 %TODO:
@@ -100,7 +105,7 @@
     \end{columns}
 \end{frame}
 
-\subsubsection{Nodo - Controller}
+\subsubsection*{Nodo - Controller}
 \begin{frame}{\subsubsecname\ (1)}
 E' il componente che implementa la logica del nodo, in particolare:
 \vspace{0.5cm}
@@ -143,7 +148,7 @@ E' il componente che implementa la logica del nodo, in particolare:
         \end{columns}
     \end{frame}
 
-\subsubsection{Nodo - Agent Client}
+\subsubsection*{Nodo - Agent Client}
 \begin{frame}{\subsubsecname}
     E' il componente che fa da intermediario tra il controller e l'agente, in particolare:
     \begin{itemize}
@@ -156,7 +161,7 @@ E' il componente che implementa la logica del nodo, in particolare:
     \end{itemize}
 \end{frame}
 
-\subsubsection{Nodo - Queue}
+\subsubsection*{Nodo - Queue}
 \begin{frame}{\subsubsecname}
     E' il componente che implementa la logica della coda, in particolare:
     \vspace{0.5cm}
