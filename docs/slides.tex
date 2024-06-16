@@ -259,15 +259,14 @@ E' il componente che implementa la logica del nodo, in particolare:
 
 \subsubsection*{Nodo - Agent Client}
 \begin{frame}{\subsubsecname}
-    E' il componente che fa da intermediario tra il controller e l'agente, in particolare:
-    \begin{itemize}
-        \item Accoglie le action request del controller, le quali contengono stato e reward dell'azione precedente 
-        \item Converte l'action request in una bean compatibile con l'implementazione Python dell'agente
-        \item Inoltra la bean all'agente
-        \item Accoglie le bean di risposta dell'agente, le quali contengono l'azione da attuare
-        \item Converte la bena di risposta in una action response compatibile con l'implementazione in C++ del controller
-        \item Inoltra l'action response al controller
-    \end{itemize}
+    E' il componente che fa da intermediario tra il controller e l'Agente
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{figs/agentc_sequence_diagram.drawio.png}
+        \caption{sequence diagram per la servitura di una richiesta di azione del Controller nei confronti dell'agente.}
+        \label{fig:agentc_sequence_diagram}
+    \end{figure}
 \end{frame}
 
 \subsubsection*{Nodo - Queue}
