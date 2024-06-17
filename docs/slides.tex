@@ -251,27 +251,37 @@
 \begin{frame}
     \frametitle{\subsecname}
     \begin{itemize}
-        \item Replay Buffer: Memorizza le esperienze per l'addestramento.
+        \item Implementazione: Configurabile tramite la classe \code{AgentFactory}
+        \item Replay Buffer:
+        \begin{itemize}
+            \item TFUniformReplayBuffer: Buffer circolare fornito dalla libreria TF-Agents che pesca le esperienze con distribuzione uniforme.
+            \item Decoratore per integraazione dinamica con l'agente
+        \end{itemize}
         \item Ottimizzazione: Utilizzo dell'algoritmo Stochastic Gradient Descent (SGD).
-        \item Esplorazione: Politica $\epsilon$-greedy per bilanciare esploration e exploitation.
+        \item Esplorazione: Politica $\epsilon$-greedy per bilanciare exploration e exploitation.
+        
     \end{itemize}
 \end{frame}
 
 \subsubsection{Replay Buffer}
-\begin{frame}
-    \frametitle{\subsecname: \subsubsecname\ (1)}
-    \begin{itemize}
-        \item TFUniformReplayBuffer: Un buffer circolare fornito dalla libreria TF-Agents.
-        \item Addestramento: L'agente addestra la rete neurale con minibatch di esperienze prelevate casualmente dal buffer.
-    \end{itemize}
-\end{frame}
 
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname\ (2)}
+    \frametitle{\subsecname: \subsubsecname}
     \begin{itemize}
         \item Problema Identificato: Esperienze simili riempiono il buffer, limitando l'apprendimento\footnote{\href{https://rll.berkeley.edu/deeprlworkshop/papers/database_composition.pdf}{ Bruin, T. D., Jens Kober, and K. Tuyls. ”The importance of experience replay database composition in deep reinforcement learning.”, 2015}}.
         \item Soluzione: Divisione del buffer in due parti: una per esperienze di esplorazione e una per esperienze di exploitation.
         \item Vantaggi: Addestramento con esperienze diversificate per migliorare la stabilità e la performance.
+    \end{itemize}
+\end{frame}
+\subsubsection*{Rete Neurale}
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{itemize}
+        \item Architettura: La rete è composta da soli layer densi, tutti con funzione di attivazione sigmoidale.
+        \begin{itemize}
+            \item Layer: Ultimo layer con neuroni pari al numero di azioni possibili.
+        \end{itemize}
+        \item Preprocessamento: Un layer flatter appiattisce lo stato in un vettore unidimensionale prima di essere passato alla rete neurale.
     \end{itemize}
 \end{frame}
 
@@ -288,52 +298,29 @@
     \end{itemize}
     \end{frame}
 
-\subsubsection*{Rete Neurale}
-\begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
-    \begin{itemize}
-        \item Architettura: La rete è composta da soli layer densi, tutti con funzione di attivazione sigmoidale.
-        \begin{itemize}
-            \item Layer: Ultimo layer con neuroni pari al numero di azioni possibili.
-        \end{itemize}
-        \item Preprocessamento: Un layer flatter appiattisce lo stato in un vettore unidimensionale prima di essere passato alla rete neurale.
-    \end{itemize}
-\end{frame}
-
 \subsubsection{AgentFaçade}
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname\ (1)}
-    Interfaccia
+    \frametitle{\subsecname: \subsubsecname}
+    \onslide<1->{
     \begin{itemize}
         \item AgentFaçade: Un'interfaccia che espone i metodi necessari per l'interazione con l'agente.
-        \item Vantaggi: Nasconde le complessità e fornisce un'interfaccia unificata per la comunicazione con l'agente.
-    \end{itemize}
-    Configurazione
-    \begin{itemize}
+        \begin{itemize}
+            \item Vantaggi: Nasconde le complessità e fornisce un'interfaccia unificata per la comunicazione con l'agente.
+        \end{itemize}
         \item Configurazione: Tramite file che specifica varie caratteristiche dell'agente per adattarlo a diversi scenari.
-        \item Parametri Aggiuntivi: Numero di code nel nodo per generare azioni valide.
+        \begin{itemize}
+            \item Parametri Aggiuntivi: Numero di code nel nodo per generare azioni valide.
+        \end{itemize}
     \end{itemize}
-\end{frame}
-
-\begin{frame}
-    \frametitle{\subsecname: \subsubsecname\ (2)}
-    Interazione
+    }
+    \vspace{0.5cm}
+    \onslide<2->{
     \begin{itemize}
         \item Metodo get\_action: Restituisce l'azione da intraprendere in base allo stato attuale.
         \item Addestramento: L'agente viene addestrato periodicamente per evitare adattamenti troppo rapidi.
     \end{itemize}
+    }
 \end{frame}
-
-\subsubsection{AgentFactory}
-\begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
-    \begin{itemize}
-        \item AgentFactory: Classe che configura e crea agenti disponibili nella libreria.
-        \item Agenti Utilizzati: DQN e RandomAgent come benchmark.
-        \item Replay Buffer Decorator: Per integrare dinamicamente i replay buffer forniti dalla libreria.
-    \end{itemize}
-\end{frame}
-
 \subsubsection{Decisions}
 \begin{frame}
     \frametitle{\subsecname: \subsubsecname}
