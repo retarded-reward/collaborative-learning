@@ -55,6 +55,74 @@
     \end{columns}
 \end{frame}
 \subsection{Obiettivi}
+\begin{frame}{\subsecname\ (1)}
+    Le performance del nodo vengono valutate confrontando le scelte fatte dell'agente con quelle di un agente che fa scelte casuali, al variare di:
+    \begin{columns}
+        \column{0.5\textwidth}
+            \begin{minipage}{1\textwidth}
+                \begin{itemize}
+                    \item Configurazione del modello di reward dell'agente
+                    \item Numero di code del nodo
+                \end{itemize}
+            \end{minipage}
+        \column{0.5\textwidth}
+            \begin{minipage}{1\textwidth}
+                \begin{adjustbox}{margin=0cm 0cm 0cm 0.7cm, center} % left, bottom, right, top
+                    \includegraphics[width=.8\textwidth]{figs/tuning_performance.png}
+                \end{adjustbox}
+            \end{minipage}
+    \end{columns}
+\end{frame}
+\begin{frame}{\subsecname\ (2)}
+    La bontà delle scelte dell'agente viene misurata utilizzando diverse metriche, in particolare:
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item Reward cumulativa per unità di tempo
+        \item Reward per unità di tempo
+        \item Tempo medio in coda per unità di tempo, per ogni coda
+        \item Percentuale di occupazione della coda per unità di tempo, per ogni coda
+        \item Numero di pacchetti persi dalla coda per unità di tempo, per ogni coda
+        \item Percentuale di carica della batteria per unità di tempo
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{\subsecname\ (3)}
+    \begin{itemize}
+        \item Costo energetico per unità energetica, definito come:
+        \begin{Definition}
+            \begin{equation}
+                \label{eq:ce_ue}
+                \frac{energy\_cost}{energy\_consumed}
+            \end{equation}
+        \end{Definition}
+        \item Costo energetico per unità di tempo, definito come:
+        \begin{Definition}
+            \begin{equation}
+                \label{eq:ce_ut}
+                \frac{energy\_cost}{time\_step}
+            \end{equation}
+        \end{Definition}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{\subsecname\ (4)}
+    \begin{itemize}
+    \item Risparmio energetico per unità di tempo, definito come:
+        \begin{Definition}
+            \begin{equation}
+                \label{eq:re}
+                100\cdot(1-\frac{energy\_cost}{energy\_cost\_only\_power\_chord})
+            \end{equation}
+        \end{Definition}
+    \item Utilizzazione del nodo per unità di tempo, definita come:
+        \begin{Definition}
+            \begin{equation}
+                \label{eq:utilization}
+                arrival\_rate\cdot time\_step
+            \end{equation}
+        \end{Definition}
+    \end{itemize}
+\end{frame}
 
 \section{Metodologia}
 \subsection{Modello}
@@ -432,7 +500,7 @@ E' il componente che implementa la logica del nodo, in particolare:
     \begin{figure}
         \centering
         \includegraphics[width=\textwidth]{figs/agentc_sequence_diagram.drawio.png}
-        \caption{sequence diagram per la servitura di una richiesta di azione del Controller nei confronti dell'agente.}
+        \caption{Sequence diagram per la servitura di una richiesta di azione del Controller nei confronti dell'agente.}
         \label{fig:agentc_sequence_diagram}
     \end{figure}
 \end{frame}
