@@ -259,7 +259,7 @@
 
 \subsubsection{Replay Buffer}
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname (1)}
+    \frametitle{\subsecname: \subsubsecname\ (1)}
     \begin{itemize}
         \item TFUniformReplayBuffer: Un buffer circolare fornito dalla libreria TF-Agents.
         \item Addestramento: L'agente addestra la rete neurale con minibatch di esperienze prelevate casualmente dal buffer.
@@ -267,16 +267,17 @@
 \end{frame}
 
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname (2)}
+    \frametitle{\subsecname: \subsubsecname\ (2)}
     \begin{itemize}
-        \item Problema Identificato: Esperienze simili riempiono il buffer, limitando l'apprendimento\footnote{\href{https://rll.berkeley.edu/deeprlworkshop/papers/database_composition.pdf}{ Bruin, T. D., Jens Kober, and K. Tuyls. ”The importance of experience replay database composition in deep reinforcement learning.”, 2015}},.
+        \item Problema Identificato: Esperienze simili riempiono il buffer, limitando l'apprendimento\footnote{\href{https://rll.berkeley.edu/deeprlworkshop/papers/database_composition.pdf}{ Bruin, T. D., Jens Kober, and K. Tuyls. ”The importance of experience replay database composition in deep reinforcement learning.”, 2015}}.
         \item Soluzione: Divisione del buffer in due parti: una per esperienze di esplorazione e una per esperienze di exploitation.
         \item Vantaggi: Addestramento con esperienze diversificate per migliorare la stabilità e la performance.
     \end{itemize}
 \end{frame}
 
+\subsubsection*{Azioni Illegali}
 \begin{frame}
-    \frametitle{\subsecname: Azioni illegali}
+    \frametitle{\subsecname: \subsubsecname}
     \begin{itemize}
         \item Azioni Illegali: Esempio: inviare un messaggio da una coda vuota.
         \item Metodi di Gestione:
@@ -287,6 +288,7 @@
     \end{itemize}
     \end{frame}
 
+\subsubsection*{Rete Neurale}
 \begin{frame}
     \frametitle{\subsecname: \subsubsecname}
     \begin{itemize}
@@ -300,7 +302,7 @@
 
 \subsubsection{AgentFaçade}
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname (1)}
+    \frametitle{\subsecname: \subsubsecname\ (1)}
     Interfaccia
     \begin{itemize}
         \item AgentFaçade: Un'interfaccia che espone i metodi necessari per l'interazione con l'agente.
@@ -314,7 +316,7 @@
 \end{frame}
 
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname (2)}
+    \frametitle{\subsecname: \subsubsecname\ (2)}
     Interazione
     \begin{itemize}
         \item Metodo get\_action: Restituisce l'azione da intraprendere in base allo stato attuale.
