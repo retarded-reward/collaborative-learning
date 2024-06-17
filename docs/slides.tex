@@ -171,16 +171,184 @@
 \end{frame}
 
 \subsection{Agente}
-%TODO:
+\begin{frame}
+    \frametitle{\subsecname}
+    \begin{itemize}
+        \item DQN (Deep Q-Network): Un algoritmo di reinforcement learning che utilizza reti neurali deep per apprendere una Q function.
+        \item Q Function: Utilizzata per determinare una policy che guida le azioni dell'agente in base allo stato attuale.
+        \item Addestramento: Basato sull'esperienza accumulata durante l'interazione con l'ambiente.
+    \end{itemize}
+\end{frame}
+\begin{frame}
+    \frametitle{\subsecname}
+    \begin{itemize}
+        \item Replay Buffer: Memorizza le esperienze per l'addestramento.
+        \item Ottimizzazione: Utilizzo dell'algoritmo Stochastic Gradient Descent (SGD).
+        \item Esplorazione: Politica $\epsilon$-greedy per bilanciare esploration e exploitation.
+    \end{itemize}
+\end{frame}
+
+\subsubsection{Replay Buffer}
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname (1)}
+    \begin{itemize}
+        \item TFUniformReplayBuffer: Un buffer circolare fornito dalla libreria TF-Agents.
+        \item Addestramento: L'agente addestra la rete neurale con minibatch di esperienze prelevate casualmente dal buffer.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname (2)}
+    \begin{itemize}
+        \item Problema Identificato: Esperienze simili riempiono il buffer, limitando l'apprendimento\footnote{\href{https://rll.berkeley.edu/deeprlworkshop/papers/database_composition.pdf}{ Bruin, T. D., Jens Kober, and K. Tuyls. ”The importance of experience replay database composition in deep reinforcement learning.”, 2015}},.
+        \item Soluzione: Divisione del buffer in due parti: una per esperienze di esplorazione e una per esperienze di exploitation.
+        \item Vantaggi: Addestramento con esperienze diversificate per migliorare la stabilità e la performance.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{\subsecname: Azioni illegali}
+    \begin{itemize}
+        \item Azioni Illegali: Esempio: inviare un messaggio da una coda vuota.
+        \item Metodi di Gestione:
+        \begin{itemize}
+            \item Penalizzazione con reward negativa per azioni illegali.
+            \item Esclusione delle azioni illegali dal set di azioni possibili (non implementabile facilmente con la libreria usata).
+        \end{itemize}
+    \end{itemize}
+    \end{frame}
+
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{itemize}
+        \item Architettura: La rete è composta da soli layer densi, tutti con funzione di attivazione sigmoidale.
+        \begin{itemize}
+            \item Layer: Ultimo layer con neuroni pari al numero di azioni possibili.
+        \end{itemize}
+        \item Preprocessamento: Un layer flatter appiattisce lo stato in un vettore unidimensionale prima di essere passato alla rete neurale.
+    \end{itemize}
+\end{frame}
 
 \subsubsection{AgentFaçade}
-%TODO:
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname (1)}
+    Interfaccia
+    \begin{itemize}
+        \item AgentFaçade: Un'interfaccia che espone i metodi necessari per l'interazione con l'agente.
+        \item Vantaggi: Nasconde le complessità e fornisce un'interfaccia unificata per la comunicazione con l'agente.
+    \end{itemize}
+    Configurazione
+    \begin{itemize}
+        \item Configurazione: Tramite file che specifica varie caratteristiche dell'agente per adattarlo a diversi scenari.
+        \item Parametri Aggiuntivi: Numero di code nel nodo per generare azioni valide.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname (2)}
+    Interazione
+    \begin{itemize}
+        \item Metodo get\_action: Restituisce l'azione da intraprendere in base allo stato attuale.
+        \item Addestramento: L'agente viene addestrato periodicamente per evitare adattamenti troppo rapidi.
+    \end{itemize}
+\end{frame}
 
 \subsubsection{AgentFactory}
-%TODO:
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{itemize}
+        \item AgentFactory: Classe che configura e crea agenti disponibili nella libreria.
+        \item Agenti Utilizzati: DQN e RandomAgent come benchmark.
+        \item Replay Buffer Decorator: Per integrare dinamicamente i replay buffer forniti dalla libreria.
+    \end{itemize}
+\end{frame}
 
 \subsubsection{Decisions}
-%TODO:
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{itemize}
+        \item Lo spazio delle decisioni si estende attraverso diverse dimensioni, ciascuna rappresenta un parametro.
+        \item Un'azione dell'agente è rappresentabile da un vettore a tre dimensioni:
+        \begin{itemize}
+            \item Azione[0] = invia o non fare nulla
+            \item Azione[1] = preleva pacchetto da coda $i$, con $i \in$ [0, num\_queues \textminus 1]
+            \item Azione[2] = seleziona power source $j, j \in$ [0, num\_power\_sources \textminus 1]
+        \end{itemize}
+        \item Non tutte le combinazioni di valori sono legali.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    Soluzione semplice: enumerare solo le combinazioni legali.
+    \begin{itemize}
+        \item Problemi dell'enumerazione:
+        \begin{itemize}
+            \item Crescita rapida dello spazio delle azioni con l'aumentare delle opzioni.
+            \item Rallentamento dell'apprendimento dell'agente.
+        \end{itemize}
+    \end{itemize}
+    \vspace{0.5cm}
+    Decisions Idea:
+    \begin{itemize}
+        \item Delegare la scelta del valore di ogni componente di un'azione a un agente diverso.
+        \item Gli agenti sono organizzati in un albero delle decisioni.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{itemize}
+        \item Nodo root: agente per la decisione iniziale.
+        \item Due casi:
+        \begin{itemize}
+            \item Nodo root è una foglia: un solo nodo root (equivalente all'enumerazione).
+            \item Nodo root ha figli: ogni scelta corrisponde a un nodo figlio.
+        \end{itemize}
+        \item Decision path
+        \begin {itemize}
+            \item Cammino dalla root a una foglia.
+        \end{itemize}
+    \end{itemize}
+    \begin{adjustbox}{margin=0cm 0cm 0cm 0.5cm, center} % left, bottom, right, top
+        \includegraphics[width=.8\textwidth]{figs/decisions.drawio.png}
+    \end{adjustbox}
+\end{frame}
+
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    \begin{itemize}
+        \item Ogni nodo dell'albero è un Consultant.
+        \item Responsabilità di un Consultant:
+        \begin{itemize}
+            \item Riferimento all'agente che prende la decisione.
+            \item Lista di consultant figli.
+            \item Metodo get\_decisions() per aggiornare il decision path.
+            \item Metodo train() per addestrare l'agente.
+        \end{itemize}
+        \item Raffinazione stato-esperienza:
+        \begin{itemize}
+            \item \code{deduce\_consultant\_state()}
+            \item \code{deduce\_consultant\_experience()}
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{\subsecname: \subsubsecname}
+    Implicazioni:
+    \begin{itemize}
+        \item Gli agenti condividono lo stesso stato osservato dalla root o una sua deduzione.
+        \item Gli agenti condividono la stessa esperienza della root al momento del training o una deduzione.
+        \item Solo i consultant nel decision path vengono interrogati.
+        \item Addestramento dei consultant può essere fatto in parallelo.
+        \item Consultant in profondità ricevono meno esperienze.
+        \begin{itemize}
+            \item Spazio delle azioni ridotto: meno esperienza necessaria per l'apprendimento.
+        \end{itemize}
+        \item Evitare gli svantaggi dell'enumerazione dello spazio delle azioni.
+    \end{itemize}
+\end{frame}
 
 \subsection{Simulazione}
 \begin{frame}{\subsecname}
