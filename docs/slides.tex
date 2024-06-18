@@ -317,7 +317,7 @@
     \onslide<2->{
     \begin{itemize}
         \item Metodo get\_action: Restituisce l'azione da intraprendere in base allo stato attuale.
-        \item Addestramento: L'agente viene addestrato periodicamente per evitare adattamenti troppo rapidi.
+        \item Addestramento: L'agente viene addestrato con una periodicità tarata affinchè velocizzi il training ma non rallenti l'apprendimento.
     \end{itemize}
     }
 \end{frame}
@@ -376,12 +376,11 @@
 \begin{frame}
     \frametitle{\subsecname: \subsubsecname}
     \begin{itemize}
-        \item Ogni nodo dell'albero è un Consultant.
-        \item Responsabilità di un Consultant:
+        \item Responsabilità di un Nodo:
         \begin{itemize}
             \item Riferimento all'agente che prende la decisione.
-            \item Lista di consultant figli.
-            \item Metodo get\_decisions() per aggiornare il decision path.
+            \item Lista di nodi figli.
+            \item Metodo get\_decisions() per aggiungere la propria decisione al decision path.
             \item Metodo train() per addestrare l'agente.
         \end{itemize}
         \item Raffinazione stato-esperienza:
@@ -398,9 +397,9 @@
     \begin{itemize}
         \item Gli agenti condividono lo stesso stato osservato dalla root o una sua deduzione.
         \item Gli agenti condividono la stessa esperienza della root al momento del training o una deduzione.
-        \item Solo i consultant nel decision path vengono interrogati.
-        \item Addestramento dei consultant può essere fatto in parallelo.
-        \item Consultant in profondità ricevono meno esperienze.
+        \item Solo i nodi nel decision path vengono interrogati.
+        \item Addestramento dei nodi può essere fatto in parallelo.
+        \item Nodi in profondità ricevono meno esperienze.
         \begin{itemize}
             \item Spazio delle azioni ridotto: meno esperienza necessaria per l'apprendimento.
         \end{itemize}
