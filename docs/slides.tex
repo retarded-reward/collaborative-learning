@@ -163,7 +163,7 @@
 
 \subsubsection{Reward}
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
+    \frametitle{\subsecname: \subsubsecname\ (1)}
     \begin{Definition}[Reward per timestep]
         \begin{equation}
             \label{eq:reward}
@@ -187,7 +187,7 @@
     \end{itemize}}
 \end{frame}
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
+    \frametitle{\subsecname: \subsubsecname\ (2)}
     \begin{Definition}[Reward Power Term]
         \begin{equation}
             \label{eq:reward_energy}
@@ -205,7 +205,7 @@
     \end{itemize}
 \end{frame}
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
+    \frametitle{\subsecname: \subsubsecname\ (3)}
     \begin{Definition}[Reward Queue Occupancy Term]
         \begin{equation}
             \label{eq:reward_occupancy}
@@ -223,7 +223,7 @@
     \end{itemize}
 \end{frame}
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
+    \frametitle{\subsecname: \subsubsecname\ (4)}
     \begin{Definition}[Reward Packet Drop Term]
         \begin{equation}
             \label{eq:reward_drop}
@@ -241,7 +241,7 @@
 
 \subsection{Agente}
 \begin{frame}
-    \frametitle{\subsecname}
+    \frametitle{\subsecname\ (1)}
     \begin{itemize}
         \item DQN (Deep Q-Network): Un algoritmo di reinforcement learning che utilizza reti neurali deep per apprendere una Q function.
         \item Q Function: Utilizzata per determinare una policy che guida le azioni dell'agente in base allo stato attuale.
@@ -249,7 +249,7 @@
     \end{itemize}
 \end{frame}
 \begin{frame}
-    \frametitle{\subsecname}
+    \frametitle{\subsecname\ (2)}
     \begin{itemize}
         \item Implementazione: Configurabile tramite la classe \code{AgentFactory}
         \item Replay Buffer:
@@ -300,7 +300,7 @@
 
 \subsubsection{AgentFaçade}
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
+    \frametitle{\subsecname: \subsubsecname\ (1)}
     \onslide<1->{
     \begin{itemize}
         \item AgentFaçade: Un'interfaccia che espone i metodi necessari per l'interazione con l'agente.
@@ -323,7 +323,7 @@
 \end{frame}
 \subsubsection{Decisions}
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
+    \frametitle{\subsecname: \subsubsecname\ (1)}
     \begin{itemize}
         \item Lo spazio delle decisioni si estende attraverso diverse dimensioni, ciascuna rappresenta un parametro.
         \item Un'azione dell'agente è rappresentabile da un vettore a tre dimensioni:
@@ -337,7 +337,7 @@
 \end{frame}
 
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
+    \frametitle{\subsecname: \subsubsecname\ (2)}
     Soluzione semplice: enumerare solo le combinazioni legali.
     \begin{itemize}
         \item Problemi dell'enumerazione:
@@ -355,7 +355,7 @@
 \end{frame}
 
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
+    \frametitle{\subsecname: \subsubsecname\ (3)}
     \begin{itemize}
         \item Nodo root: agente per la decisione iniziale.
         \item Due casi:
@@ -374,7 +374,7 @@
 \end{frame}
 
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
+    \frametitle{\subsecname: \subsubsecname\ (4)}
     \begin{itemize}
         \item Responsabilità di un Nodo:
         \begin{itemize}
@@ -392,7 +392,7 @@
 \end{frame}
 
 \begin{frame}
-    \frametitle{\subsecname: \subsubsecname}
+    \frametitle{\subsecname: \subsubsecname\ (5)}
     Implicazioni:
     \begin{itemize}
         \item Gli agenti condividono lo stesso stato osservato dalla root o una sua deduzione.
