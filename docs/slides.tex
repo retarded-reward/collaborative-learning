@@ -80,6 +80,7 @@
     \begin{itemize}
         \item Reward cumulativa per unità di tempo
         \item Reward per unità di tempo
+        \item Utilizzazione del nodo per unità di tempo
         \item Tempo medio in coda per unità di tempo, per ogni coda
         \item Percentuale di occupazione della coda per unità di tempo, per ogni coda
         \item Numero di pacchetti persi dalla coda per unità di tempo, per ogni coda
@@ -113,13 +114,6 @@
             \begin{equation}
                 \label{eq:re}
                 100\cdot(1-\frac{energy\_cost}{energy\_cost\_only\_power\_chord})
-            \end{equation}
-        \end{Definition}
-    \item Utilizzazione del nodo per unità di tempo, definita come:
-        \begin{Definition}
-            \begin{equation}
-                \label{eq:utilization}
-                arrival\_rate\cdot time\_step
             \end{equation}
         \end{Definition}
     \end{itemize}
@@ -467,7 +461,7 @@ E' il componente che implementa la logica del nodo, in particolare:
                 \begin{minipage}[b]{1\textwidth}
                     \begin{itemize}
                         \item una batteria,
-                        avente un costo di utilizzo pari a zero ma una capacità limitata e una ricarica influenzata
+                        cha ha un costo di utilizzo pari a zero ma una capacità limitata e una ricarica influenzata
                         da fattori ambientali;
                         \item Una presa di corrente, che ha un costo di utilizzo diverso
                         da zero ma una capacità pressoché illimitata.
@@ -481,18 +475,6 @@ E' il componente che implementa la logica del nodo, in particolare:
                 \end{minipage}
         \end{columns}
     \end{frame}
-
-\subsubsection*{Nodo: Agent Client}
-\begin{frame}{\subsubsecname}
-    E' il componente che fa da intermediario tra il controller e l'Agente
-
-    \begin{figure}
-        \centering
-        \includegraphics[width=\textwidth]{figs/agentc_sequence_diagram.drawio.png}
-        \caption{Sequence diagram per la servitura di una richiesta di azione del Controller nei confronti dell'agente.}
-        \label{fig:agentc_sequence_diagram}
-    \end{figure}
-\end{frame}
 
 \subsubsection*{Nodo: Queue}
 \begin{frame}{\subsubsecname}
@@ -515,6 +497,18 @@ E' il componente che implementa la logica del nodo, in particolare:
                     \end{adjustbox}
                 \end{minipage}
         \end{columns}
+\end{frame}
+
+\subsubsection*{Nodo: Agent Client}
+\begin{frame}{\subsubsecname}
+    E' il componente che fa da intermediario tra il controller e l'Agente
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{figs/agentc_sequence_diagram.drawio.png}
+        \caption{Sequence diagram per la servitura di una richiesta di azione del Controller nei confronti dell'agente.}
+        \label{fig:agentc_sequence_diagram}
+    \end{figure}
 \end{frame}
 
 \subsubsection{SrcNode}
